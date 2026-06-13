@@ -9,7 +9,13 @@ import { prisma } from './config/database'
 const app = Fastify({ logger: env.NODE_ENV === 'development' })
 
 app.register(cors, {
-  origin: env.FRONTEND_URL,
+  origin: (origin, cb) => {
+    if (!origin || origin === env.FRONTEND_URL || origin === env.FRONTEND_URL.replace(/\/$/, '')) {
+      cb(null, true)
+    } else {
+      cb(new Error('Not allowed by CORS'), false)
+    }
+  },
   credentials: true,
 })
 
