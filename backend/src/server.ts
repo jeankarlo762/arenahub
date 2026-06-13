@@ -10,10 +10,16 @@ const app = Fastify({ logger: env.NODE_ENV === 'development' })
 
 app.register(cors, {
   origin: (origin, cb) => {
-    if (!origin || origin === env.FRONTEND_URL || origin === env.FRONTEND_URL.replace(/\/$/, '')) {
+    const allowed = env.FRONTEND_URL.replace(/\/$/, '')
+    if (!origin || origin.replace(/\/$/, '') === allowed) {
       cb(null, true)
     } else {
-      cb(new Error('Not allowed by CORS'), false)
+      // In development allow localhost origins
+      if (env.NODE_ENV !== 'production' || origin.includes('localhost')) {
+        cb(null, true)
+      } else {
+        cb(new Error('Not allowed by CORS'), false)
+      }
     }
   },
   credentials: true,
