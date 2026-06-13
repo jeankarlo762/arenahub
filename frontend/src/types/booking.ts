@@ -16,7 +16,7 @@ export interface Payment {
 export interface Booking {
   id: string
   courtId: string
-  court: { id: string; name: string; type?: string }
+  court: { id: string; name: string; type?: string } | null
   customerName: string
   customerPhone: string
   customerEmail?: string

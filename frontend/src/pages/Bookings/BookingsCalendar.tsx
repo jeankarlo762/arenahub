@@ -279,7 +279,7 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
                               className="text-[10px] leading-tight truncate opacity-80"
                               style={{ color: color.text }}
                             >
-                              {booking.startTime}–{booking.endTime} · {booking.court.name}
+                              {booking.startTime}–{booking.endTime} · {booking.court?.name ?? '—'}
                             </p>
                           )}
                         </div>

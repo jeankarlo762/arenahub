@@ -94,7 +94,7 @@ export default function BookingsPage() {
     {
       key: 'court',
       header: 'Quadra',
-      cell: (b: Booking) => <span className="font-medium">{b.court.name}</span>,
+      cell: (b: Booking) => <span className="font-medium">{b.court?.name ?? '—'}</span>,
     },
     {
       key: 'customer',

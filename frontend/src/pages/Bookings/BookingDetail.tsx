@@ -68,7 +68,7 @@ export function BookingDetail({ open, onClose, booking, onSuccess }: BookingDeta
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500 text-xs">Quadra</p>
-              <p className="font-medium">{booking.court.name}</p>
+              <p className="font-medium">{booking.court?.name ?? '—'}</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">Data</p>

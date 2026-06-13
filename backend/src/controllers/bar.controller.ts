@@ -113,8 +113,3 @@ export async function removeItem(
 ) {
   return reply.send(await barService.removeItem(request.params.id, request.params.itemId))
 }
-
-
-export async function getTopClients(request: FastifyRequest, reply: FastifyReply) {
-  return reply.send(await barService.getTopClients())
-}

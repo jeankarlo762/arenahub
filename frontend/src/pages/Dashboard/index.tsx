@@ -154,7 +154,7 @@ export default function DashboardPage() {
                   <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm gap-2">
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900 truncate">{b.customerName}</p>
-                      <p className="text-gray-500 text-xs">{b.court.name} · {b.startTime}–{b.endTime}</p>
+                      <p className="text-gray-500 text-xs">{b.court?.name ?? '—'} · {b.startTime}–{b.endTime}</p>
                     </div>
                     <Badge label={BOOKING_STATUS_LABELS[b.status]} status={b.status} />
                   </div>
@@ -204,7 +204,7 @@ export default function DashboardPage() {
                   {pendingBookings.map((b) => (
                     <tr key={b.id}>
                       <td className="py-2 pr-4 font-medium text-gray-900">{b.customerName}</td>
-                      <td className="py-2 pr-4 text-gray-600">{b.court.name}</td>
+                      <td className="py-2 pr-4 text-gray-600">{b.court?.name ?? '—'}</td>
                       <td className="py-2 pr-4 text-gray-600 hidden sm:table-cell">{formatDate(b.date)}</td>
                       <td className="py-2 pr-4 text-gray-600 hidden sm:table-cell">{b.startTime}–{b.endTime}</td>
                       <td className="py-2 font-medium text-gray-900">{formatCurrency(Number(b.totalPrice))}</td>
