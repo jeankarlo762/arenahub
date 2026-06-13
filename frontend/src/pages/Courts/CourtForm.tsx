@@ -75,8 +75,9 @@ export function CourtForm({ open, onClose, onSuccess, court }: CourtFormProps) {
       }
       onSuccess()
       onClose()
-    } catch {
-      toast.error('Erro ao salvar quadra')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      toast.error(msg ?? 'Erro ao salvar quadra')
     }
   }
 
