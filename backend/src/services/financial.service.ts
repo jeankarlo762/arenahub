@@ -1,0 +1,142 @@
+import { prisma } from '../config/database'
+
+interface DateRange {
+  startDate?: string
+  endDate?: string
+  source?: string // 'courts' | 'bar' | 'all'
+}
+
+function buildDateFilter(startDate?: string, endDate?: string) {
+  if (!startDate && !endDate) return undefined
+  const filter: Record<string, Date> = {}
+  if (startDate) filter.gte = new Date(startDate + 'T00:00:00')
+  if (endDate) {
+    const end = new Date(endDate + 'T00:00:00')
+    end.setDate(end.getDate() + 1)
+    filter.lt = end
+  }
+  return filter
+}
+
+async function getCourtsSummary(startDate?: string, endDate?: string) {
+  const dateFilter = buildDateFilter(startDate, endDate)
+  const payments = await prisma.payment.findMany({
+    where: dateFilter ? { createdAt: dateFilter } : undefined,
+    include: { booking: { select: { status: true } } },
+  })
+  const total = payments.reduce((sum, p) => sum + Number(p.amount), 0)
+  const received = payments.filter((p) => p.status === 'PAID').reduce((sum, p) => sum + Number(p.amount), 0)
+  const pending = payments.filter((p) => p.status === 'PENDING').reduce((sum, p) => sum + Number(p.amount), 0)
+  return { total, received, pending, paymentCount: payments.length }
+}
+
+async function getBarRevenueSummary(startDate?: string, endDate?: string) {
+  const dateFilter = buildDateFilter(startDate, endDate)
+  const orders = await prisma.barOrder.findMany({
+    where: { status: 'CLOSED', ...(dateFilter ? { createdAt: dateFilter } : {}) },
+    select: { total: true },
+  })
+  const revenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
+  return { total: revenue, received: revenue, pending: 0, paymentCount: orders.length }
+}
+
+export async function getSummary({ startDate, endDate, source = 'courts' }: DateRange) {
+  const bookingCount = await prisma.booking.count({
+    where: startDate || endDate ? { createdAt: buildDateFilter(startDate, endDate) } : undefined,
+  })
+
+  if (source === 'bar') {
+    const bar = await getBarRevenueSummary(startDate, endDate)
+    return { ...bar, bookingCount }
+  }
+
+  if (source === 'all') {
+    const [courts, bar] = await Promise.all([
+      getCourtsSummary(startDate, endDate),
+      getBarRevenueSummary(startDate, endDate),
+    ])
+    return {
+      total: courts.total + bar.total,
+      received: courts.received + bar.received,
+      pending: courts.pending,
+      paymentCount: courts.paymentCount + bar.paymentCount,
+      bookingCount,
+    }
+  }
+
+  // 'courts' (default)
+  const courts = await getCourtsSummary(startDate, endDate)
+  return { ...courts, bookingCount }
+}
+
+export async function getDailyRevenue({ startDate, endDate, days = 30, source = 'courts' }: DateRange & { days?: number }) {
+  const end = endDate ? new Date(endDate + 'T00:00:00') : new Date()
+  const start = startDate
+    ? new Date(startDate + 'T00:00:00')
+    : new Date(end.getTime() - days * 24 * 60 * 60 * 1000)
+
+  const dailyMap = new Map<string, number>()
+  const cursor = new Date(start)
+  while (cursor <= end) {
+    dailyMap.set(cursor.toISOString().slice(0, 10), 0)
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  if (source !== 'bar') {
+    const payments = await prisma.payment.findMany({
+      where: { status: 'PAID', paidAt: { gte: start, lte: end } },
+      select: { amount: true, paidAt: true },
+    })
+    for (const p of payments) {
+      if (!p.paidAt) continue
+      const key = p.paidAt.toISOString().slice(0, 10)
+      dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(p.amount))
+    }
+  }
+
+  if (source !== 'courts') {
+    const orders = await prisma.barOrder.findMany({
+      where: { status: 'CLOSED', createdAt: { gte: start, lte: end } },
+      select: { total: true, createdAt: true },
+    })
+    for (const o of orders) {
+      const key = o.createdAt.toISOString().slice(0, 10)
+      dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(o.total))
+    }
+  }
+
+  return Array.from(dailyMap.entries()).map(([date, revenue]) => ({ date, revenue }))
+}
+
+export async function getRevenueByCourt({ startDate, endDate }: DateRange) {
+  const dateFilter = buildDateFilter(startDate, endDate)
+  const payments = await prisma.payment.findMany({
+    where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+    include: { booking: { include: { court: { select: { id: true, name: true } } } } },
+  })
+  const courtMap = new Map<string, { name: string; revenue: number; count: number }>()
+  for (const p of payments) {
+    const court = p.booking.court
+    const existing = courtMap.get(court.id) ?? { name: court.name, revenue: 0, count: 0 }
+    existing.revenue += Number(p.amount)
+    existing.count += 1
+    courtMap.set(court.id, existing)
+  }
+  return Array.from(courtMap.entries()).map(([id, data]) => ({ id, ...data }))
+}
+
+export async function getRevenueByMethod({ startDate, endDate }: DateRange) {
+  const dateFilter = buildDateFilter(startDate, endDate)
+  const payments = await prisma.payment.findMany({
+    where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+    select: { amount: true, method: true },
+  })
+  const methodMap = new Map<string, { revenue: number; count: number }>()
+  for (const p of payments) {
+    const existing = methodMap.get(p.method) ?? { revenue: 0, count: 0 }
+    existing.revenue += Number(p.amount)
+    existing.count += 1
+    methodMap.set(p.method, existing)
+  }
+  return Array.from(methodMap.entries()).map(([method, data]) => ({ method, ...data }))
+}

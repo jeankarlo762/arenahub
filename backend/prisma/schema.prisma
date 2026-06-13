@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Role: ADMIN | OPERATOR
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("OPERATOR")
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Court {
+  id           String       @id @default(cuid())
+  name         String
+  type         String
+  description  String?
+  capacity     Int?
+  pricePerSlot Decimal      @default(0)
+  slotMinutes  Int          @default(60)
+  active       Boolean      @default(true)
+  imageUrl     String?
+  schedules    Schedule[]
+  bookings     Booking[]
+  tournaments  Tournament[]
+  rentals      Rental[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Schedule {
+  id        String  @id @default(cuid())
+  courtId   String
+  court     Court   @relation(fields: [courtId], references: [id])
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+  active    Boolean @default(true)
+}
+
+// status: CONFIRMED | CANCELLED | COMPLETED | NO_SHOW
+model Booking {
+  id            String   @id @default(cuid())
+  courtId       String
+  court         Court    @relation(fields: [courtId], references: [id])
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  date          DateTime
+  startTime     String
+  endTime       String
+  totalPrice    Decimal
+  status        String   @default("CONFIRMED")
+  notes         String?
+  payment       Payment?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// method: CASH | CREDIT_CARD | DEBIT_CARD | PIX | TRANSFER
+// status: PENDING | PAID | REFUNDED
+model Payment {
+  id        String    @id @default(cuid())
+  bookingId String    @unique
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+  amount    Decimal
+  method    String
+  paidAt    DateTime?
+  status    String    @default("PENDING")
+  notes     String?
+  createdAt DateTime  @default(now())
+}
+
+// status: DRAFT | OPEN | IN_PROGRESS | FINISHED | CANCELLED
+// matchType: INDIVIDUAL | DOUBLES | TEAM
+model Tournament {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  sport       String
+  startDate   DateTime
+  endDate     DateTime
+  status      String           @default("DRAFT")
+  matchType   String           @default("TEAM")
+  maxTeams    Int
+  prizeInfo   String?
+  imageUrl    String?
+  champion    String?
+  courtId     String?
+  court       Court?           @relation(fields: [courtId], references: [id])
+  teams       TournamentTeam[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model BarProduct {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal
+  costPrice   Decimal        @default(0)
+  category    String?
+  active      Boolean        @default(true)
+  items       BarOrderItem[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+// status: OPEN | CLOSED | CANCELLED
+model BarOrder {
+  id            String         @id @default(cuid())
+  number        Int            @unique
+  customerName  String
+  status        String         @default("OPEN")
+  total         Decimal        @default(0)
+  notes         String?
+  paymentMethod String?
+  items         BarOrderItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model BarOrderItem {
+  id        String     @id @default(cuid())
+  orderId   String
+  order     BarOrder   @relation(fields: [orderId], references: [id])
+  productId String
+  product   BarProduct @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal
+  subtotal  Decimal
+  createdAt DateTime   @default(now())
+}
+
+model PaymentFee {
+  method     String  @id
+  feePercent Decimal @default(0)
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  rentals   Rental[]
+}
+
+// weekdays: JSON string of int array [0-6] (0=Sun)
+// slots: JSON string of [{startTime:"HH:MM",endTime:"HH:MM",price:number}]
+model Rental {
+  id         String    @id @default(cuid())
+  courtId    String?
+  court      Court?    @relation(fields: [courtId], references: [id])
+  clientId   String?
+  client     Client?   @relation(fields: [clientId], references: [id])
+  clientName String
+  weekdays   String
+  slots      String
+  startDate  DateTime
+  endDate    DateTime?
+  notes      String?
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model TournamentTeam {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  name         String
+  players      String
+  groupNumber  Int?
+  createdAt    DateTime   @default(now())
+}
