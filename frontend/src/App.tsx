@@ -26,12 +26,20 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 function AppInit() {
-  const { accessToken, setUser, clearAuth } = useAuthStore()
+  const accessToken = useAuthStore((s) => s.accessToken)
+  const user = useAuthStore((s) => s.user)
 
   useEffect(() => {
-    if (!accessToken) return
-    authApi.getMe().then(setUser).catch(() => clearAuth())
-  }, [accessToken, setUser, clearAuth])
+    if (!accessToken || user) return
+    authApi.getMe()
+      .then((u) => useAuthStore.getState().setUser(u))
+      .catch((err) => {
+        if (err?.response?.status === 401) {
+          useAuthStore.getState().clearAuth()
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken])
 
   return null
 }
