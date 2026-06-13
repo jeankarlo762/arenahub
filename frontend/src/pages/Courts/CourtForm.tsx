@@ -26,7 +26,6 @@ const schema = z.object({
     z.number().int().positive('Deve ser maior que zero'),
   ),
   description: z.string().optional(),
-  imageUrl: z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
@@ -59,9 +58,8 @@ export function CourtForm({ open, onClose, onSuccess, court }: CourtFormProps) {
               pricePerSlot: Number(court.pricePerSlot),
               slotMinutes: court.slotMinutes,
               description: court.description ?? '',
-              imageUrl: court.imageUrl ?? '',
             }
-          : { name: '', type: '', capacity: undefined, pricePerSlot: 0, slotMinutes: 60, description: '', imageUrl: '' },
+          : { name: '', type: '', capacity: undefined, pricePerSlot: 0, slotMinutes: 60, description: '' },
       )
     }
   }, [open, court, reset])
@@ -104,7 +102,7 @@ export function CourtForm({ open, onClose, onSuccess, court }: CourtFormProps) {
         />
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Valor por slot (R$)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Valor do Jogo (R$)</label>
             <input
               type="number"
               min={0}
@@ -115,7 +113,7 @@ export function CourtForm({ open, onClose, onSuccess, court }: CourtFormProps) {
             {errors.pricePerSlot && <p className="text-xs text-red-500 mt-1">{errors.pricePerSlot.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Duração do slot (min)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Duração do Jogo (min)</label>
             <input
               type="number"
               min={15}
@@ -134,7 +132,6 @@ export function CourtForm({ open, onClose, onSuccess, court }: CourtFormProps) {
           {...register('capacity')}
         />
         <Textarea label="Descrição" {...register('description')} />
-        <Input label="URL da Imagem" type="url" {...register('imageUrl')} />
       </div>
     </Modal>
   )
