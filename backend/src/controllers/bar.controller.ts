@@ -1,0 +1,115 @@
+import { FastifyRequest, FastifyReply } from 'fastify'
+import * as barService from '../services/bar.service'
+import {
+  createProductSchema,
+  updateProductSchema,
+  createOrderSchema,
+  updateOrderSchema,
+  orderStatusSchema,
+  addItemSchema,
+  orderFiltersSchema,
+} from '../schemas/bar.schema'
+
+// Products
+export async function listProducts(request: FastifyRequest, reply: FastifyReply) {
+  const { active } = (request.query as { active?: string })
+  const activeOnly = active === 'true' ? true : active === 'false' ? false : undefined
+  return reply.send(await barService.listProducts(activeOnly))
+}
+
+export async function createProduct(request: FastifyRequest, reply: FastifyReply) {
+  const input = createProductSchema.parse(request.body)
+  return reply.status(201).send(await barService.createProduct(input))
+}
+
+export async function updateProduct(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  const input = updateProductSchema.parse(request.body)
+  return reply.send(await barService.updateProduct(request.params.id, input))
+}
+
+export async function deleteProduct(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  return reply.send(await barService.deleteProduct(request.params.id))
+}
+
+// Orders
+export async function listOrders(request: FastifyRequest, reply: FastifyReply) {
+  const { status } = orderFiltersSchema.parse(request.query)
+  return reply.send(await barService.listOrders(status))
+}
+
+export async function getOrder(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  return reply.send(await barService.getOrder(request.params.id))
+}
+
+export async function createOrder(request: FastifyRequest, reply: FastifyReply) {
+  const input = createOrderSchema.parse(request.body)
+  return reply.status(201).send(await barService.createOrder(input))
+}
+
+export async function updateOrder(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  const input = updateOrderSchema.parse(request.body)
+  return reply.send(await barService.updateOrder(request.params.id, input))
+}
+
+export async function updateOrderStatus(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  const { status, paymentMethod } = orderStatusSchema.parse(request.body)
+  return reply.send(await barService.updateOrderStatus(request.params.id, status, paymentMethod))
+}
+
+export async function addItem(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  const input = addItemSchema.parse(request.body)
+  return reply.status(201).send(await barService.addItem(request.params.id, input))
+}
+
+export async function getBarStats(request: FastifyRequest, reply: FastifyReply) {
+  const { startDate, endDate } = request.query as { startDate?: string; endDate?: string }
+  const today = new Date().toISOString().slice(0, 10)
+  return reply.send(await barService.getBarStats(startDate ?? today, endDate ?? today))
+}
+
+export async function getTopClients(_request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await barService.getTopClients())
+}
+
+export async function getOrderByNumber(
+  request: FastifyRequest<{ Params: { number: string } }>,
+  reply: FastifyReply,
+) {
+  const number = parseInt(request.params.number)
+  if (!number || number <= 0) return reply.status(400).send({ message: 'Número inválido' })
+  const order = await barService.getOrderByNumber(number)
+  return reply.send(order ?? null)
+}
+
+export async function reopenOrder(
+  request: FastifyRequest<{ Params: { id: string }; Body: { clearItems: boolean } }>,
+  reply: FastifyReply,
+) {
+  const { clearItems } = request.body as { clearItems: boolean }
+  return reply.send(await barService.reopenOrder(request.params.id, !!clearItems))
+}
+
+export async function removeItem(
+  request: FastifyRequest<{ Params: { id: string; itemId: string } }>,
+  reply: FastifyReply,
+) {
+  return reply.send(await barService.removeItem(request.params.id, request.params.itemId))
+}

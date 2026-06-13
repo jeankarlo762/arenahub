@@ -1,0 +1,297 @@
+import { useState, useEffect, useCallback } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Spinner } from '../../components/ui/Spinner'
+import type { Booking } from '../../types/booking'
+import type { Court } from '../../types/court'
+import * as bookingsApi from '../../api/bookings.api'
+import { toInputDate } from '../../utils/date'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const HOUR_HEIGHT = 60   // px per hour
+const START_HOUR = 7
+const END_HOUR = 23
+const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
+const TOTAL_HEIGHT = HOURS.length * HOUR_HEIGHT
+
+const DAY_NAMES_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+
+const COURT_COLORS = [
+  { bg: '#fff7ed', border: '#f97316', text: '#9a3412' },  // orange
+  { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' },  // blue
+  { bg: '#f0fdf4', border: '#22c55e', text: '#14532d' },  // green
+  { bg: '#faf5ff', border: '#a855f7', text: '#581c87' },  // purple
+  { bg: '#fdf2f8', border: '#ec4899', text: '#831843' },  // pink
+  { bg: '#fefce8', border: '#eab308', text: '#713f12' },  // yellow
+]
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getMonday(date: Date): Date {
+  const d = new Date(date)
+  const day = d.getDay()
+  d.setDate(d.getDate() - day + (day === 0 ? -6 : 1))
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
+function addDays(date: Date, n: number): Date {
+  const d = new Date(date)
+  d.setDate(d.getDate() + n)
+  return d
+}
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
+function doOverlap(a: Booking, b: Booking): boolean {
+  return (
+    timeToMinutes(a.startTime) < timeToMinutes(b.endTime) &&
+    timeToMinutes(a.endTime) > timeToMinutes(b.startTime)
+  )
+}
+
+// Assign column lanes to avoid visual overlap
+function layoutDay(bookings: Booking[]): { booking: Booking; col: number; cols: number }[] {
+  const sorted = [...bookings].sort(
+    (a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime),
+  )
+  const lanes: Booking[][] = []
+  const assigned: { booking: Booking; col: number }[] = []
+
+  for (const b of sorted) {
+    let col = 0
+    while (lanes[col]?.some((lb) => doOverlap(lb, b))) col++
+    if (!lanes[col]) lanes[col] = []
+    lanes[col].push(b)
+    assigned.push({ booking: b, col })
+  }
+
+  return assigned.map(({ booking, col }) => {
+    const maxCols = assigned
+      .filter(({ booking: b2 }) => doOverlap(booking, b2))
+      .reduce((m, { col: c }) => Math.max(m, c + 1), 1)
+    return { booking, col, cols: maxCols }
+  })
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+interface Props {
+  courts: Court[]
+  onBookingClick: (booking: Booking) => void
+}
+
+export function BookingsCalendar({ courts, onBookingClick }: Props) {
+  const [monday, setMonday] = useState(() => getMonday(new Date()))
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const courtColorMap = new Map(
+    courts.map((c, i) => [c.id, COURT_COLORS[i % COURT_COLORS.length]]),
+  )
+
+  const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))
+  const todayStr = toInputDate(new Date())
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await bookingsApi.listBookings({
+        startDate: toInputDate(monday),
+        endDate: toInputDate(addDays(monday, 6)),
+      })
+      setBookings(data)
+    } finally {
+      setLoading(false)
+    }
+  }, [monday])
+
+  useEffect(() => { load() }, [load])
+
+  function bookingsForDay(day: Date): Booking[] {
+    const key = toInputDate(day)
+    return bookings.filter((b) => {
+      // b.date is an ISO string; just compare the date portion
+      const bDate = b.date.slice(0, 10)
+      return bDate === key
+    })
+  }
+
+  const weekLabel = `${days[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${days[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`
+
+  return (
+    <div className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+      {/* ── Toolbar ── */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 flex-wrap">
+        <button
+          onClick={() => setMonday(getMonday(new Date()))}
+          className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+        >
+          Hoje
+        </button>
+        <div className="flex items-center">
+          <button
+            onClick={() => setMonday((m) => addDays(m, -7))}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={() => setMonday((m) => addDays(m, 7))}
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <span className="text-sm font-semibold text-gray-800">{weekLabel}</span>
+        {loading && <Spinner size="sm" className="text-orange-500 ml-1" />}
+
+        {/* Court legend */}
+        <div className="ml-auto flex items-center gap-3 flex-wrap">
+          {courts.map((court) => {
+            const color = courtColorMap.get(court.id)
+            return (
+              <div key={court.id} className="flex items-center gap-1.5">
+                <div
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: color?.border }}
+                />
+                <span className="text-xs text-gray-600 truncate max-w-[120px]">{court.name}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Calendar grid ── */}
+      <div className="overflow-auto">
+        <div className="min-w-[640px]">
+
+          {/* Day headers */}
+          <div className="flex border-b border-gray-100 sticky top-0 bg-white z-20">
+            {/* Gutter */}
+            <div className="w-14 shrink-0 border-r border-gray-100" />
+            {days.map((day, i) => {
+              const isToday = toInputDate(day) === todayStr
+              return (
+                <div
+                  key={i}
+                  className={`flex-1 py-2 text-center border-r border-gray-100 last:border-0 ${isToday ? 'bg-orange-50' : ''}`}
+                >
+                  <p className="text-xs font-medium text-gray-400 uppercase">{DAY_NAMES_SHORT[i]}</p>
+                  <p
+                    className={`text-xl font-bold leading-tight mt-0.5 mx-auto w-9 h-9 flex items-center justify-center rounded-full ${
+                      isToday ? 'bg-orange-500 text-white' : 'text-gray-900'
+                    }`}
+                  >
+                    {day.getDate()}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Time + day body */}
+          <div className="flex" style={{ height: TOTAL_HEIGHT }}>
+
+            {/* Hour labels gutter */}
+            <div className="w-14 shrink-0 border-r border-gray-100 relative">
+              {HOURS.map((hour) => (
+                <div
+                  key={hour}
+                  className="absolute w-full flex items-start justify-end pr-2"
+                  style={{ top: (hour - START_HOUR) * HOUR_HEIGHT - 8 }}
+                >
+                  <span className="text-[11px] text-gray-400 leading-none">
+                    {String(hour).padStart(2, '0')}:00
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Day columns */}
+            {days.map((day, di) => {
+              const isToday = toInputDate(day) === todayStr
+              const laid = layoutDay(bookingsForDay(day))
+
+              return (
+                <div
+                  key={di}
+                  className={`flex-1 relative border-r border-gray-100 last:border-0 ${isToday ? 'bg-orange-50/30' : ''}`}
+                >
+                  {/* Hour dividers */}
+                  {HOURS.map((hour) => (
+                    <div
+                      key={hour}
+                      className="absolute left-0 right-0 border-t border-gray-100"
+                      style={{ top: (hour - START_HOUR) * HOUR_HEIGHT }}
+                    />
+                  ))}
+                  {/* Half-hour dividers */}
+                  {HOURS.map((hour) => (
+                    <div
+                      key={`h-${hour}`}
+                      className="absolute left-0 right-0 border-t border-dashed border-gray-100"
+                      style={{ top: (hour - START_HOUR) * HOUR_HEIGHT + HOUR_HEIGHT / 2 }}
+                    />
+                  ))}
+
+                  {/* Bookings */}
+                  {laid.map(({ booking, col, cols }) => {
+                    const startMin = timeToMinutes(booking.startTime)
+                    const endMin = timeToMinutes(booking.endTime)
+                    const top = Math.max(0, (startMin - START_HOUR * 60) / 60 * HOUR_HEIGHT) + 1
+                    const height = Math.max((endMin - startMin) / 60 * HOUR_HEIGHT - 2, 20)
+                    const left = `calc(${(col / cols) * 100}% + 2px)`
+                    const width = `calc(${100 / cols}% - 4px)`
+                    const color = courtColorMap.get(booking.courtId) ?? COURT_COLORS[0]
+                    const isShort = height < 38
+
+                    return (
+                      <button
+                        key={booking.id}
+                        onClick={() => onBookingClick(booking)}
+                        className="absolute rounded-md overflow-hidden text-left transition-opacity hover:opacity-80 focus:outline-none"
+                        style={{
+                          top,
+                          height,
+                          left,
+                          width,
+                          backgroundColor: color.bg,
+                          borderLeft: `3px solid ${color.border}`,
+                        }}
+                      >
+                        <div className="px-1.5 py-0.5 h-full flex flex-col justify-center">
+                          <p
+                            className="text-[11px] font-semibold leading-tight truncate"
+                            style={{ color: color.text }}
+                          >
+                            {isShort
+                              ? `${booking.startTime} ${booking.customerName}`
+                              : booking.customerName}
+                          </p>
+                          {!isShort && (
+                            <p
+                              className="text-[10px] leading-tight truncate opacity-80"
+                              style={{ color: color.text }}
+                            >
+                              {booking.startTime}–{booking.endTime} · {booking.court.name}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
