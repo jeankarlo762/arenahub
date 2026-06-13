@@ -283,3 +283,21 @@ export async function removeItem(orderId: string, itemId: string) {
 
   return getOrder(orderId)
 }
+
+export async function getTopClients(limit = 10) {
+  const orders = await prisma.barOrder.findMany({
+    where: { status: 'CLOSED' },
+    select: { customerName: true, total: true },
+  })
+  const map = new Map<string, { total: number; orderCount: number }>()
+  for (const o of orders) {
+    const existing = map.get(o.customerName) ?? { total: 0, orderCount: 0 }
+    existing.total += Number(o.total)
+    existing.orderCount += 1
+    map.set(o.customerName, existing)
+  }
+  return Array.from(map.entries())
+    .map(([customerName, data]) => ({ customerName, ...data }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, limit)
+}
