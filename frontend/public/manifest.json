@@ -1,0 +1,18 @@
+{
+  "name": "ArenaHub — Gestão de Quadras",
+  "short_name": "ArenaHub",
+  "description": "Sistema de gestão de quadras esportivas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
