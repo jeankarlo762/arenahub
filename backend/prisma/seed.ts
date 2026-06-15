@@ -7,14 +7,15 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Iniciando seed...')
 
-  // Super Admin
+  // Super Admin — force password + role on every seed so it's always accessible
+  const superAdminHash = await bcrypt.hash('superadmin123', 10)
   await prisma.user.upsert({
     where: { email: 'superadmin@arenahub.com' },
-    update: {},
+    update: { passwordHash: superAdminHash, role: 'SUPERADMIN', active: true },
     create: {
       name: 'Super Admin',
       email: 'superadmin@arenahub.com',
-      passwordHash: await bcrypt.hash('superadmin123', 10),
+      passwordHash: superAdminHash,
       role: 'SUPERADMIN',
     },
   })
