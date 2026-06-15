@@ -37,7 +37,7 @@ registerRoutes(app)
 
 app.setErrorHandler(errorHandler)
 
-app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }))
+app.get('/health', async () => ({ status: 'ok', version: 'als-onrequest-2', timestamp: new Date().toISOString() }))
 
 async function start() {
   try {
