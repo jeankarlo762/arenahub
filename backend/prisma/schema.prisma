@@ -36,6 +36,7 @@ model User {
 
 model Court {
   id           String       @id @default(cuid())
+  tenantId     String?
   name         String
   type         String
   description  String?
@@ -50,21 +51,27 @@ model Court {
   rentals      Rental[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+
+  @@index([tenantId])
 }
 
 model Schedule {
   id        String  @id @default(cuid())
+  tenantId  String?
   courtId   String
   court     Court   @relation(fields: [courtId], references: [id])
   dayOfWeek Int
   openTime  String
   closeTime String
   active    Boolean @default(true)
+
+  @@index([tenantId])
 }
 
 // status: CONFIRMED | CANCELLED | COMPLETED | NO_SHOW
 model Booking {
   id            String   @id @default(cuid())
+  tenantId      String?
   courtId       String
   court         Court    @relation(fields: [courtId], references: [id])
   customerName  String
@@ -79,12 +86,15 @@ model Booking {
   payment       Payment?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 // method: CASH | CREDIT_CARD | DEBIT_CARD | PIX | TRANSFER
 // status: PENDING | PAID | REFUNDED
 model Payment {
   id        String    @id @default(cuid())
+  tenantId  String?
   bookingId String    @unique
   booking   Booking   @relation(fields: [bookingId], references: [id])
   amount    Decimal
@@ -93,12 +103,15 @@ model Payment {
   status    String    @default("PENDING")
   notes     String?
   createdAt DateTime  @default(now())
+
+  @@index([tenantId])
 }
 
 // status: DRAFT | OPEN | IN_PROGRESS | FINISHED | CANCELLED
 // matchType: INDIVIDUAL | DOUBLES | TEAM
 model Tournament {
   id          String           @id @default(cuid())
+  tenantId    String?
   name        String
   description String?
   sport       String
@@ -115,10 +128,13 @@ model Tournament {
   teams       TournamentTeam[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+
+  @@index([tenantId])
 }
 
 model BarProduct {
   id          String         @id @default(cuid())
+  tenantId    String?
   name        String
   description String?
   price       Decimal
@@ -128,12 +144,15 @@ model BarProduct {
   items       BarOrderItem[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+
+  @@index([tenantId])
 }
 
 // status: OPEN | CLOSED | CANCELLED
 model BarOrder {
   id            String         @id @default(cuid())
-  number        Int            @unique
+  tenantId      String?
+  number        Int
   customerName  String
   status        String         @default("OPEN")
   total         Decimal        @default(0)
@@ -142,10 +161,14 @@ model BarOrder {
   items         BarOrderItem[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@unique([tenantId, number])
+  @@index([tenantId])
 }
 
 model BarOrderItem {
   id        String     @id @default(cuid())
+  tenantId  String?
   orderId   String
   order     BarOrder   @relation(fields: [orderId], references: [id])
   productId String
@@ -154,27 +177,36 @@ model BarOrderItem {
   unitPrice Decimal
   subtotal  Decimal
   createdAt DateTime   @default(now())
+
+  @@index([tenantId])
 }
 
 model PaymentFee {
-  method     String  @id
+  tenantId   String
+  method     String
   feePercent Decimal @default(0)
+
+  @@id([tenantId, method])
 }
 
 model Client {
   id        String   @id @default(cuid())
+  tenantId  String?
   firstName String
   lastName  String
   phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   rentals   Rental[]
+
+  @@index([tenantId])
 }
 
 // weekdays: JSON string of int array [0-6] (0=Sun)
 // slots: JSON string of [{startTime:"HH:MM",endTime:"HH:MM",price:number}]
 model Rental {
   id         String    @id @default(cuid())
+  tenantId   String?
   courtId    String?
   court      Court?    @relation(fields: [courtId], references: [id])
   clientId   String?
@@ -188,14 +220,19 @@ model Rental {
   active     Boolean   @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+
+  @@index([tenantId])
 }
 
 model TournamentTeam {
   id           String     @id @default(cuid())
+  tenantId     String?
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id])
   name         String
   players      String
   groupNumber  Int?
   createdAt    DateTime   @default(now())
+
+  @@index([tenantId])
 }

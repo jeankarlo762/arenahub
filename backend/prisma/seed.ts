@@ -20,35 +20,50 @@ async function main() {
     },
   })
 
-  // Users
+  // Demo tenant — owns all the example data below
+  const demoTenant = await prisma.tenant.upsert({
+    where: { email: 'demo@arenahub.com' },
+    update: {},
+    create: {
+      name: 'Arena Demonstração',
+      email: 'demo@arenahub.com',
+      plan: 'PRO',
+    },
+  })
+  const tenantId = demoTenant.id
+
+  // Users (linked to demo tenant; update fixes pre-existing rows)
   await prisma.user.upsert({
     where: { email: 'admin@quadras.com' },
-    update: {},
+    update: { tenantId },
     create: {
       name: 'Administrador',
       email: 'admin@quadras.com',
       passwordHash: await bcrypt.hash('admin123', 10),
       role: 'ADMIN',
+      tenantId,
     },
   })
 
   await prisma.user.upsert({
     where: { email: 'operador@quadras.com' },
-    update: {},
+    update: { tenantId },
     create: {
       name: 'Operador Padrão',
       email: 'operador@quadras.com',
       passwordHash: await bcrypt.hash('op123456', 10),
       role: 'OPERATOR',
+      tenantId,
     },
   })
 
   // Courts
   const court1 = await prisma.court.upsert({
     where: { id: 'court-1' },
-    update: {},
+    update: { tenantId },
     create: {
       id: 'court-1',
+      tenantId,
       name: 'Quadra Society A',
       type: 'Futebol Society',
       description: 'Quadra de futebol society com gramado sintético e iluminação LED',
@@ -60,9 +75,10 @@ async function main() {
 
   const court2 = await prisma.court.upsert({
     where: { id: 'court-2' },
-    update: {},
+    update: { tenantId },
     create: {
       id: 'court-2',
+      tenantId,
       name: 'Quadra Beach Tennis 1',
       type: 'Beach Tennis',
       description: 'Quadra de beach tennis com areia fina importada',
@@ -74,9 +90,10 @@ async function main() {
 
   const court3 = await prisma.court.upsert({
     where: { id: 'court-3' },
-    update: {},
+    update: { tenantId },
     create: {
       id: 'court-3',
+      tenantId,
       name: 'Ginásio Poliesportivo',
       type: 'Vôlei',
       description: 'Ginásio coberto com piso de madeira',
@@ -94,7 +111,7 @@ async function main() {
       })
       if (!existing) {
         await prisma.schedule.create({
-          data: { courtId: court.id, dayOfWeek: day, openTime: '08:00', closeTime: '22:00', active: true },
+          data: { tenantId, courtId: court.id, dayOfWeek: day, openTime: '08:00', closeTime: '22:00', active: true },
         })
       }
     }
@@ -107,10 +124,11 @@ async function main() {
   const day1 = new Date(today); day1.setDate(today.getDate() + 1)
   const day2 = new Date(today); day2.setDate(today.getDate() + 2)
 
-  const existingBookings = await prisma.booking.count()
+  const existingBookings = await prisma.booking.count({ where: { tenantId } })
   if (existingBookings === 0) {
     const b1 = await prisma.booking.create({
       data: {
+        tenantId,
         courtId: court1.id,
         customerName: 'Carlos Mendes',
         customerPhone: '(11) 99999-0001',
@@ -123,11 +141,12 @@ async function main() {
       },
     })
     await prisma.payment.create({
-      data: { bookingId: b1.id, amount: 120, method: 'PIX', status: 'PAID', paidAt: new Date() },
+      data: { tenantId, bookingId: b1.id, amount: 120, method: 'PIX', status: 'PAID', paidAt: new Date() },
     })
 
     await prisma.booking.create({
       data: {
+        tenantId,
         courtId: court2.id,
         customerName: 'Ana Souza',
         customerPhone: '(11) 99999-0002',
@@ -141,6 +160,7 @@ async function main() {
 
     const b3 = await prisma.booking.create({
       data: {
+        tenantId,
         courtId: court1.id,
         customerName: 'Pedro Alves',
         customerPhone: '(11) 99999-0003',
@@ -152,11 +172,12 @@ async function main() {
       },
     })
     await prisma.payment.create({
-      data: { bookingId: b3.id, amount: 120, method: 'CASH', status: 'PENDING' },
+      data: { tenantId, bookingId: b3.id, amount: 120, method: 'CASH', status: 'PENDING' },
     })
 
     await prisma.booking.create({
       data: {
+        tenantId,
         courtId: court2.id,
         customerName: 'Ricardo Costa',
         customerPhone: '(11) 99999-0005',
@@ -170,7 +191,7 @@ async function main() {
   }
 
   // Tournament
-  const existingTournament = await prisma.tournament.count()
+  const existingTournament = await prisma.tournament.count({ where: { tenantId } })
   if (existingTournament === 0) {
     const startDate = new Date(today)
     startDate.setDate(today.getDate() + 7)
@@ -179,6 +200,7 @@ async function main() {
 
     const tournament = await prisma.tournament.create({
       data: {
+        tenantId,
         name: 'Torneio de Beach Tennis - Verão 2026',
         description: 'Campeonato interno de beach tennis com premiação',
         sport: 'Beach Tennis',
@@ -201,6 +223,7 @@ async function main() {
     for (const team of teams) {
       await prisma.tournamentTeam.create({
         data: {
+          tenantId,
           tournamentId: tournament.id,
           name: team.name,
           players: JSON.stringify(team.players),
