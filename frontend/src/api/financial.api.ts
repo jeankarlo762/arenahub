@@ -28,3 +28,19 @@ export async function getRevenueByMethod(params?: DateRange): Promise<RevenueIte
   const res = await api.get<RevenueItem[]>('/financial/by-method', { params })
   return res.data
 }
+
+export interface FinancialTransaction {
+  id: string
+  date: string
+  type: 'court' | 'bar'
+  customerName: string
+  description: string
+  amount: number
+  method: string
+  status?: string
+}
+
+export async function getTransactions(params?: { startDate?: string; endDate?: string }): Promise<FinancialTransaction[]> {
+  const res = await api.get<FinancialTransaction[]>('/financial/transactions', { params })
+  return res.data
+}

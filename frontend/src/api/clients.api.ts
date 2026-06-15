@@ -24,3 +24,8 @@ export async function updateClient(id: string, data: Partial<{ firstName: string
 export async function deleteClient(id: string): Promise<void> {
   await api.delete(`/clients/${id}`)
 }
+
+export async function getClientHistory(id: string) {
+  const res = await api.get(`/clients/${id}/history`)
+  return res.data
+}

@@ -25,3 +25,7 @@ export async function deleteClient(request: FastifyRequest<{ Params: { id: strin
   await clientService.deleteClient(request.params.id)
   return reply.status(204).send()
 }
+
+export async function getClientHistory(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  return reply.send(await clientService.getClientHistory(request.params.id))
+}

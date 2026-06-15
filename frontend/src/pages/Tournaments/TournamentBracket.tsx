@@ -8,14 +8,16 @@ import { parsePlayers } from '../../types/tournament'
 import { TOURNAMENT_STATUS_LABELS } from '../../utils/format'
 import { formatDate } from '../../utils/date'
 
-const SLOT_H = 56
+const CARD_W = 140
+const CARD_H = 120
+const GAP_MULTIPLIER = 1.6
 
 const ROUND_NAMES: Record<number, string> = {
   2: 'Final',
   4: 'Semifinal',
-  8: 'Quartas de Final',
-  16: 'Oitavas de Final',
-  32: 'Round de 32',
+  8: 'Quartas',
+  16: 'Oitavas',
+  32: 'Round 32',
 }
 
 interface BracketMatch {
@@ -163,7 +165,7 @@ export default function TournamentBracketPage() {
         </div>
       </div>
 
-      {/* Champion banner (if set) */}
+      {/* Champion banner */}
       {tournament.champion && (
         <div className="bg-gradient-to-r from-yellow-900/40 via-yellow-800/30 to-yellow-900/40 border-b border-yellow-700/50 px-6 py-3 flex items-center justify-center gap-3">
           <span className="text-2xl">🏆</span>
@@ -184,24 +186,34 @@ export default function TournamentBracketPage() {
             <p className="text-gray-600">{tournament.maxTeams} vagas disponíveis</p>
           </div>
         ) : (
-          <div className="flex items-start gap-2 min-w-max mx-auto">
+          <div className="flex items-start gap-8 min-w-max mx-auto">
             {rounds.map((round) => (
               <BracketRoundColumn key={round.roundIndex} round={round} />
             ))}
 
             {/* Champion slot */}
             <div
-              className="flex flex-col shrink-0 ml-2"
-              style={{ paddingTop: SLOT_H * (Math.pow(2, rounds.length) - 1) }}
+              className="flex flex-col shrink-0"
+              style={{ paddingTop: CARD_H * (Math.pow(2, rounds.length) - 1) * GAP_MULTIPLIER / 2 }}
             >
-              <div className="text-center text-xs font-bold text-yellow-400 uppercase tracking-widest mb-3 whitespace-nowrap">
+              <div className="text-center text-xs font-bold text-yellow-400 uppercase tracking-widest mb-4 whitespace-nowrap">
                 🏆 Campeão
               </div>
-              <div className="w-56 border-2 border-yellow-500 rounded-xl bg-yellow-900/20 px-4 py-4 text-center min-h-[56px] flex items-center justify-center">
+              <div className="w-36 border-2 border-yellow-500 rounded-2xl bg-yellow-900/20 p-3 text-center flex flex-col items-center gap-2 min-h-[120px] justify-center">
                 {tournament.champion ? (
-                  <p className="font-bold text-yellow-300 text-sm">{tournament.champion}</p>
+                  <>
+                    <div className="w-14 h-14 rounded-full bg-yellow-500/20 border-2 border-yellow-500 flex items-center justify-center">
+                      <Trophy size={24} className="text-yellow-400" />
+                    </div>
+                    <p className="font-bold text-yellow-300 text-sm leading-tight">{tournament.champion}</p>
+                  </>
                 ) : (
-                  <p className="text-gray-600 text-xs italic">A definir</p>
+                  <>
+                    <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-700 flex items-center justify-center">
+                      <Trophy size={20} className="text-gray-700" />
+                    </div>
+                    <p className="text-gray-600 text-xs italic">A definir</p>
+                  </>
                 )}
               </div>
             </div>
@@ -222,26 +234,30 @@ export default function TournamentBracketPage() {
 }
 
 function BracketRoundColumn({ round }: { round: BracketRound }) {
-  const paddingTop = SLOT_H * (Math.pow(2, round.roundIndex) - 1)
-  const gap = 2 * SLOT_H * (Math.pow(2, round.roundIndex) - 1)
+  const gap = CARD_H * (Math.pow(2, round.roundIndex + 1) - 2) * GAP_MULTIPLIER / 2
+  const paddingTop = CARD_H * (Math.pow(2, round.roundIndex) - 1) * GAP_MULTIPLIER / 2
 
   return (
     <div className="flex flex-col shrink-0" style={{ paddingTop }}>
       {/* Round name */}
-      <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2 whitespace-nowrap">
+      <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2 whitespace-nowrap">
         {round.name}
       </div>
 
       <div className="flex flex-col" style={{ gap }}>
         {round.matches.map((match, mIdx) => (
-          <div key={mIdx} className="flex items-center">
-            <div className="w-56 border border-gray-700 rounded-xl overflow-hidden bg-gray-900 shadow-lg">
-              <MatchSlot team={match.team1} isFirst={round.roundIndex === 0} matchIndex={mIdx} position={0} />
-              <div className="border-t border-gray-700" />
-              <MatchSlot team={match.team2} isFirst={round.roundIndex === 0} matchIndex={mIdx} position={1} />
+          <div key={mIdx} className="flex items-center gap-2">
+            <div className="flex flex-col gap-1">
+              <MatchCard team={match.team1} isFirst={round.roundIndex === 0} matchIndex={mIdx} position={0} />
+              <div className="flex items-center gap-1 my-0.5">
+                <div className="flex-1 h-px bg-gray-800" />
+                <span className="text-[10px] text-gray-700 font-bold">VS</span>
+                <div className="flex-1 h-px bg-gray-800" />
+              </div>
+              <MatchCard team={match.team2} isFirst={round.roundIndex === 0} matchIndex={mIdx} position={1} />
             </div>
-            {/* Horizontal connector line */}
-            <div className="w-4 h-px bg-gray-700 shrink-0" />
+            {/* Connector line */}
+            <div className="w-6 h-px bg-gray-700 shrink-0" />
           </div>
         ))}
       </div>
@@ -249,7 +265,7 @@ function BracketRoundColumn({ round }: { round: BracketRound }) {
   )
 }
 
-function MatchSlot({
+function MatchCard({
   team,
   isFirst,
   matchIndex,
@@ -264,11 +280,19 @@ function MatchSlot({
 
   if (!isFirst || !team) {
     return (
-      <div className="flex items-center gap-3 px-4" style={{ height: SLOT_H }}>
+      <div
+        className="w-36 rounded-xl border border-dashed border-gray-800 bg-gray-900/50 flex flex-col items-center justify-center gap-1 py-3"
+        style={{ minHeight: CARD_H / 2 - 12 }}
+      >
         {isFirst ? (
           <span className="text-gray-700 text-xs italic">BYE</span>
         ) : (
-          <span className="text-gray-600 text-xs">Vencedor #{seed}</span>
+          <>
+            <div className="w-10 h-10 rounded-full border-2 border-dashed border-gray-800 flex items-center justify-center">
+              <span className="text-gray-700 text-xs font-bold">?</span>
+            </div>
+            <span className="text-gray-700 text-[10px]">Vencedor #{seed}</span>
+          </>
         )}
       </div>
     )
@@ -278,21 +302,31 @@ function MatchSlot({
   const photo = players[0]?.photo
 
   return (
-    <div className="flex items-center gap-3 px-4" style={{ height: SLOT_H }}>
+    <div
+      className="w-36 rounded-xl border border-gray-700 bg-gray-800 hover:border-orange-500/50 hover:bg-gray-750 transition-all shadow-lg flex flex-col items-center gap-2 py-3 px-2"
+      style={{ minHeight: CARD_H / 2 - 12 }}
+    >
+      {/* Photo above name */}
       {photo ? (
-        <img src={photo} alt={team.name} className="w-9 h-9 rounded-full object-cover border-2 border-gray-600 shrink-0" />
+        <img
+          src={photo}
+          alt={team.name}
+          className="w-14 h-14 rounded-full object-cover border-2 border-orange-500/60 shadow-md shrink-0"
+        />
       ) : (
-        <div className="w-9 h-9 rounded-full bg-orange-500/20 border-2 border-orange-500/40 flex items-center justify-center text-sm font-bold text-orange-400 shrink-0">
+        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/20 border-2 border-orange-500/40 flex items-center justify-center text-lg font-bold text-orange-400 shrink-0 shadow-md">
           {team.name.charAt(0).toUpperCase()}
         </div>
       )}
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-white truncate">{team.name}</p>
+
+      {/* Name below photo */}
+      <div className="text-center min-w-0 w-full px-1">
+        <p className="text-xs font-bold text-white leading-tight truncate">{team.name}</p>
         {players.length > 1 && (
-          <p className="text-[11px] text-gray-500 truncate">{players.map(p => p.name).join(' · ')}</p>
+          <p className="text-[10px] text-gray-400 truncate mt-0.5">{players.map((p) => p.name).join(' · ')}</p>
         )}
         {players.length === 1 && players[0].name !== team.name && (
-          <p className="text-[11px] text-gray-500 truncate">{players[0].name}</p>
+          <p className="text-[10px] text-gray-400 truncate mt-0.5">{players[0].name}</p>
         )}
       </div>
     </div>

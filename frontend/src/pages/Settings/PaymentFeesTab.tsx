@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useBeforeUnload, useBlocker } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { AlertTriangle } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
@@ -24,32 +23,11 @@ export function PaymentFeesTab() {
 
   const hasDirty = Object.values(dirty).some(Boolean)
 
-  // Warn on browser tab close / refresh
-  useBeforeUnload(
-    useCallback((e) => {
-      if (hasDirty) e.preventDefault()
-    }, [hasDirty]),
-  )
-
-  // Block React Router navigation if there are unsaved changes
-  const blocker = useBlocker(hasDirty)
-
-  useEffect(() => {
-    if (blocker.state === 'blocked') {
-      const confirmed = window.confirm('Você tem alterações não salvas nas taxas. Deseja sair mesmo assim?')
-      if (confirmed) {
-        blocker.proceed()
-      } else {
-        blocker.reset()
-      }
-    }
-  }, [blocker])
-
   useEffect(() => {
     settingsApi.getPaymentFees().then((data) => {
       setFees(data)
       setValues(Object.fromEntries(data.map((f) => [f.method, String(f.feePercent)])))
-    }).finally(() => setLoading(false))
+    }).catch(() => toast.error('Erro ao carregar taxas')).finally(() => setLoading(false))
   }, [])
 
   async function handleSave(method: string) {
@@ -72,6 +50,14 @@ export function PaymentFeesTab() {
     }
   }
 
+  const handleSaveAll = useCallback(async () => {
+    const dirtyMethods = Object.entries(dirty).filter(([, v]) => v).map(([k]) => k)
+    for (const method of dirtyMethods) {
+      await handleSave(method)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, values])
+
   function handleChange(method: string, val: string) {
     setValues((prev) => ({ ...prev, [method]: val }))
     setDirty((prev) => ({ ...prev, [method]: true }))
@@ -82,9 +68,14 @@ export function PaymentFeesTab() {
   return (
     <div className="flex flex-col gap-4 max-w-lg">
       {hasDirty && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-          <AlertTriangle size={15} className="shrink-0" />
-          Você tem alterações não salvas. Salve antes de sair.
+        <div className="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={15} className="shrink-0" />
+            Você tem alterações não salvas.
+          </div>
+          <Button size="sm" onClick={handleSaveAll} loading={!!saving}>
+            Salvar tudo
+          </Button>
         </div>
       )}
 

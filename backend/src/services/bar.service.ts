@@ -38,10 +38,8 @@ export async function toggleProduct(id: string) {
 
 export async function deleteProduct(id: string) {
   await getProduct(id)
-  // Check if used in any order item
   const used = await prisma.barOrderItem.findFirst({ where: { productId: id } })
   if (used) {
-    // Soft-delete instead
     return prisma.barProduct.update({ where: { id }, data: { active: false } })
   }
   return prisma.barProduct.delete({ where: { id } })
@@ -105,6 +103,32 @@ export async function updateOrderStatus(id: string, status: string, paymentMetho
   if (order.status === 'CANCELLED') {
     throw Object.assign(new Error('Comanda cancelada não pode ser alterada'), { statusCode: 409 })
   }
+
+  // When closing (paying), create a BarTransaction for the unpaid remainder
+  if (status === 'CLOSED' && paymentMethod) {
+    const alreadyPaid = Number(order.paidAmount)
+    const total = Number(order.total)
+    const payingNow = total - alreadyPaid
+
+    if (payingNow > 0) {
+      const tenantId = (order as { tenantId?: string }).tenantId ?? null
+      await prisma.barTransaction.create({
+        data: {
+          orderId: id,
+          amount: payingNow,
+          paymentMethod,
+          ...(tenantId ? { tenantId } : {}),
+        },
+      })
+    }
+
+    return prisma.barOrder.update({
+      where: { id },
+      data: { status, paymentMethod, paidAmount: order.total },
+      include: { items: { include: { product: true } } },
+    })
+  }
+
   return prisma.barOrder.update({
     where: { id },
     data: { status, ...(paymentMethod ? { paymentMethod } : {}) },
@@ -165,25 +189,50 @@ export async function getBarStats(startDate: string, endDate: string) {
   const start = new Date(startDate + 'T00:00:00')
   const end = new Date(endDate + 'T23:59:59')
 
-  const orders = await prisma.barOrder.findMany({
-    where: { status: 'CLOSED', createdAt: { gte: start, lte: end } },
-    select: { total: true, createdAt: true, items: { select: { quantity: true } } },
+  // Use BarTransaction for accurate per-payment stats
+  const transactions = await prisma.barTransaction.findMany({
+    where: { createdAt: { gte: start, lte: end } },
+    select: { amount: true, paymentMethod: true, createdAt: true, orderId: true },
   })
 
-  const revenue = orders.reduce((s, o) => s + Number(o.total), 0)
-  const orderCount = orders.length
+  // Fall back to CLOSED orders without transactions (legacy data)
+  const ordersWithTx = new Set(transactions.map((t) => t.orderId))
+  const legacyOrders = await prisma.barOrder.findMany({
+    where: {
+      status: 'CLOSED',
+      createdAt: { gte: start, lte: end },
+      id: { notIn: [...ordersWithTx] },
+    },
+    select: { id: true, total: true, createdAt: true, paymentMethod: true, items: { select: { quantity: true } } },
+  })
+
+  const revenue =
+    transactions.reduce((s, t) => s + Number(t.amount), 0) +
+    legacyOrders.reduce((s, o) => s + Number(o.total), 0)
+
+  const orderCount = new Set([...transactions.map((t) => t.orderId), ...legacyOrders.map((o) => o.id)]).size
+
+  const orders = await prisma.barOrder.findMany({
+    where: { status: 'CLOSED', createdAt: { gte: start, lte: end } },
+    select: { items: { select: { quantity: true } } },
+  })
   const itemCount = orders.reduce((s, o) => s + o.items.reduce((is, i) => is + i.quantity, 0), 0)
   const avgTicket = orderCount > 0 ? revenue / orderCount : 0
 
   const byDay: Record<string, { revenue: number; count: number }> = {}
-  for (const o of orders) {
+  for (const t of transactions) {
+    const d = t.createdAt.toISOString().slice(0, 10)
+    if (!byDay[d]) byDay[d] = { revenue: 0, count: 0 }
+    byDay[d].revenue += Number(t.amount)
+    byDay[d].count += 1
+  }
+  for (const o of legacyOrders) {
     const d = o.createdAt.toISOString().slice(0, 10)
     if (!byDay[d]) byDay[d] = { revenue: 0, count: 0 }
     byDay[d].revenue += Number(o.total)
     byDay[d].count += 1
   }
 
-  // Fill gaps between start and end
   const daily: { date: string; revenue: number; count: number }[] = []
   const cursor = new Date(start)
   while (cursor <= end) {
@@ -221,16 +270,24 @@ export async function getBarStats(startDate: string, endDate: string) {
 
   const byMargin = [...topProducts].sort((a, b) => b.margin - a.margin)
 
-  const paymentMethodRaw = await prisma.barOrder.groupBy({
-    by: ['paymentMethod'],
-    where: { status: 'CLOSED', createdAt: { gte: start, lte: end }, paymentMethod: { not: null } },
-    _sum: { total: true },
-    _count: { id: true },
-  })
-  const byPaymentMethod = paymentMethodRaw.map((r) => ({
-    method: r.paymentMethod ?? 'UNKNOWN',
-    count: r._count.id,
-    total: Number(r._sum.total ?? 0),
+  // Payment methods: combine transactions + legacy orders
+  const methodMap: Record<string, { count: number; total: number }> = {}
+  for (const t of transactions) {
+    const m = t.paymentMethod
+    if (!methodMap[m]) methodMap[m] = { count: 0, total: 0 }
+    methodMap[m].count += 1
+    methodMap[m].total += Number(t.amount)
+  }
+  for (const o of legacyOrders) {
+    const m = o.paymentMethod ?? 'UNKNOWN'
+    if (!methodMap[m]) methodMap[m] = { count: 0, total: 0 }
+    methodMap[m].count += 1
+    methodMap[m].total += Number(o.total)
+  }
+  const byPaymentMethod = Object.entries(methodMap).map(([method, data]) => ({
+    method,
+    count: data.count,
+    total: data.total,
   }))
 
   return { revenue, orderCount, itemCount, avgTicket, daily, topProducts, byMargin, byPaymentMethod }
@@ -246,19 +303,21 @@ export async function getOrderByNumber(number: number) {
 }
 
 export async function reopenOrder(id: string, clearItems: boolean) {
-  await getOrder(id)
+  const order = await getOrder(id)
   if (clearItems) {
     await prisma.$transaction([
       prisma.barOrderItem.deleteMany({ where: { orderId: id } }),
       prisma.barOrder.update({
         where: { id },
-        data: { status: 'OPEN', total: 0, paymentMethod: null },
+        // paidAmount keeps the previously paid amount so next payment only covers new items
+        data: { status: 'OPEN', total: 0, paymentMethod: null, paidAmount: order.total },
       }),
     ])
   } else {
     await prisma.barOrder.update({
       where: { id },
-      data: { status: 'OPEN', paymentMethod: null },
+      // paidAmount = current total (already paid), new items will increase total beyond this
+      data: { status: 'OPEN', paymentMethod: null, paidAmount: order.total },
     })
   }
   return getOrder(id)
@@ -282,4 +341,19 @@ export async function removeItem(orderId: string, itemId: string) {
   ])
 
   return getOrder(orderId)
+}
+
+export async function listBarTransactions(startDate?: string, endDate?: string) {
+  const where: Record<string, unknown> = {}
+  if (startDate || endDate) {
+    where.createdAt = {
+      ...(startDate ? { gte: new Date(startDate + 'T00:00:00') } : {}),
+      ...(endDate ? { lte: new Date(endDate + 'T23:59:59') } : {}),
+    }
+  }
+  return prisma.barTransaction.findMany({
+    where,
+    include: { order: { select: { number: true, customerName: true } } },
+    orderBy: { createdAt: 'desc' },
+  })
 }

@@ -29,6 +29,14 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (user?.role === 'SUPERADMIN') return <Navigate to="/superadmin" replace />
+  if (user?.role !== 'ADMIN') return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
 function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
   if (!isAuthenticated) return <Navigate to="/login" replace />
@@ -71,96 +79,20 @@ export default function App() {
         <Route path="/superadmin" element={<RequireSuperAdmin><TenantsPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/usuarios" element={<RequireSuperAdmin><TenantUsersPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/financeiro" element={<RequireSuperAdmin><FinanceiroPage /></RequireSuperAdmin>} />
-        <Route
-          path="/"
-          element={
-            <RequireAuth>
-              <DashboardPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/courts"
-          element={
-            <RequireAuth>
-              <CourtsPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/bookings"
-          element={
-            <RequireAuth>
-              <BookingsPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/tournaments"
-          element={
-            <RequireAuth>
-              <TournamentsPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/tournaments/:id"
-          element={
-            <RequireAuth>
-              <TournamentPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/tournaments/:id/tv"
-          element={
-            <RequireAuth>
-              <TournamentTVPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/tournaments/:id/bracket"
-          element={
-            <RequireAuth>
-              <TournamentBracketPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/bar"
-          element={
-            <RequireAuth>
-              <BarPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/comandas"
-          element={
-            <RequireAuth>
-              <ComandasPage />
-            </RequireAuth>
-          }
-        />
+        <Route path="/" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+        <Route path="/courts" element={<RequireAuth><CourtsPage /></RequireAuth>} />
+        <Route path="/bookings" element={<RequireAuth><BookingsPage /></RequireAuth>} />
+        <Route path="/tournaments" element={<RequireAuth><TournamentsPage /></RequireAuth>} />
+        <Route path="/tournaments/:id" element={<RequireAuth><TournamentPage /></RequireAuth>} />
+        <Route path="/tournaments/:id/tv" element={<RequireAuth><TournamentTVPage /></RequireAuth>} />
+        <Route path="/tournaments/:id/bracket" element={<RequireAuth><TournamentBracketPage /></RequireAuth>} />
         <Route path="/clients" element={<RequireAuth><ClientsPage /></RequireAuth>} />
         <Route path="/rentals" element={<RequireAuth><RentalsPage /></RequireAuth>} />
-        <Route
-          path="/financial"
-          element={
-            <RequireAuth>
-              <FinancialPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <RequireAuth>
-              <SettingsPage />
-            </RequireAuth>
-          }
-        />
+        {/* Admin-only routes */}
+        <Route path="/bar" element={<RequireAdmin><BarPage /></RequireAdmin>} />
+        <Route path="/comandas" element={<RequireAdmin><ComandasPage /></RequireAdmin>} />
+        <Route path="/financial" element={<RequireAdmin><FinancialPage /></RequireAdmin>} />
+        <Route path="/settings" element={<RequireAdmin><SettingsPage /></RequireAdmin>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

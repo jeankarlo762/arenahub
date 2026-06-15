@@ -9,12 +9,17 @@ async function main() {
 
   // Super Admin — force password + role on every seed so it's always accessible
   const superAdminHash = await bcrypt.hash('superadmin123', 10)
+  // Migrate old email if it still exists
+  const oldSuper = await prisma.user.findUnique({ where: { email: 'superadmin@arenahub.com' } })
+  if (oldSuper) {
+    await prisma.user.update({ where: { email: 'superadmin@arenahub.com' }, data: { email: 'superadmin@quadras.com' } })
+  }
   await prisma.user.upsert({
-    where: { email: 'superadmin@arenahub.com' },
+    where: { email: 'superadmin@quadras.com' },
     update: { passwordHash: superAdminHash, role: 'SUPERADMIN', active: true },
     create: {
       name: 'Super Admin',
-      email: 'superadmin@arenahub.com',
+      email: 'superadmin@quadras.com',
       passwordHash: superAdminHash,
       role: 'SUPERADMIN',
     },
