@@ -141,7 +141,7 @@ export function BookingDetail({ open, onClose, booking, onSuccess }: BookingDeta
             <div className="border-t pt-4 flex gap-2 flex-wrap">
               {canComplete && (
                 <Button variant="secondary" size="sm" loading={updatingStatus} onClick={() => changeStatus('COMPLETED')}>
-                  Marcar Concluído
+                  Confirmar Pagamento
                 </Button>
               )}
               {canNoShow && (
