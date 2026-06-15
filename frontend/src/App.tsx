@@ -5,6 +5,7 @@ import { useAuthStore } from './store/auth.store'
 import * as authApi from './api/auth.api'
 
 import LoginPage from './pages/Login'
+import SuperAdminLoginPage from './pages/SuperAdmin/Login'
 import TenantsPage from './pages/SuperAdmin'
 import TenantUsersPage from './pages/SuperAdmin/TenantUsers'
 import FinanceiroPage from './pages/SuperAdmin/Financeiro'
@@ -39,7 +40,7 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated) return <Navigate to="/superadmin/login" replace />
   if (user?.role !== 'SUPERADMIN') return <Navigate to="/" replace />
   return <>{children}</>
 }
@@ -76,6 +77,7 @@ export default function App() {
       />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
         <Route path="/superadmin" element={<RequireSuperAdmin><TenantsPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/usuarios" element={<RequireSuperAdmin><TenantUsersPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/financeiro" element={<RequireSuperAdmin><FinanceiroPage /></RequireSuperAdmin>} />

@@ -35,7 +35,11 @@ export default function LoginPage() {
   async function onSubmit(data: FormData) {
     try {
       const result = await login(data.email, data.password)
-      navigate(result.user.role === 'SUPERADMIN' ? '/superadmin' : '/', { replace: true })
+      if (result.user.role === 'SUPERADMIN') {
+        navigate('/superadmin', { replace: true })
+        return
+      }
+      navigate('/', { replace: true })
     } catch {
       toast.error('Email ou senha incorretos')
     }
@@ -176,6 +180,11 @@ export default function LoginPage() {
 
           <p className="mt-8 text-center text-xs text-gray-400">
             ArenaHub — Gestão de Quadras Esportivas
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-300">
+            <a href="/superadmin/login" className="text-gray-300 hover:text-orange-500 transition-colors">
+              Acesso Super Admin
+            </a>
           </p>
         </div>
       </div>
