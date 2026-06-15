@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Building2, CheckCircle, XCircle, Plus, Search } from 'lucide-react'
+import { Building2, CheckCircle, XCircle, Plus, Search, Pencil } from 'lucide-react'
 import * as superAdminApi from '../../api/superadmin.api'
 import type { Tenant } from '../../types/tenant'
 import { Spinner } from '../../components/ui/Spinner'
@@ -25,10 +25,19 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+const editSchema = z.object({
+  name: z.string().min(1, 'Nome obrigatório'),
+  phone: z.string().optional(),
+  mrrValue: z.coerce.number().min(0, 'Valor inválido'),
+  setupFee: z.coerce.number().min(0, 'Valor inválido'),
+})
+type EditForm = z.infer<typeof editSchema>
+
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
   const [openModal, setOpenModal] = useState(false)
+  const [editTenant, setEditTenant] = useState<Tenant | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
@@ -36,6 +45,25 @@ export default function TenantsPage() {
     resolver: zodResolver(schema),
     defaultValues: { mrrValue: 0, setupFee: 0 },
   })
+
+  const editForm = useForm<EditForm>({ resolver: zodResolver(editSchema) })
+
+  function openEdit(tenant: Tenant) {
+    setEditTenant(tenant)
+    editForm.reset({ name: tenant.name, phone: tenant.phone ?? '', mrrValue: tenant.mrrValue, setupFee: tenant.setupFee })
+  }
+
+  async function onEdit(data: EditForm) {
+    if (!editTenant) return
+    try {
+      await superAdminApi.updateTenant(editTenant.id, data)
+      toast.success('Tenant atualizado')
+      setEditTenant(null)
+      load()
+    } catch {
+      toast.error('Erro ao atualizar tenant')
+    }
+  }
 
   async function load() {
     try {
@@ -170,15 +198,23 @@ export default function TenantsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4">
-                    <button
-                      onClick={() => handleToggle(tenant)}
-                      disabled={actionId === tenant.id}
-                      className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-                        tenant.active ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-green-600 bg-green-50 hover:bg-green-100'
-                      }`}
-                    >
-                      {actionId === tenant.id ? <Spinner size="sm" /> : tenant.active ? 'Desativar' : 'Ativar'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEdit(tenant)}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors inline-flex items-center gap-1"
+                      >
+                        <Pencil size={12} />Editar
+                      </button>
+                      <button
+                        onClick={() => handleToggle(tenant)}
+                        disabled={actionId === tenant.id}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                          tenant.active ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-green-600 bg-green-50 hover:bg-green-100'
+                        }`}
+                      >
+                        {actionId === tenant.id ? <Spinner size="sm" /> : tenant.active ? 'Desativar' : 'Ativar'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -251,6 +287,42 @@ export default function TenantsPage() {
                 {errors.adminPassword && <p className="text-xs text-red-500">{errors.adminPassword.message}</p>}
               </div>
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit tenant modal */}
+      <Modal
+        open={!!editTenant}
+        onClose={() => setEditTenant(null)}
+        title={`Editar — ${editTenant?.name ?? ''}`}
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setEditTenant(null)}>Cancelar</Button>
+            <Button onClick={editForm.handleSubmit(onEdit)} loading={editForm.formState.isSubmitting}>Salvar</Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label className="text-sm font-medium text-gray-700">Nome da Arena</label>
+            <input {...editForm.register('name')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+            {editForm.formState.errors.name && <p className="text-xs text-red-500">{editForm.formState.errors.name.message}</p>}
+          </div>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label className="text-sm font-medium text-gray-700">Telefone</label>
+            <input {...editForm.register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
+            <input {...editForm.register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+            {editForm.formState.errors.mrrValue && <p className="text-xs text-red-500">{editForm.formState.errors.mrrValue.message}</p>}
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">Valor de Implantação (R$)</label>
+            <input {...editForm.register('setupFee')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+            {editForm.formState.errors.setupFee && <p className="text-xs text-red-500">{editForm.formState.errors.setupFee.message}</p>}
           </div>
         </div>
       </Modal>
