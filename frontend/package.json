@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "npx serve dist -p $PORT"
+    "start": "npx serve dist -s -p $PORT"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
