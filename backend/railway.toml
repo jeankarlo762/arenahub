@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install && npm run build && npx prisma db push --accept-data-loss --skip-generate && npx tsx prisma/seed.ts"
+buildCommand = "npm install && npm run build"
 
 [deploy]
 startCommand = "npm start"
