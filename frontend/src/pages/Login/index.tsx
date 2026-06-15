@@ -16,7 +16,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function LoginPage() {
-  const { login, loading, isAuthenticated } = useAuth()
+  const { login, loading, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
 
@@ -27,13 +27,15 @@ export default function LoginPage() {
   } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/', { replace: true })
-  }, [isAuthenticated, navigate])
+    if (isAuthenticated) {
+      navigate(user?.role === 'SUPERADMIN' ? '/superadmin' : '/', { replace: true })
+    }
+  }, [isAuthenticated, navigate, user])
 
   async function onSubmit(data: FormData) {
     try {
-      await login(data.email, data.password)
-      navigate('/', { replace: true })
+      const result = await login(data.email, data.password)
+      navigate(result.user.role === 'SUPERADMIN' ? '/superadmin' : '/', { replace: true })
     } catch {
       toast.error('Email ou senha incorretos')
     }
