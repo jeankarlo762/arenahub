@@ -20,7 +20,7 @@ const schema = z.object({
   courtId: z.string().min(1, 'Quadra obrigatória'),
   date: z.string().min(1, 'Data obrigatória'),
   customerName: z.string().min(1, 'Nome obrigatório'),
-  customerPhone: z.string().min(1, 'Telefone obrigatório'),
+  customerPhone: z.string().optional(),
   customerEmail: z.string().optional(),
   notes: z.string().optional(),
 })
@@ -120,7 +120,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
           bookingsApi.createBooking({
             courtId: data.courtId,
             customerName: data.customerName,
-            customerPhone: data.customerPhone,
+            customerPhone: data.customerPhone || '',
             customerEmail: data.customerEmail || undefined,
             date: data.date,
             startTime: slot.startTime,
@@ -264,9 +264,8 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Nome" error={errors.customerName?.message} {...register('customerName')} />
             <Input
-              label="Telefone"
+              label="Telefone (opcional)"
               placeholder="(11) 99999-9999"
-              error={errors.customerPhone?.message}
               {...register('customerPhone')}
             />
             <Input

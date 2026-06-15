@@ -24,18 +24,21 @@ const navItems = [
   { to: '/courts', icon: MapPin, label: 'Quadras' },
   { to: '/bookings', icon: CalendarDays, label: 'Agendamentos' },
   { to: '/tournaments', icon: Trophy, label: 'Torneios' },
-  { to: '/bar', icon: Beer, label: 'Bar' },
-  { to: '/comandas', icon: ClipboardList, label: 'Comandas' },
+  { to: '/bar', icon: Beer, label: 'Bar', adminOnly: true },
+  { to: '/comandas', icon: ClipboardList, label: 'Comandas', adminOnly: true },
   { to: '/clients', icon: Users, label: 'Clientes' },
   { to: '/rentals', icon: CalendarRange, label: 'Aluguéis' },
-  { to: '/financial', icon: DollarSign, label: 'Financeiro' },
-  { to: '/settings', icon: Settings, label: 'Configurações' },
+  { to: '/financial', icon: DollarSign, label: 'Financeiro', adminOnly: true },
+  { to: '/settings', icon: Settings, label: 'Configurações', adminOnly: true },
 ]
 
 export function Sidebar() {
   const { user, refreshToken, clearAuth } = useAuthStore()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const navigate = useNavigate()
+
+  const isAdmin = user?.role === 'ADMIN'
+  const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   async function handleLogout() {
     try {
@@ -76,7 +79,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 py-4 overflow-y-auto">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {visibleItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
@@ -101,6 +104,7 @@ export function Sidebar() {
             <div className="mb-3">
               <p className="text-sm font-medium text-white truncate">{user.name}</p>
               <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              <p className="text-xs text-gray-500 capitalize">{user.role === 'ADMIN' ? 'Administrador' : 'Operador'}</p>
             </div>
           )}
           <button

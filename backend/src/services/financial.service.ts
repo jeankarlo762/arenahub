@@ -125,6 +125,73 @@ export async function getRevenueByCourt({ startDate, endDate }: DateRange) {
   return Array.from(courtMap.entries()).map(([id, data]) => ({ id, ...data }))
 }
 
+export async function getTransactions({ startDate, endDate }: DateRange) {
+  const dateFilter = buildDateFilter(startDate, endDate)
+  const transactions: Array<{
+    id: string; date: string; type: 'court' | 'bar'; customerName: string;
+    description: string; amount: number; method: string; status?: string
+  }> = []
+
+  // Court payments
+  const payments = await prisma.payment.findMany({
+    where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+    include: { booking: { include: { court: { select: { name: true } } } } },
+    orderBy: { paidAt: 'desc' },
+  })
+  for (const p of payments) {
+    transactions.push({
+      id: p.id,
+      date: (p.paidAt ?? p.createdAt).toISOString().slice(0, 10),
+      type: 'court',
+      customerName: p.booking.customerName,
+      description: `Quadra ${p.booking.court.name} · ${p.booking.startTime}–${p.booking.endTime}`,
+      amount: Number(p.amount),
+      method: p.method,
+      status: p.status,
+    })
+  }
+
+  // Bar transactions (new model - after paidAmount feature)
+  try {
+    const barTx = await (prisma as unknown as { barTransaction: { findMany: (args: unknown) => Promise<unknown[]> } }).barTransaction.findMany({
+      where: dateFilter ? { createdAt: dateFilter } : {},
+      include: { order: { select: { customerName: true, number: true } } },
+      orderBy: { createdAt: 'desc' },
+    }) as Array<{ id: string; createdAt: Date; amount: number; paymentMethod: string; order: { customerName: string; number: number } }>
+    for (const t of barTx) {
+      transactions.push({
+        id: t.id,
+        date: t.createdAt.toISOString().slice(0, 10),
+        type: 'bar',
+        customerName: t.order.customerName,
+        description: `Comanda #${t.order.number}`,
+        amount: Number(t.amount),
+        method: t.paymentMethod,
+      })
+    }
+  } catch {
+    // BarTransaction table may not exist yet — fall back to legacy CLOSED orders
+    const orders = await prisma.barOrder.findMany({
+      where: { status: 'CLOSED', ...(dateFilter ? { createdAt: dateFilter } : {}) },
+      orderBy: { createdAt: 'desc' },
+    })
+    for (const o of orders) {
+      transactions.push({
+        id: o.id,
+        date: o.createdAt.toISOString().slice(0, 10),
+        type: 'bar',
+        customerName: o.customerName,
+        description: `Comanda #${o.number}`,
+        amount: Number(o.total),
+        method: o.paymentMethod ?? 'UNKNOWN',
+      })
+    }
+  }
+
+  // Sort all by date desc
+  return transactions.sort((a, b) => b.date.localeCompare(a.date))
+}
+
 export async function getRevenueByMethod({ startDate, endDate }: DateRange) {
   const dateFilter = buildDateFilter(startDate, endDate)
   const payments = await prisma.payment.findMany({

@@ -106,6 +106,9 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
     }
   }
 
+  const remainingToPay = order ? Number(order.total) - Number((order as unknown as { paidAmount?: number }).paidAmount ?? 0) : 0
+  const hasPartialPayment = order ? Number((order as unknown as { paidAmount?: number }).paidAmount ?? 0) > 0 : false
+
   async function handleChangeStatus(status: 'CLOSED' | 'OPEN' | 'CANCELLED', paymentMethod?: string) {
     setChangingStatus(true)
     try {
@@ -199,6 +202,12 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
                   {STATUS_LABELS[order.status]}
                 </span>
                 <p className="text-2xl font-bold text-orange-600 mt-2">{formatCurrency(Number(order.total))}</p>
+                {hasPartialPayment && order.status === 'OPEN' && (
+                  <div className="mt-1">
+                    <p className="text-xs text-gray-400">Já pago: {formatCurrency(Number((order as unknown as { paidAmount?: number }).paidAmount ?? 0))}</p>
+                    <p className="text-sm font-semibold text-orange-700">Restante: {formatCurrency(remainingToPay)}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -318,7 +327,12 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
         <div className="flex flex-col gap-3">
           <p className="text-sm text-gray-500">
             Selecione como o cliente pagou a comanda #{order?.number}
-            {order && Number(order.total) > 0 && ` — ${formatCurrency(Number(order.total))}`}.
+            {order && ` — ${formatCurrency(hasPartialPayment ? remainingToPay : Number(order.total))}`}.
+            {hasPartialPayment && (
+              <span className="block text-xs text-orange-600 mt-1">
+                Valor já pago anteriormente: {formatCurrency(Number((order as unknown as { paidAmount?: number }).paidAmount ?? 0))}
+              </span>
+            )}
           </p>
           <div className="grid grid-cols-1 gap-2">
             {PAYMENT_METHODS.map((m) => (

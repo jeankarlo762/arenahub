@@ -9,4 +9,5 @@ export async function financialRoutes(app: FastifyInstance) {
   app.get('/daily', financialController.getDaily)
   app.get('/by-court', financialController.getByCourt)
   app.get('/by-method', financialController.getByMethod)
+  app.get('/transactions', financialController.getTransactions)
 }
