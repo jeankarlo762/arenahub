@@ -5,7 +5,9 @@ import { useAuthStore } from './store/auth.store'
 import * as authApi from './api/auth.api'
 
 import LoginPage from './pages/Login'
-import SuperAdminPage from './pages/SuperAdmin'
+import TenantsPage from './pages/SuperAdmin'
+import TenantUsersPage from './pages/SuperAdmin/TenantUsers'
+import FinanceiroPage from './pages/SuperAdmin/Financeiro'
 import DashboardPage from './pages/Dashboard'
 import CourtsPage from './pages/Courts'
 import BookingsPage from './pages/Bookings'
@@ -66,7 +68,9 @@ export default function App() {
       />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/superadmin" element={<RequireSuperAdmin><SuperAdminPage /></RequireSuperAdmin>} />
+        <Route path="/superadmin" element={<RequireSuperAdmin><TenantsPage /></RequireSuperAdmin>} />
+        <Route path="/superadmin/usuarios" element={<RequireSuperAdmin><TenantUsersPage /></RequireSuperAdmin>} />
+        <Route path="/superadmin/financeiro" element={<RequireSuperAdmin><FinanceiroPage /></RequireSuperAdmin>} />
         <Route
           path="/"
           element={
