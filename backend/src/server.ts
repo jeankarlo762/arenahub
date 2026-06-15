@@ -5,8 +5,16 @@ import { env } from './config/env'
 import { registerRoutes } from './routes'
 import { errorHandler } from './middlewares/errorHandler'
 import { prisma } from './config/database'
+import { tenantStore, createStore } from './config/tenant-context'
 
 const app = Fastify({ logger: env.NODE_ENV === 'development' })
+
+// Establish the tenant context at the very root of every request so it
+// reliably propagates to all hooks, handlers and the Prisma middleware.
+// The auth middleware later fills in the tenantId via setTenant().
+app.addHook('onRequest', (_request, _reply, done) => {
+  tenantStore.run(createStore(), done)
+})
 
 app.register(cors, {
   origin: (origin, cb) => {
