@@ -54,15 +54,20 @@ export default function TenantUsersPage() {
 
   useEffect(() => { load() }, [])
 
-  // Show ALL users by default; filter by tenant name (or user name/email) on search.
+  // Show ALL users by default; filter by tenant name (or user name/email) on
+  // search. Always grouped/ordered by tenant first (orphans without arena last).
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return users
-    return users.filter((u) =>
+    const base = !q ? users : users.filter((u) =>
       u.tenantName.toLowerCase().includes(q) ||
       u.name.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q),
     )
+    return [...base].sort((a, b) => {
+      const an = a.tenantId ? a.tenantName : '￿'
+      const bn = b.tenantId ? b.tenantName : '￿'
+      return an.localeCompare(bn, 'pt') || a.name.localeCompare(b.name, 'pt')
+    })
   }, [users, search])
 
   async function onCreate(data: CreateForm) {
@@ -144,7 +149,7 @@ export default function TenantUsersPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                {['Usuário', 'Email', 'Arena', 'Função', 'Status', 'Ações'].map((h) => (
+                {['Arena', 'Usuário', 'Email', 'Função', 'Status', 'Ações'].map((h) => (
                   <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -152,6 +157,9 @@ export default function TenantUsersPage() {
             <tbody>
               {filtered.map((user) => (
                 <tr key={user.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-4">
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700">{user.tenantName}</span>
+                  </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -161,9 +169,6 @@ export default function TenantUsersPage() {
                     </div>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-600">{user.email}</td>
-                  <td className="px-5 py-4">
-                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700">{user.tenantName}</span>
-                  </td>
                   <td className="px-5 py-4">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${user.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
                       {user.role === 'ADMIN' ? <Shield size={11} /> : <UserIcon size={11} />}
