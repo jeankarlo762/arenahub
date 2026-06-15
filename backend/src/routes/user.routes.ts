@@ -20,8 +20,9 @@ const updateUserSchema = z.object({
 export async function userRoutes(app: FastifyInstance) {
   app.addHook('preHandler', authenticate)
 
-  app.get('/', { preHandler: [requireAdmin] }, async (_req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/', { preHandler: [requireAdmin] }, async (req: FastifyRequest, reply: FastifyReply) => {
     const users = await prisma.user.findMany({
+      where: { tenantId: req.user.tenantId },
       select: { id: true, name: true, email: true, role: true, active: true, createdAt: true, updatedAt: true },
       orderBy: { name: 'asc' },
     })
@@ -30,6 +31,7 @@ export async function userRoutes(app: FastifyInstance) {
 
   app.post('/', { preHandler: [requireAdmin] }, async (req: FastifyRequest, reply: FastifyReply) => {
     const input = createUserSchema.parse(req.body)
+    // Email is globally unique (used for login), so check across all tenants.
     const existing = await prisma.user.findUnique({ where: { email: input.email } })
     if (existing) {
       reply.status(409).send({ error: true, message: 'Email já cadastrado', code: 'CONFLICT' })
@@ -37,7 +39,7 @@ export async function userRoutes(app: FastifyInstance) {
     }
     const passwordHash = await hashPassword(input.password)
     const user = await prisma.user.create({
-      data: { name: input.name, email: input.email, passwordHash, role: input.role },
+      data: { name: input.name, email: input.email, passwordHash, role: input.role, tenantId: req.user.tenantId },
       select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
     })
     return reply.status(201).send(user)
@@ -45,6 +47,15 @@ export async function userRoutes(app: FastifyInstance) {
 
   app.patch<{ Params: { id: string } }>('/:id', { preHandler: [requireAdmin] }, async (req, reply: FastifyReply) => {
     const input = updateUserSchema.parse(req.body)
+    // Ownership guard: only users in the caller's tenant can be edited.
+    const target = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      select: { tenantId: true },
+    })
+    if (!target || target.tenantId !== req.user.tenantId) {
+      reply.status(404).send({ error: true, message: 'Usuário não encontrado', code: 'NOT_FOUND' })
+      return
+    }
     const user = await prisma.user.update({
       where: { id: req.params.id },
       data: input,

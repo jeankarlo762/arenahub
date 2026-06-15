@@ -77,7 +77,7 @@ export async function getOrder(id: string) {
 }
 
 export async function createOrder(input: CreateOrderInput) {
-  const exists = await prisma.barOrder.findUnique({ where: { number: input.number } })
+  const exists = await prisma.barOrder.findFirst({ where: { number: input.number } })
   if (exists) {
     throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
   }
@@ -237,7 +237,7 @@ export async function getBarStats(startDate: string, endDate: string) {
 }
 
 export async function getOrderByNumber(number: number) {
-  return prisma.barOrder.findUnique({
+  return prisma.barOrder.findFirst({
     where: { number },
     include: {
       items: { include: { product: true }, orderBy: { createdAt: 'asc' } },

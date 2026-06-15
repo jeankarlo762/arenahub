@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 import { verifyAccessToken } from '../utils/token'
 import { prisma } from '../config/database'
+import { setTenant } from '../config/tenant-context'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -8,6 +9,7 @@ declare module 'fastify' {
       id: string
       email: string
       role: string
+      tenantId: string | null
     }
   }
 }
@@ -27,7 +29,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, role: true, active: true },
+      select: { id: true, email: true, role: true, active: true, tenantId: true },
     })
 
     if (!user || !user.active) {
@@ -35,7 +37,18 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       return
     }
 
-    request.user = { id: user.id, email: user.email, role: user.role }
+    // Non-superadmin users must belong to a tenant. Fail closed otherwise.
+    if (user.role !== 'SUPERADMIN' && !user.tenantId) {
+      reply.status(403).send({ error: true, message: 'Usuário sem arena vinculada', code: 'NO_TENANT' })
+      return
+    }
+
+    request.user = { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId }
+
+    // Activate tenant isolation for the rest of this request.
+    if (user.tenantId) {
+      setTenant(user.tenantId)
+    }
   } catch {
     reply.status(401).send({ error: true, message: 'Token inválido ou expirado', code: 'TOKEN_EXPIRED' })
   }
