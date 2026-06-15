@@ -7,13 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// plan: BASIC | PRO | ENTERPRISE
 model Tenant {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
   phone     String?
-  plan      String   @default("BASIC")
+  mrrValue  Decimal  @default(0)
+  setupFee  Decimal  @default(0)
   active    Boolean  @default(true)
   users     User[]
   createdAt DateTime @default(now())

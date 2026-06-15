@@ -1,28 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Building2, CheckCircle, XCircle, Plus, ChevronDown } from 'lucide-react'
+import { Building2, CheckCircle, XCircle, Plus, Search } from 'lucide-react'
 import * as superAdminApi from '../../api/superadmin.api'
 import type { Tenant } from '../../types/tenant'
 import { Spinner } from '../../components/ui/Spinner'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
+import { formatCurrency } from '../../utils/format'
 import { SuperAdminLayout } from './SuperAdminLayout'
-
-const planLabels: Record<string, string> = { BASIC: 'Basic', PRO: 'Pro', ENTERPRISE: 'Enterprise' }
-const planColors: Record<string, string> = {
-  BASIC: 'bg-gray-100 text-gray-600',
-  PRO: 'bg-blue-100 text-blue-700',
-  ENTERPRISE: 'bg-purple-100 text-purple-700',
-}
 
 const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
-  plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']),
+  mrrValue: z.coerce.number().min(0, 'Valor inválido'),
+  setupFee: z.coerce.number().min(0, 'Valor inválido'),
   adminName: z.string().min(1, 'Nome do admin obrigatório'),
   adminEmail: z.string().email('Email do admin inválido'),
   adminPassword: z.string().min(6, 'Mínimo 6 caracteres'),
@@ -35,10 +30,11 @@ export default function TenantsPage() {
   const [loading, setLoading] = useState(true)
   const [openModal, setOpenModal] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { plan: 'BASIC' },
+    defaultValues: { mrrValue: 0, setupFee: 0 },
   })
 
   async function load() {
@@ -52,6 +48,12 @@ export default function TenantsPage() {
   }
 
   useEffect(() => { load() }, [])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return tenants
+    return tenants.filter((t) => t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q))
+  }, [tenants, search])
 
   async function onSubmit(data: FormData) {
     try {
@@ -81,16 +83,6 @@ export default function TenantsPage() {
     }
   }
 
-  async function handlePlanChange(tenant: Tenant, plan: Tenant['plan']) {
-    try {
-      await superAdminApi.updateTenantPlan(tenant.id, plan)
-      toast.success('Plano atualizado')
-      load()
-    } catch {
-      toast.error('Erro ao atualizar plano')
-    }
-  }
-
   const total = tenants.length
   const active = tenants.filter((t) => t.active).length
   const inactive = total - active
@@ -102,7 +94,7 @@ export default function TenantsPage() {
       action={<Button onClick={() => setOpenModal(true)}><Plus size={16} />Novo Tenant</Button>}
     >
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Total de Tenants', value: total, icon: Building2, color: 'text-blue-600 bg-blue-50' },
           { label: 'Tenants Ativos', value: active, icon: CheckCircle, color: 'text-green-600 bg-green-50' },
@@ -120,6 +112,17 @@ export default function TenantsPage() {
         ))}
       </div>
 
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Pesquisar arena por nome ou email..."
+          className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border border-gray-200 bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none"
+        />
+      </div>
+
       {/* Tenant list */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {loading ? (
@@ -127,23 +130,23 @@ export default function TenantsPage() {
             <Spinner size="md" />
             <span className="text-sm text-gray-400">Carregando tenants...</span>
           </div>
-        ) : tenants.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
             <Building2 size={40} className="opacity-30" />
-            <p className="text-sm">Nenhum tenant cadastrado ainda</p>
-            <Button variant="secondary" onClick={() => setOpenModal(true)}>Criar primeiro tenant</Button>
+            <p className="text-sm">{search ? 'Nenhuma arena encontrada' : 'Nenhum tenant cadastrado ainda'}</p>
+            {!search && <Button variant="secondary" onClick={() => setOpenModal(true)}>Criar primeiro tenant</Button>}
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                {['Arena', 'Email', 'Usuários', 'Plano', 'Status', 'Ações'].map((h) => (
+                {['Arena', 'Email', 'Usuários', 'MRR', 'Implantação', 'Status', 'Ações'].map((h) => (
                   <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {tenants.map((tenant) => (
+              {filtered.map((tenant) => (
                 <tr key={tenant.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
@@ -158,25 +161,8 @@ export default function TenantsPage() {
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-600">{tenant.email}</td>
                   <td className="px-5 py-4 text-sm text-gray-600">{tenant._count?.users ?? 0}</td>
-                  <td className="px-5 py-4">
-                    <div className="relative group inline-block">
-                      <button className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${planColors[tenant.plan]}`}>
-                        {planLabels[tenant.plan]}
-                        <ChevronDown size={11} />
-                      </button>
-                      <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden group-hover:block min-w-28">
-                        {(['BASIC', 'PRO', 'ENTERPRISE'] as const).map((p) => (
-                          <button
-                            key={p}
-                            onClick={() => handlePlanChange(tenant, p)}
-                            className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${tenant.plan === p ? 'font-semibold text-orange-600' : 'text-gray-700'}`}
-                          >
-                            {planLabels[p]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </td>
+                  <td className="px-5 py-4 text-sm font-medium text-green-600">{formatCurrency(tenant.mrrValue)}</td>
+                  <td className="px-5 py-4 text-sm text-gray-600">{formatCurrency(tenant.setupFee)}</td>
                   <td className="px-5 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${tenant.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${tenant.active ? 'bg-green-500' : 'bg-red-400'}`} />
@@ -233,12 +219,14 @@ export default function TenantsPage() {
                 <input {...register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Plano</label>
-                <select {...register('plan')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none bg-white">
-                  <option value="BASIC">Basic</option>
-                  <option value="PRO">Pro</option>
-                  <option value="ENTERPRISE">Enterprise</option>
-                </select>
+                <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
+                <input {...register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="199.00" />
+                {errors.mrrValue && <p className="text-xs text-red-500">{errors.mrrValue.message}</p>}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Valor de Implantação (R$)</label>
+                <input {...register('setupFee')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="500.00" />
+                {errors.setupFee && <p className="text-xs text-red-500">{errors.setupFee.message}</p>}
               </div>
             </div>
           </div>

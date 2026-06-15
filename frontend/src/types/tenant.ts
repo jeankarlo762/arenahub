@@ -1,11 +1,10 @@
-export type Plan = 'BASIC' | 'PRO' | 'ENTERPRISE'
-
 export interface Tenant {
   id: string
   name: string
   email: string
   phone?: string
-  plan: Plan
+  mrrValue: number
+  setupFee: number
   active: boolean
   createdAt: string
   updatedAt: string
@@ -16,7 +15,8 @@ export interface CreateTenantInput {
   name: string
   email: string
   phone?: string
-  plan: Plan
+  mrrValue: number
+  setupFee: number
   adminName: string
   adminEmail: string
   adminPassword: string
@@ -31,6 +31,11 @@ export interface TenantUser {
   createdAt: string
 }
 
+export interface GlobalUser extends TenantUser {
+  tenantId: string | null
+  tenantName: string
+}
+
 export interface CreateTenantUserInput {
   name: string
   email: string
@@ -38,12 +43,26 @@ export interface CreateTenantUserInput {
   role: 'ADMIN' | 'OPERATOR'
 }
 
+export interface UpdateUserInput {
+  name?: string
+  role?: 'ADMIN' | 'OPERATOR'
+  active?: boolean
+  password?: string
+}
+
 export interface FinancialOverview {
   totalTenants: number
   activeTenants: number
   mrr: number
-  activeMrr: number
   arr: number
-  byPlan: { plan: Plan; price: number; count: number; revenue: number }[]
-  tenants: { id: string; name: string; plan: Plan; active: boolean; monthlyValue: number }[]
+  setupRevenue: number
+  newTenantsInPeriod: number
+  tenants: {
+    id: string
+    name: string
+    active: boolean
+    mrrValue: number
+    setupFee: number
+    createdAt: string
+  }[]
 }

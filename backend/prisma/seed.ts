@@ -27,7 +27,8 @@ async function main() {
     create: {
       name: 'Arena Demonstração',
       email: 'demo@arenahub.com',
-      plan: 'PRO',
+      mrrValue: 199,
+      setupFee: 500,
     },
   })
   const tenantId = demoTenant.id
