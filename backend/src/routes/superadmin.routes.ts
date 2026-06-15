@@ -4,18 +4,12 @@ import { prisma } from '../config/database'
 import { authenticate, requireSuperAdmin } from '../middlewares/auth'
 import { hashPassword } from '../utils/password'
 
-// Monthly recurring revenue per plan (R$)
-const PLAN_PRICES: Record<string, number> = {
-  BASIC: 99,
-  PRO: 199,
-  ENTERPRISE: 399,
-}
-
 const createTenantSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
-  plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']).default('BASIC'),
+  mrrValue: z.coerce.number().min(0).default(0),
+  setupFee: z.coerce.number().min(0).default(0),
   adminName: z.string().min(1, 'Nome do admin obrigatório'),
   adminEmail: z.string().email('Email do admin inválido'),
   adminPassword: z.string().min(6, 'Senha mínima 6 caracteres'),
@@ -59,7 +53,8 @@ export async function superAdminRoutes(app: FastifyInstance) {
         name: input.name,
         email: input.email,
         phone: input.phone,
-        plan: input.plan,
+        mrrValue: input.mrrValue,
+        setupFee: input.setupFee,
       },
     })
 
@@ -78,14 +73,17 @@ export async function superAdminRoutes(app: FastifyInstance) {
   })
 
   app.patch<{ Params: { id: string } }>('/tenants/:id', async (req, reply: FastifyReply) => {
-    const { active, plan } = z.object({
+    const data = z.object({
       active: z.boolean().optional(),
-      plan: z.enum(['BASIC', 'PRO', 'ENTERPRISE']).optional(),
+      name: z.string().min(1).optional(),
+      phone: z.string().optional(),
+      mrrValue: z.coerce.number().min(0).optional(),
+      setupFee: z.coerce.number().min(0).optional(),
     }).parse(req.body)
 
     const tenant = await prisma.tenant.update({
       where: { id: req.params.id },
-      data: { ...(active !== undefined && { active }), ...(plan && { plan }) },
+      data,
     })
     return reply.send(tenant)
   })
@@ -96,7 +94,29 @@ export async function superAdminRoutes(app: FastifyInstance) {
     return reply.status(204).send()
   })
 
-  // ---------- Tenant Users ----------
+  // ---------- Users (across all tenants) ----------
+  app.get('/users', async (_req: FastifyRequest, reply: FastifyReply) => {
+    const users = await prisma.user.findMany({
+      where: { role: { not: 'SUPERADMIN' } },
+      select: {
+        id: true, name: true, email: true, role: true, active: true, createdAt: true,
+        tenant: { select: { id: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return reply.send(users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      active: u.active,
+      createdAt: u.createdAt,
+      tenantId: u.tenant?.id ?? null,
+      tenantName: u.tenant?.name ?? '—',
+    })))
+  })
+
+  // Users of a specific tenant
   app.get<{ Params: { id: string } }>('/tenants/:id/users', async (req, reply: FastifyReply) => {
     const users = await prisma.user.findMany({
       where: { tenantId: req.params.id },
@@ -133,55 +153,77 @@ export async function superAdminRoutes(app: FastifyInstance) {
     return reply.status(201).send(user)
   })
 
-  app.patch<{ Params: { id: string; userId: string } }>('/tenants/:id/users/:userId', async (req, reply: FastifyReply) => {
-    const { active } = z.object({ active: z.boolean() }).parse(req.body)
+  // Edit any tenant user
+  app.patch<{ Params: { id: string } }>('/users/:id', async (req, reply: FastifyReply) => {
+    const input = z.object({
+      name: z.string().min(1).optional(),
+      role: z.enum(['ADMIN', 'OPERATOR']).optional(),
+      active: z.boolean().optional(),
+      password: z.string().min(6).optional(),
+    }).parse(req.body)
+
+    const target = await prisma.user.findUnique({ where: { id: req.params.id }, select: { role: true } })
+    if (!target || target.role === 'SUPERADMIN') {
+      return reply.status(404).send({ error: true, message: 'Usuário não encontrado', code: 'NOT_FOUND' })
+    }
+
+    const data: Record<string, unknown> = {}
+    if (input.name !== undefined) data.name = input.name
+    if (input.role !== undefined) data.role = input.role
+    if (input.active !== undefined) data.active = input.active
+    if (input.password) data.passwordHash = await hashPassword(input.password)
+
     const user = await prisma.user.update({
-      where: { id: req.params.userId },
-      data: { active },
+      where: { id: req.params.id },
+      data,
       select: { id: true, name: true, email: true, role: true, active: true },
     })
     return reply.send(user)
   })
 
   // ---------- Financeiro ----------
-  app.get('/financial', async (_req: FastifyRequest, reply: FastifyReply) => {
-    const tenants = await prisma.tenant.findMany({
-      orderBy: { createdAt: 'desc' },
-    })
+  app.get<{ Querystring: { startDate?: string; endDate?: string } }>('/financial', async (req, reply: FastifyReply) => {
+    const { startDate, endDate } = req.query
 
-    const planCounts: Record<string, number> = { BASIC: 0, PRO: 0, ENTERPRISE: 0 }
+    const tenants = await prisma.tenant.findMany({ orderBy: { createdAt: 'desc' } })
+
+    // MRR is recurring (all active tenants). Setup revenue is one-time, counted
+    // by tenant creation date — filtered by the requested period when provided.
+    let start: Date | null = null
+    let end: Date | null = null
+    if (startDate) start = new Date(startDate + 'T00:00:00')
+    if (endDate) { end = new Date(endDate + 'T00:00:00'); end.setDate(end.getDate() + 1) }
+
+    const inPeriod = (d: Date) => (!start || d >= start) && (!end || d < end)
+
     let mrr = 0
-    let activeMrr = 0
+    let setupRevenue = 0
+    let newTenantsInPeriod = 0
 
     for (const t of tenants) {
-      planCounts[t.plan] = (planCounts[t.plan] ?? 0) + 1
-      const price = PLAN_PRICES[t.plan] ?? 0
-      mrr += price
-      if (t.active) activeMrr += price
+      if (t.active) mrr += Number(t.mrrValue)
+      if (inPeriod(t.createdAt)) {
+        setupRevenue += Number(t.setupFee)
+        newTenantsInPeriod += 1
+      }
     }
-
-    const byPlan = (['BASIC', 'PRO', 'ENTERPRISE'] as const).map((plan) => ({
-      plan,
-      price: PLAN_PRICES[plan],
-      count: planCounts[plan],
-      revenue: PLAN_PRICES[plan] * planCounts[plan],
-    }))
 
     const tenantsBilling = tenants.map((t) => ({
       id: t.id,
       name: t.name,
-      plan: t.plan,
       active: t.active,
-      monthlyValue: PLAN_PRICES[t.plan] ?? 0,
+      mrrValue: Number(t.mrrValue),
+      setupFee: Number(t.setupFee),
+      createdAt: t.createdAt,
     }))
 
     return reply.send({
       totalTenants: tenants.length,
       activeTenants: tenants.filter((t) => t.active).length,
       mrr,
-      activeMrr,
-      arr: activeMrr * 12,
-      byPlan,
+      arr: mrr * 12,
+      setupRevenue,
+      newTenantsInPeriod,
       tenants: tenantsBilling,
     })
   })
