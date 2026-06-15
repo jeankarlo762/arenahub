@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'ADMIN' | 'OPERATOR'
+  role: 'ADMIN' | 'OPERATOR' | 'SUPERADMIN'
   active: boolean
   createdAt: string
 }

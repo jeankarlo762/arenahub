@@ -7,6 +7,18 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Iniciando seed...')
 
+  // Super Admin
+  await prisma.user.upsert({
+    where: { email: 'superadmin@arenahub.com' },
+    update: {},
+    create: {
+      name: 'Super Admin',
+      email: 'superadmin@arenahub.com',
+      passwordHash: await bcrypt.hash('superadmin123', 10),
+      role: 'SUPERADMIN',
+    },
+  })
+
   // Users
   await prisma.user.upsert({
     where: { email: 'admin@quadras.com' },

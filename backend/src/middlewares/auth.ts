@@ -42,7 +42,13 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 }
 
 export async function requireAdmin(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  if (request.user?.role !== 'ADMIN') {
+  if (request.user?.role !== 'ADMIN' && request.user?.role !== 'SUPERADMIN') {
     reply.status(403).send({ error: true, message: 'Permissão insuficiente', code: 'FORBIDDEN' })
+  }
+}
+
+export async function requireSuperAdmin(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (request.user?.role !== 'SUPERADMIN') {
+    reply.status(403).send({ error: true, message: 'Acesso restrito ao super administrador', code: 'FORBIDDEN' })
   }
 }

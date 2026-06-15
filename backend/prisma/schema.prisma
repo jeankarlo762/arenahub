@@ -7,7 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Role: ADMIN | OPERATOR
+// plan: BASIC | PRO | ENTERPRISE
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  plan      String   @default("BASIC")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Role: ADMIN | OPERATOR | SUPERADMIN
 model User {
   id           String   @id @default(cuid())
   name         String
