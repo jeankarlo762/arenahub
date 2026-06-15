@@ -8,7 +8,6 @@ import { parsePlayers } from '../../types/tournament'
 import { TOURNAMENT_STATUS_LABELS } from '../../utils/format'
 import { formatDate } from '../../utils/date'
 
-const CARD_W = 140
 const CARD_H = 120
 const GAP_MULTIPLIER = 1.6
 
