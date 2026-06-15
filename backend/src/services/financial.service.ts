@@ -71,6 +71,8 @@ export async function getSummary({ startDate, endDate, source = 'courts' }: Date
 
 export async function getDailyRevenue({ startDate, endDate, days = 30, source = 'courts' }: DateRange & { days?: number }) {
   const end = endDate ? new Date(endDate + 'T00:00:00') : new Date()
+  // endExclusive = start of the day AFTER endDate so we capture the full endDate
+  const endExclusive = new Date(end.getTime() + 24 * 60 * 60 * 1000)
   const start = startDate
     ? new Date(startDate + 'T00:00:00')
     : new Date(end.getTime() - days * 24 * 60 * 60 * 1000)
@@ -84,7 +86,7 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
 
   if (source !== 'bar') {
     const payments = await prisma.payment.findMany({
-      where: { status: 'PAID', paidAt: { gte: start, lte: end } },
+      where: { status: 'PAID', paidAt: { gte: start, lt: endExclusive } },
       select: { amount: true, paidAt: true },
     })
     for (const p of payments) {
@@ -96,7 +98,7 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
 
   if (source !== 'courts') {
     const orders = await prisma.barOrder.findMany({
-      where: { status: 'CLOSED', createdAt: { gte: start, lte: end } },
+      where: { status: 'CLOSED', createdAt: { gte: start, lt: endExclusive } },
       select: { total: true, createdAt: true },
     })
     for (const o of orders) {
