@@ -108,7 +108,10 @@ export async function createOrder(input: CreateOrderInput) {
 }
 
 export async function updateOrder(id: string, input: UpdateOrderInput) {
-  await getOrder(id)
+  const order = await getOrder(id)
+  if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+    throw Object.assign(new Error('Comanda encerrada não pode ser alterada'), { statusCode: 409 })
+  }
   return prisma.barOrder.update({
     where: { id },
     data: input,
@@ -156,8 +159,8 @@ export async function updateOrderStatus(id: string, status: string, paymentMetho
 
 export async function addItem(orderId: string, input: AddItemInput) {
   const order = await getOrder(orderId)
-  if (order.status === 'CANCELLED') {
-    throw Object.assign(new Error('Comanda cancelada não pode ser editada'), { statusCode: 409 })
+  if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+    throw Object.assign(new Error('Comanda encerrada não pode ser editada'), { statusCode: 409 })
   }
 
   const product = await getProduct(input.productId)
@@ -343,8 +346,8 @@ export async function reopenOrder(id: string, clearItems: boolean) {
 
 export async function removeItem(orderId: string, itemId: string) {
   const order = await getOrder(orderId)
-  if (order.status === 'CANCELLED') {
-    throw Object.assign(new Error('Comanda cancelada não pode ser editada'), { statusCode: 409 })
+  if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+    throw Object.assign(new Error('Comanda encerrada não pode ser editada'), { statusCode: 409 })
   }
 
   const item = await prisma.barOrderItem.findFirst({ where: { id: itemId, orderId } })

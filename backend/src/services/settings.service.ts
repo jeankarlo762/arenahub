@@ -24,12 +24,16 @@ export async function setBookingSlug(slug?: string) {
   const tenantId = getTenantId()
   if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
   const newSlug = slug?.trim() || randomBytes(6).toString('hex')
-  const existing = await prisma.tenant.findUnique({ where: { bookingSlug: newSlug } })
-  if (existing && existing.id !== tenantId) {
-    throw Object.assign(new Error('Este slug já está em uso'), { statusCode: 409 })
+  try {
+    await prisma.tenant.update({ where: { id: tenantId }, data: { bookingSlug: newSlug } })
+    return { slug: newSlug }
+  } catch (err: unknown) {
+    const e = err as { code?: string }
+    if (e.code === 'P2002') {
+      throw Object.assign(new Error('Este slug já está em uso'), { statusCode: 409 })
+    }
+    throw err
   }
-  await prisma.tenant.update({ where: { id: tenantId }, data: { bookingSlug: newSlug } })
-  return { slug: newSlug }
 }
 
 export async function upsertPaymentFee(method: string, feePercent: number) {

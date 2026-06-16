@@ -103,8 +103,24 @@ export async function superAdminRoutes(app: FastifyInstance) {
   })
 
   app.delete<{ Params: { id: string } }>('/tenants/:id', async (req, reply: FastifyReply) => {
-    await prisma.user.deleteMany({ where: { tenantId: req.params.id } })
-    await prisma.tenant.delete({ where: { id: req.params.id } })
+    const tenantId = req.params.id
+    await prisma.$transaction([
+      prisma.barOrderItem.deleteMany({ where: { tenantId } }),
+      prisma.barOrder.deleteMany({ where: { tenantId } }),
+      prisma.barProduct.deleteMany({ where: { tenantId } }),
+      prisma.barCategory.deleteMany({ where: { tenantId } }),
+      prisma.payment.deleteMany({ where: { tenantId } }),
+      prisma.booking.deleteMany({ where: { tenantId } }),
+      prisma.tournamentTeam.deleteMany({ where: { tenantId } }),
+      prisma.tournament.deleteMany({ where: { tenantId } }),
+      prisma.schedule.deleteMany({ where: { tenantId } }),
+      prisma.rental.deleteMany({ where: { tenantId } }),
+      prisma.court.deleteMany({ where: { tenantId } }),
+      prisma.paymentFee.deleteMany({ where: { tenantId } }),
+      prisma.client.deleteMany({ where: { tenantId } }),
+      prisma.user.deleteMany({ where: { tenantId } }),
+      prisma.tenant.delete({ where: { id: tenantId } }),
+    ])
     return reply.status(204).send()
   })
 

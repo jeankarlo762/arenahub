@@ -69,57 +69,94 @@ export async function getBooking(id: string) {
 }
 
 export async function createBooking(input: CreateBookingInput) {
-  const court = await prisma.court.findUnique({ where: { id: input.courtId } })
-  if (!court || !court.active) {
-    throw Object.assign(new Error('Quadra não encontrada ou inativa'), { statusCode: 404 })
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const court = await tx.court.findUnique({ where: { id: input.courtId } })
+      if (!court || !court.active) {
+        throw Object.assign(new Error('Quadra não encontrada ou inativa'), { statusCode: 404 })
+      }
+
+      const bookingDate = new Date(input.date + 'T00:00:00')
+      const dayOfWeek = bookingDate.getDay()
+
+      const schedule = await tx.schedule.findFirst({
+        where: { courtId: input.courtId, dayOfWeek, active: true },
+      })
+
+      if (!schedule) {
+        throw Object.assign(new Error('Quadra fechada neste dia'), { statusCode: 400 })
+      }
+
+      const conflicts = await tx.booking.findMany({
+        where: {
+          courtId: input.courtId,
+          date: bookingDate,
+          status: { in: ['CONFIRMED', 'COMPLETED'] },
+        },
+        select: { startTime: true, endTime: true },
+      })
+
+      const hasConflict = conflicts.some((b) =>
+        timesOverlap(input.startTime, input.endTime, b.startTime, b.endTime),
+      )
+
+      if (hasConflict) {
+        throw Object.assign(new Error('Horário já está ocupado'), { statusCode: 409 })
+      }
+
+      return tx.booking.create({
+        data: {
+          courtId: input.courtId,
+          customerName: input.customerName,
+          customerPhone: input.customerPhone,
+          customerEmail: input.customerEmail || null,
+          date: bookingDate,
+          startTime: input.startTime,
+          endTime: input.endTime,
+          totalPrice: input.totalPrice,
+          notes: input.notes,
+        },
+        include: { court: { select: { id: true, name: true } } },
+      })
+    }, { isolationLevel: 'Serializable' })
+  } catch (err: unknown) {
+    const e = err as { code?: string; statusCode?: number }
+    if (e.code === 'P2034') {
+      throw Object.assign(new Error('Horário já está ocupado'), { statusCode: 409 })
+    }
+    throw err
   }
-
-  const bookingDate = new Date(input.date + 'T00:00:00')
-  const dayOfWeek = bookingDate.getDay()
-
-  const schedule = await prisma.schedule.findFirst({
-    where: { courtId: input.courtId, dayOfWeek, active: true },
-  })
-
-  if (!schedule) {
-    throw Object.assign(new Error('Quadra fechada neste dia'), { statusCode: 400 })
-  }
-
-  const conflicts = await prisma.booking.findMany({
-    where: {
-      courtId: input.courtId,
-      date: bookingDate,
-      status: { in: ['CONFIRMED', 'COMPLETED'] },
-    },
-    select: { startTime: true, endTime: true },
-  })
-
-  const hasConflict = conflicts.some((b) =>
-    timesOverlap(input.startTime, input.endTime, b.startTime, b.endTime),
-  )
-
-  if (hasConflict) {
-    throw Object.assign(new Error('Horário já está ocupado'), { statusCode: 409 })
-  }
-
-  return prisma.booking.create({
-    data: {
-      courtId: input.courtId,
-      customerName: input.customerName,
-      customerPhone: input.customerPhone,
-      customerEmail: input.customerEmail || null,
-      date: bookingDate,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      totalPrice: input.totalPrice,
-      notes: input.notes,
-    },
-    include: { court: { select: { id: true, name: true } } },
-  })
 }
 
 export async function updateBooking(id: string, input: UpdateBookingInput) {
-  await getBooking(id)
+  const existing = await getBooking(id)
+
+  if (input.startTime !== undefined || input.endTime !== undefined || input.courtId !== undefined || input.date !== undefined) {
+    const courtId = input.courtId ?? existing.courtId
+    const dateStr = input.date ?? existing.date.toISOString().slice(0, 10)
+    const startTime = input.startTime ?? existing.startTime
+    const endTime = input.endTime ?? existing.endTime
+    const bookingDate = new Date(dateStr + 'T00:00:00')
+
+    const conflicts = await prisma.booking.findMany({
+      where: {
+        id: { not: id },
+        courtId,
+        date: bookingDate,
+        status: { in: ['CONFIRMED', 'COMPLETED'] },
+      },
+      select: { startTime: true, endTime: true },
+    })
+
+    const hasConflict = conflicts.some((b) =>
+      timesOverlap(startTime, endTime, b.startTime, b.endTime),
+    )
+
+    if (hasConflict) {
+      throw Object.assign(new Error('Horário já está ocupado'), { statusCode: 409 })
+    }
+  }
+
   return prisma.booking.update({ where: { id }, data: input })
 }
 

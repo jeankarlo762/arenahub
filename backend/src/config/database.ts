@@ -17,6 +17,7 @@ const TENANT_MODELS = new Set<string>([
   'BarProduct',
   'BarOrder',
   'BarOrderItem',
+  'BarCategory',
   'Client',
   'Rental',
 ])
@@ -94,7 +95,7 @@ prisma.$use(async (params, next) => {
     }
 
     case 'upsert':
-      args.where = { ...(args.where ?? {}), tenantId }
+      // where must remain a unique selector — do not inject tenantId into it
       args.create = { ...(args.create ?? {}), tenantId }
       break
 

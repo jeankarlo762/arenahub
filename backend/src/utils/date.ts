@@ -1,5 +1,6 @@
 export function parseTime(time: string): { hours: number; minutes: number } {
   const [h, m] = time.split(':').map(Number)
+  if (isNaN(h) || isNaN(m)) return { hours: 0, minutes: 0 }
   return { hours: h, minutes: m }
 }
 

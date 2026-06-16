@@ -73,6 +73,10 @@ export async function updateTournamentStatus(id: string, status: string) {
 export async function addTeam(tournamentId: string, input: AddTeamInput) {
   const tournament = await getTournament(tournamentId)
 
+  if (tournament.status === 'FINISHED' || tournament.status === 'CANCELLED') {
+    throw Object.assign(new Error('Torneio encerrado não aceita inscrições'), { statusCode: 409 })
+  }
+
   if (tournament.teams.length >= tournament.maxTeams) {
     throw Object.assign(new Error('Número máximo de equipes atingido'), { statusCode: 409 })
   }
@@ -87,9 +91,13 @@ export async function addTeam(tournamentId: string, input: AddTeamInput) {
 }
 
 export async function removeTeam(tournamentId: string, teamId: string) {
-  const team = await prisma.tournamentTeam.findFirst({
-    where: { id: teamId, tournamentId },
-  })
+  const tournament = await getTournament(tournamentId)
+
+  if (tournament.status === 'FINISHED' || tournament.status === 'CANCELLED') {
+    throw Object.assign(new Error('Torneio encerrado não permite remoção de equipes'), { statusCode: 409 })
+  }
+
+  const team = tournament.teams.find((t) => t.id === teamId)
 
   if (!team) {
     throw Object.assign(new Error('Equipe não encontrada'), { statusCode: 404 })
@@ -243,7 +251,12 @@ interface BracketMatch {
 
 export async function saveBracketMatch(tournamentId: string, input: SaveBracketInput) {
   const tournament = await getTournament(tournamentId)
-  const existing: BracketMatch[] = tournament.bracketData ? JSON.parse(tournament.bracketData) : []
+  let existing: BracketMatch[] = []
+  try {
+    existing = tournament.bracketData ? JSON.parse(tournament.bracketData) : []
+  } catch {
+    existing = []
+  }
 
   const idx = existing.findIndex(
     (m) => m.round === input.match.round && m.matchIndex === input.match.matchIndex,

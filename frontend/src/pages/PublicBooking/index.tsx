@@ -8,7 +8,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import axios from 'axios'
 
 const publicApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3333/api',
+  baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api',
 })
 
 interface PublicCourt {
@@ -224,7 +224,7 @@ export default function PublicBookingPage() {
           <div className="flex flex-col gap-4">
             <button
               type="button"
-              onClick={() => setStep('date')}
+              onClick={() => { setSlots([]); setStep('date') }}
               className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 w-fit"
             >
               <ChevronLeft size={16} /> Voltar

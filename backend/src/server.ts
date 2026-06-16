@@ -23,7 +23,7 @@ app.register(cors, {
       cb(null, true)
     } else {
       // In development allow localhost origins
-      if (env.NODE_ENV !== 'production' || origin.includes('localhost')) {
+      if (env.NODE_ENV !== 'production' && origin.includes('localhost')) {
         cb(null, true)
       } else {
         cb(new Error('Not allowed by CORS'), false)
@@ -51,6 +51,12 @@ async function start() {
 }
 
 process.on('SIGINT', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  await app.close()
   await prisma.$disconnect()
   process.exit(0)
 })

@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([
+    Promise.allSettled([
       bookingsApi.listBookings({ date: today }),
       financialApi.getSummary({ startDate: monthStart }),
       financialApi.getDailyRevenue({ days: 7 }),
@@ -47,16 +47,20 @@ export default function DashboardPage() {
       barApi.getTopClients(),
     ])
       .then(([bookings, fin, daily, courts, tournaments, confirmed, orders, top]) => {
-        setTodayBookings(bookings)
-        setSummary(fin)
-        setDailyRevenue(daily)
-        setActiveCourts(courts.length)
-        setUpcomingTournaments(
-          tournaments.filter((t) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length,
-        )
-        setPendingBookings(confirmed.filter((b) => !b.payment || b.payment.status === 'PENDING').slice(0, 5))
-        setOpenOrders(orders)
-        setTopClients(top as { customerName: string; total: number; orderCount: number }[])
+        if (bookings.status === 'fulfilled') setTodayBookings(bookings.value)
+        if (fin.status === 'fulfilled') setSummary(fin.value)
+        if (daily.status === 'fulfilled') setDailyRevenue(daily.value)
+        if (courts.status === 'fulfilled') setActiveCourts(courts.value.length)
+        if (tournaments.status === 'fulfilled') {
+          setUpcomingTournaments(
+            tournaments.value.filter((t) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length,
+          )
+        }
+        if (confirmed.status === 'fulfilled') {
+          setPendingBookings(confirmed.value.filter((b) => !b.payment || b.payment.status === 'PENDING').slice(0, 5))
+        }
+        if (orders.status === 'fulfilled') setOpenOrders(orders.value)
+        if (top.status === 'fulfilled') setTopClients(top.value as { customerName: string; total: number; orderCount: number }[])
       })
       .finally(() => setLoading(false))
   }, [today, monthStart])

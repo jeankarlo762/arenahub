@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
+import { z } from 'zod'
 import * as barService from '../services/bar.service'
 import {
   createProductSchema,
@@ -9,6 +10,10 @@ import {
   addItemSchema,
   orderFiltersSchema,
 } from '../schemas/bar.schema'
+
+const createCategorySchema = z.object({
+  name: z.string().min(1, 'Nome obrigatório').max(100),
+})
 
 // Products
 export async function listProducts(request: FastifyRequest, reply: FastifyReply) {
@@ -105,8 +110,7 @@ export async function listCategories(_request: FastifyRequest, reply: FastifyRep
 }
 
 export async function createCategory(request: FastifyRequest, reply: FastifyReply) {
-  const { name } = request.body as { name: string }
-  if (!name?.trim()) return reply.status(400).send({ message: 'Nome obrigatório' })
+  const { name } = createCategorySchema.parse(request.body)
   return reply.status(201).send(await barService.createCategory(name.trim()))
 }
 

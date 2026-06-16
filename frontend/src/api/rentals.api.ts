@@ -19,11 +19,11 @@ interface RentalRaw {
 }
 
 function parseRental(r: RentalRaw): Rental {
-  return {
-    ...r,
-    weekdays: JSON.parse(r.weekdays) as number[],
-    slots: JSON.parse(r.slots) as RentalSlot[],
-  }
+  let weekdays: number[] = []
+  let slots: RentalSlot[] = []
+  try { weekdays = JSON.parse(r.weekdays) } catch { weekdays = [] }
+  try { slots = JSON.parse(r.slots) } catch { slots = [] }
+  return { ...r, weekdays, slots }
 }
 
 export async function listRentals(params?: {

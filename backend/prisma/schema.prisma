@@ -89,6 +89,7 @@ model Booking {
   updatedAt     DateTime @updatedAt
 
   @@index([tenantId])
+  @@index([tenantId, courtId, date])
 }
 
 // method: CASH | CREDIT_CARD | DEBIT_CARD | PIX | TRANSFER
@@ -171,6 +172,7 @@ model BarOrder {
 
   @@unique([tenantId, number])
   @@index([tenantId])
+  @@index([tenantId, status])
 }
 
 model BarTransaction {
