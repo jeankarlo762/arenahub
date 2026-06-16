@@ -88,6 +88,20 @@ export async function superAdminRoutes(app: FastifyInstance) {
     return reply.send(tenant)
   })
 
+  app.post<{ Params: { id: string } }>('/tenants/:id/booking-slug', async (req, reply: FastifyReply) => {
+    const { slug } = req.body as { slug?: string }
+    const finalSlug = (slug ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') || null
+    try {
+      const tenant = await prisma.tenant.update({
+        where: { id: req.params.id },
+        data: { bookingSlug: finalSlug },
+      })
+      return reply.send(tenant)
+    } catch {
+      return reply.status(409).send({ message: 'Slug já está em uso por outra arena' })
+    }
+  })
+
   app.delete<{ Params: { id: string } }>('/tenants/:id', async (req, reply: FastifyReply) => {
     await prisma.user.deleteMany({ where: { tenantId: req.params.id } })
     await prisma.tenant.delete({ where: { id: req.params.id } })

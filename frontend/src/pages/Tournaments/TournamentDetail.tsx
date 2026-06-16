@@ -419,7 +419,8 @@ export function TournamentDetail({ tournament, onRefresh }: TournamentDetailProp
                 {/* Visual bracket */}
                 <div className="flex flex-col gap-2">
                   <h3 className="text-sm font-semibold text-gray-700">Chaveamento Completo</h3>
-                  <BracketPreview teams={tournament.teams} champion={tournament.champion ?? null} matchType={matchType} />
+                  <p className="text-xs text-gray-400">Clique em um participante para avançá-lo de fase</p>
+                  <BracketPreview tournament={tournament} matchType={matchType} onRefresh={onRefresh} />
                 </div>
               </>
             )}
@@ -503,19 +504,97 @@ function MatchSlotRow({ team, seed, matchType }: { team: Tournament['teams'][0] 
   )
 }
 
-// ─── Bracket preview ──────────────────────────────────────────────────────────
+// ─── Bracket preview (interactive) ───────────────────────────────────────────
 
 const SLOT_H = 48
 
-interface BracketPreviewProps {
-  teams: Tournament['teams']
-  champion: string | null
-  matchType: string
+interface BracketResult {
+  round: number
+  matchIndex: number
+  winnerId: string | null
 }
 
-function BracketPreview({ teams, champion, matchType }: BracketPreviewProps) {
-  if (teams.length === 0) return null
-  const rounds = buildBracketRounds(teams)
+interface InteractiveMatch {
+  team1: Tournament['teams'][0] | null
+  team2: Tournament['teams'][0] | null
+  winnerId: string | null
+  round: number
+  matchIndex: number
+}
+
+interface BracketRound { name: string; matches: InteractiveMatch[] }
+
+const ROUND_NAMES: Record<number, string> = { 2: 'Final', 4: 'Semifinal', 8: 'Quartas', 16: 'Oitavas', 32: 'Round 32' }
+
+function parseBracketData(bracketData?: string | null): BracketResult[] {
+  if (!bracketData) return []
+  try { return JSON.parse(bracketData) as BracketResult[] } catch { return [] }
+}
+
+function buildInteractiveRounds(teams: Tournament['teams'], bracketData: BracketResult[]): BracketRound[] {
+  const winnerMap = new Map<string, string | null>()
+  for (const b of bracketData) winnerMap.set(`${b.round}_${b.matchIndex}`, b.winnerId)
+
+  const seeded = [...teams].sort((a, b) => (a.groupNumber ?? 999) - (b.groupNumber ?? 999))
+  let size = 1
+  while (size < seeded.length) size *= 2
+  const rounds: BracketRound[] = []
+
+  for (let r = 0; r < Math.log2(size); r++) {
+    const matchCount = size / Math.pow(2, r + 1)
+    const teamsInRound = size / Math.pow(2, r)
+    const matches: InteractiveMatch[] = []
+    for (let m = 0; m < matchCount; m++) {
+      let team1: Tournament['teams'][0] | null = null
+      let team2: Tournament['teams'][0] | null = null
+      if (r === 0) {
+        team1 = seeded[m * 2] ?? null
+        team2 = seeded[m * 2 + 1] ?? null
+      } else {
+        const w1 = winnerMap.get(`${r - 1}_${m * 2}`) ?? null
+        const w2 = winnerMap.get(`${r - 1}_${m * 2 + 1}`) ?? null
+        team1 = w1 ? (teams.find(t => t.id === w1) ?? null) : null
+        team2 = w2 ? (teams.find(t => t.id === w2) ?? null) : null
+      }
+      const winnerId = winnerMap.get(`${r}_${m}`) ?? null
+      matches.push({ team1, team2, winnerId, round: r, matchIndex: m })
+    }
+    rounds.push({ name: ROUND_NAMES[teamsInRound] ?? `R${r + 1}`, matches })
+  }
+  return rounds
+}
+
+interface BracketPreviewProps {
+  tournament: Tournament
+  matchType: string
+  onRefresh: () => void
+}
+
+function BracketPreview({ tournament, matchType, onRefresh }: BracketPreviewProps) {
+  const [savingKey, setSavingKey] = useState<string | null>(null)
+
+  if (tournament.teams.length === 0) return null
+
+  const bracketData = parseBracketData(tournament.bracketData)
+  const rounds = buildInteractiveRounds(tournament.teams, bracketData)
+
+  async function handleClickTeam(match: InteractiveMatch, clicked: Tournament['teams'][0]) {
+    const newWinnerId = match.winnerId === clicked.id ? null : clicked.id
+    const key = `${match.round}_${match.matchIndex}`
+    setSavingKey(key)
+    try {
+      await tournamentsApi.saveBracketMatch(tournament.id, {
+        round: match.round,
+        matchIndex: match.matchIndex,
+        winnerId: newWinnerId,
+      })
+      onRefresh()
+    } catch {
+      toast.error('Erro ao salvar resultado')
+    } finally {
+      setSavingKey(null)
+    }
+  }
 
   return (
     <div className="overflow-x-auto pb-4">
@@ -526,16 +605,19 @@ function BracketPreview({ teams, champion, matchType }: BracketPreviewProps) {
               {round.name}
             </div>
             <div className="flex flex-col" style={{ gap: 2 * SLOT_H * (Math.pow(2, rIdx) - 1) }}>
-              {round.matches.map((match, mIdx) => (
-                <div key={mIdx} className="flex items-center">
-                  <div className="w-44 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                    <BracketSlotCell team={match.team1} isPending={rIdx > 0} seed={mIdx * 2 + 1} matchType={matchType} />
-                    <div className="border-t border-gray-200" />
-                    <BracketSlotCell team={match.team2} isPending={rIdx > 0} seed={mIdx * 2 + 2} matchType={matchType} />
+              {round.matches.map((match, mIdx) => {
+                const key = `${match.round}_${match.matchIndex}`
+                return (
+                  <div key={mIdx} className={`flex items-center transition-opacity ${savingKey === key ? 'opacity-60' : ''}`}>
+                    <div className="w-44 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                      <BracketSlotCell match={match} teamSlot="team1" matchType={matchType} onClickTeam={handleClickTeam} />
+                      <div className="border-t border-gray-200" />
+                      <BracketSlotCell match={match} teamSlot="team2" matchType={matchType} onClickTeam={handleClickTeam} />
+                    </div>
+                    {rIdx < rounds.length - 1 && <div className="w-4 border-t border-gray-300" />}
                   </div>
-                  {rIdx < rounds.length - 1 && <div className="w-4 border-t border-gray-300" />}
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         ))}
@@ -544,8 +626,8 @@ function BracketPreview({ teams, champion, matchType }: BracketPreviewProps) {
         <div className="flex flex-col shrink-0 ml-1" style={{ paddingTop: SLOT_H * (Math.pow(2, rounds.length) - 1) }}>
           <div className="text-center text-xs font-semibold text-yellow-500 uppercase tracking-wider mb-2 whitespace-nowrap">🏆 Campeão</div>
           <div className="w-44 border-2 border-yellow-400 rounded-lg px-3 py-3 bg-yellow-50 text-center min-h-[40px] flex items-center justify-center">
-            {champion
-              ? <p className="text-sm font-bold text-yellow-700">{champion}</p>
+            {tournament.champion
+              ? <p className="text-sm font-bold text-yellow-700">{tournament.champion}</p>
               : <p className="text-xs text-gray-400">A definir</p>
             }
           </div>
@@ -555,56 +637,60 @@ function BracketPreview({ teams, champion, matchType }: BracketPreviewProps) {
   )
 }
 
-interface BracketMatch { team1: Tournament['teams'][0] | null; team2: Tournament['teams'][0] | null }
-interface BracketRound { name: string; matches: BracketMatch[] }
+function BracketSlotCell({
+  match,
+  teamSlot,
+  matchType,
+  onClickTeam,
+}: {
+  match: InteractiveMatch
+  teamSlot: 'team1' | 'team2'
+  matchType: string
+  onClickTeam: (match: InteractiveMatch, team: Tournament['teams'][0]) => void
+}) {
+  const team = match[teamSlot]
+  const isWinner = !!team && match.winnerId === team.id
+  const isLoser = !!team && !!match.winnerId && match.winnerId !== team.id
 
-const ROUND_NAMES: Record<number, string> = { 2: 'Final', 4: 'Semifinal', 8: 'Quartas', 16: 'Oitavas', 32: 'Round 32' }
-
-function buildBracketRounds(teams: Tournament['teams']): BracketRound[] {
-  const seeded = [...teams].sort((a, b) => (a.groupNumber ?? 999) - (b.groupNumber ?? 999))
-  let size = 1
-  while (size < seeded.length) size *= 2
-  const rounds: BracketRound[] = []
-  for (let r = 0; r < Math.log2(size); r++) {
-    const matchCount = size / Math.pow(2, r + 1)
-    const teamsInRound = size / Math.pow(2, r)
-    const matches: BracketMatch[] = []
-    for (let m = 0; m < matchCount; m++) {
-      matches.push(r === 0
-        ? { team1: seeded[m * 2] ?? null, team2: seeded[m * 2 + 1] ?? null }
-        : { team1: null, team2: null }
-      )
-    }
-    rounds.push({ name: ROUND_NAMES[teamsInRound] ?? `R${r + 1}`, matches })
-  }
-  return rounds
-}
-
-function BracketSlotCell({ team, isPending, seed, matchType }: { team: Tournament['teams'][0] | null; isPending: boolean; seed: number; matchType: string }) {
-  if (isPending) {
+  if (!team) {
     return (
-      <div className="flex items-center gap-2 px-3 text-gray-400 italic text-xs" style={{ height: SLOT_H }}>
-        Vencedor #{seed}
+      <div className="flex items-center gap-2 px-3 text-gray-300 text-xs italic" style={{ height: SLOT_H }}>
+        {match.round === 0 ? 'BYE' : 'Aguardando'}
       </div>
     )
   }
-  if (!team) {
-    return <div className="flex items-center px-3 text-gray-300 text-xs italic" style={{ height: SLOT_H }}>BYE</div>
-  }
+
   const players = parsePlayers(team.players)
   const photo = players[0]?.photo
+
   return (
-    <div className="flex items-center gap-2 px-3" style={{ height: SLOT_H }}>
+    <button
+      type="button"
+      onClick={() => onClickTeam(match, team)}
+      className={`w-full flex items-center gap-2 px-3 text-left transition-all ${
+        isWinner ? 'bg-green-50' : isLoser ? 'opacity-30' : 'hover:bg-gray-50'
+      } cursor-pointer`}
+      style={{ height: SLOT_H }}
+    >
       {photo
         ? <img src={photo} alt={team.name} className="w-7 h-7 rounded-full object-cover border border-gray-200 shrink-0" />
-        : <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 shrink-0">{team.name.charAt(0).toUpperCase()}</div>
+        : <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+            isWinner ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-600'
+          }`}>{team.name.charAt(0).toUpperCase()}</div>
       }
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-gray-900 truncate">{team.name}</p>
+      <div className="min-w-0 flex-1">
+        <p className={`text-xs font-semibold truncate ${isWinner ? 'text-green-700' : 'text-gray-900'}`}>{team.name}</p>
         {matchType === 'TEAM' && players.length > 1 && (
           <p className="text-[10px] text-gray-400 truncate">{players.map(p => p.name).join(', ')}</p>
         )}
       </div>
-    </div>
+      {isWinner && (
+        <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )}
+    </button>
   )
 }

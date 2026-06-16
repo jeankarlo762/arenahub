@@ -36,7 +36,7 @@ export async function getRental(id: string) {
       client: { select: { id: true, firstName: true, lastName: true } },
     },
   })
-  if (!rental) throw Object.assign(new Error('Aluguel não encontrado'), { statusCode: 404 })
+  if (!rental) throw Object.assign(new Error('Locação não encontrada'), { statusCode: 404 })
   return rental
 }
 
@@ -84,6 +84,67 @@ export async function updateRental(id: string, input: UpdateRentalInput) {
 export async function deleteRental(id: string) {
   await getRental(id)
   return prisma.rental.delete({ where: { id } })
+}
+
+function countWeekdayOccurrences(weekday: number, start: Date, end: Date): number {
+  let count = 0
+  const cur = new Date(start)
+  while (cur <= end) {
+    if (cur.getDay() === weekday) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
+export async function getRentalReport(startDate?: string, endDate?: string) {
+  const allRentals = await prisma.rental.findMany({
+    include: { court: { select: { id: true, name: true } } },
+  })
+
+  const periodStart = startDate ? new Date(startDate + 'T00:00:00') : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const periodEnd = endDate ? new Date(endDate + 'T23:59:59') : new Date()
+
+  let totalEstimatedRevenue = 0
+  const courtMap = new Map<string, { name: string; count: number; revenue: number }>()
+  const weekdayCount: number[] = Array(7).fill(0)
+
+  for (const rental of allRentals) {
+    if (!rental.active) continue
+    const rentalStart = rental.startDate > periodStart ? rental.startDate : periodStart
+    const rentalEnd = rental.endDate ? (rental.endDate < periodEnd ? rental.endDate : periodEnd) : periodEnd
+    if (rentalStart > rentalEnd) continue
+
+    const weekdays: number[] = JSON.parse(rental.weekdays)
+    const slots: { startTime: string; endTime: string; price: number }[] = JSON.parse(rental.slots)
+    const slotRevenue = slots.reduce((s, sl) => s + (sl.price || 0), 0)
+
+    for (const wd of weekdays) {
+      const occurrences = countWeekdayOccurrences(wd, rentalStart, rentalEnd)
+      totalEstimatedRevenue += occurrences * slotRevenue
+      weekdayCount[wd] += occurrences
+    }
+
+    if (rental.courtId && rental.court) {
+      const existing = courtMap.get(rental.courtId) ?? { name: rental.court.name, count: 0, revenue: 0 }
+      existing.count += weekdays.length
+      courtMap.set(rental.courtId, existing)
+    }
+  }
+
+  const activeCount = allRentals.filter(r => r.active).length
+  const inactiveCount = allRentals.filter(r => !r.active).length
+
+  return {
+    activeCount,
+    inactiveCount,
+    totalCount: allRentals.length,
+    estimatedRevenue: totalEstimatedRevenue,
+    topCourts: Array.from(courtMap.entries())
+      .map(([id, d]) => ({ id, ...d }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5),
+    weekdayActivity: weekdayCount.map((count, day) => ({ day, count })),
+  }
 }
 
 export async function getRentalsForDate(courtId: string, date: string) {

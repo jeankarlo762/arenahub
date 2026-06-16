@@ -8,16 +8,17 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  mrrValue  Decimal  @default(0)
-  setupFee  Decimal  @default(0)
-  active    Boolean  @default(true)
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  mrrValue     Decimal  @default(0)
+  setupFee     Decimal  @default(0)
+  active       Boolean  @default(true)
+  bookingSlug  String?  @unique
+  users        User[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // Role: ADMIN | OPERATOR | SUPERADMIN
@@ -110,24 +111,28 @@ model Payment {
 // status: DRAFT | OPEN | IN_PROGRESS | FINISHED | CANCELLED
 // matchType: INDIVIDUAL | DOUBLES | TEAM
 model Tournament {
-  id          String           @id @default(cuid())
-  tenantId    String?
-  name        String
-  description String?
-  sport       String
-  startDate   DateTime
-  endDate     DateTime
-  status      String           @default("DRAFT")
-  matchType   String           @default("TEAM")
-  maxTeams    Int
-  prizeInfo   String?
-  imageUrl    String?
-  champion    String?
-  courtId     String?
-  court       Court?           @relation(fields: [courtId], references: [id])
-  teams       TournamentTeam[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  tenantId     String?
+  name         String
+  description  String?
+  sport        String
+  startDate    DateTime
+  endDate      DateTime
+  status       String           @default("DRAFT")
+  matchType    String           @default("TEAM")
+  maxTeams     Int
+  prizeInfo    String?
+  imageUrl     String?
+  champion     String?
+  courtId      String?
+  court        Court?           @relation(fields: [courtId], references: [id])
+  teams        TournamentTeam[]
+  pointsFirst  Int              @default(3)
+  pointsSecond Int              @default(2)
+  pointsThird  Int              @default(1)
+  bracketData  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([tenantId])
 }
@@ -240,14 +245,26 @@ model Rental {
 }
 
 model TournamentTeam {
-  id           String     @id @default(cuid())
-  tenantId     String?
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-  name         String
-  players      String
-  groupNumber  Int?
-  createdAt    DateTime   @default(now())
+  id            String     @id @default(cuid())
+  tenantId      String?
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id])
+  name          String
+  players       String
+  groupNumber   Int?
+  finalPosition Int?
+  createdAt     DateTime   @default(now())
 
   @@index([tenantId])
 }
+
+model BarCategory {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+

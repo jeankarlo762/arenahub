@@ -99,6 +99,25 @@ export async function getOrderByNumber(
   return reply.send(order ?? null)
 }
 
+// Categories
+export async function listCategories(_request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await barService.listCategories())
+}
+
+export async function createCategory(request: FastifyRequest, reply: FastifyReply) {
+  const { name } = request.body as { name: string }
+  if (!name?.trim()) return reply.status(400).send({ message: 'Nome obrigatório' })
+  return reply.status(201).send(await barService.createCategory(name.trim()))
+}
+
+export async function deleteCategory(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  await barService.deleteCategory(request.params.id)
+  return reply.status(204).send()
+}
+
 export async function reopenOrder(
   request: FastifyRequest<{ Params: { id: string }; Body: { clearItems: boolean } }>,
   reply: FastifyReply,

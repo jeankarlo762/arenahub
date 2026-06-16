@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Textarea } from '../../components/ui/Textarea'
 import type { BarProduct } from '../../types/bar'
+import type { BarCategory } from '../../api/bar.api'
 import * as barApi from '../../api/bar.api'
 
 const schema = z.object({
@@ -25,9 +26,10 @@ interface ProductFormProps {
   onClose: () => void
   onSuccess: () => void
   product?: BarProduct
+  categories?: BarCategory[]
 }
 
-export function ProductForm({ open, onClose, onSuccess, product }: ProductFormProps) {
+export function ProductForm({ open, onClose, onSuccess, product, categories = [] }: ProductFormProps) {
   const isEdit = !!product
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -71,7 +73,18 @@ export function ProductForm({ open, onClose, onSuccess, product }: ProductFormPr
     >
       <div className="flex flex-col gap-4">
         <Input label="Nome" error={errors.name?.message} {...register('name')} placeholder="ex: Refrigerante, Cerveja" />
-        <Input label="Categoria" {...register('category')} placeholder="ex: Bebidas, Petiscos" />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700">Categoria</label>
+          <select
+            {...register('category')}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none bg-white"
+          >
+            <option value="">Sem categoria</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <Input label="Custo (R$)" type="number" step="0.01" min="0" placeholder="0,00" error={errors.costPrice?.message} {...register('costPrice')} />
           <Input label="Preço de venda (R$)" type="number" step="0.01" min="0" error={errors.price?.message} {...register('price')} />

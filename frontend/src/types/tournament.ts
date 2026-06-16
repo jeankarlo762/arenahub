@@ -12,6 +12,7 @@ export interface TournamentTeam {
   name: string
   players: string   // JSON string of TournamentPlayer[] (or legacy string[])
   groupNumber?: number
+  finalPosition?: number | null
   createdAt: string
 }
 
@@ -38,6 +39,10 @@ export interface Tournament {
   court?: TournamentCourt | null
   teams: TournamentTeam[]
   _count?: { teams: number }
+  pointsFirst: number
+  pointsSecond: number
+  pointsThird: number
+  bracketData?: string | null
   createdAt: string
   updatedAt: string
 }

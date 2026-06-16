@@ -12,6 +12,8 @@ import {
   ClipboardList,
   Users,
   CalendarRange,
+  BarChart2,
+  Link,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
@@ -27,8 +29,10 @@ const navItems = [
   { to: '/bar', icon: Beer, label: 'Bar', adminOnly: true },
   { to: '/comandas', icon: ClipboardList, label: 'Comandas', adminOnly: true },
   { to: '/clients', icon: Users, label: 'Clientes' },
-  { to: '/rentals', icon: CalendarRange, label: 'Aluguéis' },
+  { to: '/rentals', icon: CalendarRange, label: 'Locação' },
   { to: '/financial', icon: DollarSign, label: 'Financeiro', adminOnly: true },
+  { to: '/reports', icon: BarChart2, label: 'Relatórios', adminOnly: true },
+  { to: '/auto-booking', icon: Link, label: 'Agendamento Auto.', adminOnly: true },
   { to: '/settings', icon: Settings, label: 'Configurações', adminOnly: true },
 ]
 

@@ -35,6 +35,14 @@ interface BookingFormProps {
   preSelect?: { courtId: string; date: string; startTime: string }
 }
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
 export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: BookingFormProps) {
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null)
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -173,7 +181,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
       <div className="flex flex-col gap-4">
         <Select
           label="Quadra"
-          placeholder="Selecione..."
+          placeholder="Insira a quadra"
           options={courts.filter((c) => c.active).map((c) => ({ value: c.id, label: c.name }))}
           error={errors.courtId?.message}
           {...register('courtId')}
@@ -262,15 +270,21 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
         <div className="border-t pt-4">
           <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Dados do Cliente</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Nome" error={errors.customerName?.message} {...register('customerName')} />
+            <Input label="Nome" placeholder="Nome do cliente" error={errors.customerName?.message} {...register('customerName')} />
             <Input
               label="Telefone (opcional)"
               placeholder="(11) 99999-9999"
               {...register('customerPhone')}
+              onChange={(e) => {
+                const formatted = formatPhone(e.target.value)
+                e.target.value = formatted
+                register('customerPhone').onChange(e)
+              }}
             />
             <Input
               label="Email (opcional)"
               type="email"
+              placeholder="email@gmail.com"
               className="sm:col-span-2"
               {...register('customerEmail')}
             />

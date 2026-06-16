@@ -3,7 +3,7 @@ import { prisma } from '../config/database'
 interface DateRange {
   startDate?: string
   endDate?: string
-  source?: string // 'courts' | 'bar' | 'all'
+  source?: string // 'courts' | 'bar' | 'rentals' | 'all'
 }
 
 function buildDateFilter(startDate?: string, endDate?: string) {
@@ -30,6 +30,40 @@ async function getCourtsSummary(startDate?: string, endDate?: string) {
   return { total, received, pending, paymentCount: payments.length }
 }
 
+function countWeekdayOccurrences(weekday: number, start: Date, end: Date): number {
+  let count = 0
+  const cur = new Date(start)
+  while (cur <= end) {
+    if (cur.getDay() === weekday) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
+async function getRentalRevenueSummary(startDate?: string, endDate?: string) {
+  const periodStart = startDate ? new Date(startDate + 'T00:00:00') : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  const periodEnd = endDate ? new Date(endDate + 'T23:59:59') : new Date()
+
+  const rentals = await prisma.rental.findMany({ where: { active: true } })
+  let revenue = 0
+
+  for (const rental of rentals) {
+    const rentalStart = rental.startDate > periodStart ? rental.startDate : periodStart
+    const rentalEnd = rental.endDate ? (rental.endDate < periodEnd ? rental.endDate : periodEnd) : periodEnd
+    if (rentalStart > rentalEnd) continue
+
+    const weekdays: number[] = JSON.parse(rental.weekdays)
+    const slots: { price: number }[] = JSON.parse(rental.slots)
+    const slotRevenue = slots.reduce((s, sl) => s + (sl.price || 0), 0)
+
+    for (const wd of weekdays) {
+      revenue += countWeekdayOccurrences(wd, rentalStart, rentalEnd) * slotRevenue
+    }
+  }
+
+  return { total: revenue, received: revenue, pending: 0, paymentCount: rentals.length }
+}
+
 async function getBarRevenueSummary(startDate?: string, endDate?: string) {
   const dateFilter = buildDateFilter(startDate, endDate)
   const orders = await prisma.barOrder.findMany({
@@ -50,16 +84,22 @@ export async function getSummary({ startDate, endDate, source = 'courts' }: Date
     return { ...bar, bookingCount }
   }
 
+  if (source === 'rentals') {
+    const rentals = await getRentalRevenueSummary(startDate, endDate)
+    return { ...rentals, bookingCount }
+  }
+
   if (source === 'all') {
-    const [courts, bar] = await Promise.all([
+    const [courts, bar, rentals] = await Promise.all([
       getCourtsSummary(startDate, endDate),
       getBarRevenueSummary(startDate, endDate),
+      getRentalRevenueSummary(startDate, endDate),
     ])
     return {
-      total: courts.total + bar.total,
-      received: courts.received + bar.received,
+      total: courts.total + bar.total + rentals.total,
+      received: courts.received + bar.received + rentals.received,
       pending: courts.pending,
-      paymentCount: courts.paymentCount + bar.paymentCount,
+      paymentCount: courts.paymentCount + bar.paymentCount + rentals.paymentCount,
       bookingCount,
     }
   }
@@ -96,7 +136,7 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
     }
   }
 
-  if (source !== 'courts') {
+  if (source === 'bar' || source === 'all') {
     const orders = await prisma.barOrder.findMany({
       where: { status: 'CLOSED', createdAt: { gte: start, lt: endExclusive } },
       select: { total: true, createdAt: true },
@@ -104,6 +144,26 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
     for (const o of orders) {
       const key = o.createdAt.toISOString().slice(0, 10)
       dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(o.total))
+    }
+  }
+
+  if (source === 'rentals' || source === 'all') {
+    const rentals = await prisma.rental.findMany({ where: { active: true } })
+    for (const rental of rentals) {
+      const weekdays: number[] = JSON.parse(rental.weekdays)
+      const slots: { price: number }[] = JSON.parse(rental.slots)
+      const slotRevenue = slots.reduce((s, sl) => s + (sl.price || 0), 0)
+      if (slotRevenue === 0) continue
+      for (const [dateKey] of dailyMap) {
+        const d = new Date(dateKey + 'T00:00:00')
+        if (weekdays.includes(d.getDay())) {
+          const rentalStart = rental.startDate
+          const rentalEnd = rental.endDate ?? end
+          if (d >= rentalStart && d <= rentalEnd) {
+            dailyMap.set(dateKey, (dailyMap.get(dateKey) ?? 0) + slotRevenue)
+          }
+        }
+      }
     }
   }
 

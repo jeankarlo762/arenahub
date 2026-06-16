@@ -5,6 +5,11 @@ import { authenticate } from '../middlewares/auth'
 export async function barRoutes(app: FastifyInstance) {
   app.addHook('preHandler', authenticate)
 
+  // Categories
+  app.get('/categories', barController.listCategories)
+  app.post('/categories', barController.createCategory)
+  app.delete('/categories/:id', barController.deleteCategory)
+
   // Products
   app.get('/products', barController.listProducts)
   app.post('/products', barController.createProduct)

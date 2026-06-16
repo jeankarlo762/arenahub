@@ -5,6 +5,7 @@ import {
   AddTeamInput,
   DrawInput,
   SetChampionInput,
+  SaveBracketInput,
 } from '../schemas/tournament.schema'
 
 export async function listTournaments() {
@@ -45,6 +46,9 @@ export async function createTournament(input: CreateTournamentInput) {
       maxTeams: input.maxTeams,
       prizeInfo: input.prizeInfo,
       courtId: input.courtId ?? null,
+      pointsFirst: input.pointsFirst ?? 3,
+      pointsSecond: input.pointsSecond ?? 2,
+      pointsThird: input.pointsThird ?? 1,
     },
   })
 }
@@ -229,4 +233,72 @@ export async function drawTeamGroups(tournamentId: string, playersPerTeam: numbe
   }
 
   return getTournament(tournamentId)
+}
+
+interface BracketMatch {
+  round: number
+  matchIndex: number
+  winnerId: string | null
+}
+
+export async function saveBracketMatch(tournamentId: string, input: SaveBracketInput) {
+  const tournament = await getTournament(tournamentId)
+  const existing: BracketMatch[] = tournament.bracketData ? JSON.parse(tournament.bracketData) : []
+
+  const idx = existing.findIndex(
+    (m) => m.round === input.match.round && m.matchIndex === input.match.matchIndex,
+  )
+
+  if (idx >= 0) {
+    existing[idx] = { ...existing[idx], ...input.match }
+  } else {
+    existing.push(input.match)
+  }
+
+  return prisma.tournament.update({
+    where: { id: tournamentId },
+    data: { bracketData: JSON.stringify(existing) },
+    include: { teams: true, court: { select: { id: true, name: true, type: true } } },
+  })
+}
+
+export async function updateTeamPosition(tournamentId: string, teamId: string, finalPosition: number | null) {
+  const team = await prisma.tournamentTeam.findFirst({ where: { id: teamId, tournamentId } })
+  if (!team) throw Object.assign(new Error('Equipe não encontrada'), { statusCode: 404 })
+  return prisma.tournamentTeam.update({ where: { id: teamId }, data: { finalPosition } })
+}
+
+export async function getPlayerRanking() {
+  const tournaments = await prisma.tournament.findMany({
+    where: { status: 'FINISHED' },
+    include: { teams: true },
+    orderBy: { endDate: 'desc' },
+  })
+
+  const playerMap = new Map<string, {
+    name: string
+    points: number
+    tournaments: { tournamentName: string; position: number | null; points: number; date: string }[]
+  }>()
+
+  for (const t of tournaments) {
+    const scoring: Record<number, number> = { 1: t.pointsFirst, 2: t.pointsSecond, 3: t.pointsThird }
+    for (const team of t.teams) {
+      const key = team.name
+      const pts = team.finalPosition != null ? (scoring[team.finalPosition] ?? 0) : 0
+      const entry = playerMap.get(key) ?? { name: team.name, points: 0, tournaments: [] }
+      entry.points += pts
+      entry.tournaments.push({
+        tournamentName: t.name,
+        position: team.finalPosition,
+        points: pts,
+        date: t.endDate.toISOString().slice(0, 10),
+      })
+      playerMap.set(key, entry)
+    }
+  }
+
+  return Array.from(playerMap.values())
+    .sort((a, b) => b.points - a.points)
+    .map((p, i) => ({ ...p, rank: i + 1 }))
 }

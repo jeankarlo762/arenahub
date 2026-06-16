@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { Maximize2, RefreshCw, Trophy } from 'lucide-react'
+import { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 import { Spinner } from '../../components/ui/Spinner'
 import * as tournamentsApi from '../../api/tournaments.api'
 import type { Tournament } from '../../types/tournament'
@@ -8,29 +10,47 @@ import { parsePlayers } from '../../types/tournament'
 import { TOURNAMENT_STATUS_LABELS } from '../../utils/format'
 import { formatDate } from '../../utils/date'
 
-const CARD_H = 120
-const GAP_MULTIPLIER = 1.6
+const SLOT_H = 64
 
 const ROUND_NAMES: Record<number, string> = {
   2: 'Final',
   4: 'Semifinal',
-  8: 'Quartas',
-  16: 'Oitavas',
-  32: 'Round 32',
+  8: 'Quartas de Final',
+  16: 'Oitavas de Final',
+  32: 'Round de 32',
 }
 
-interface BracketMatch {
+interface BracketResult {
+  round: number
+  matchIndex: number
+  winnerId: string | null
+}
+
+interface InteractiveBracketMatch {
   team1: Tournament['teams'][0] | null
   team2: Tournament['teams'][0] | null
+  winnerId: string | null
+  round: number
+  matchIndex: number
 }
 
 interface BracketRound {
   name: string
-  matches: BracketMatch[]
+  matches: InteractiveBracketMatch[]
   roundIndex: number
 }
 
-function buildRounds(teams: Tournament['teams']): BracketRound[] {
+function parseBracketData(bracketData?: string | null): BracketResult[] {
+  if (!bracketData) return []
+  try { return JSON.parse(bracketData) as BracketResult[] } catch { return [] }
+}
+
+function buildRounds(teams: Tournament['teams'], bracketData: BracketResult[]): BracketRound[] {
+  const winnerMap = new Map<string, string | null>()
+  for (const b of bracketData) {
+    winnerMap.set(`${b.round}_${b.matchIndex}`, b.winnerId)
+  }
+
   const seeded = [...teams].sort((a, b) => (a.groupNumber ?? 999) - (b.groupNumber ?? 999))
   let size = 1
   while (size < seeded.length) size *= 2
@@ -40,16 +60,29 @@ function buildRounds(teams: Tournament['teams']): BracketRound[] {
   for (let r = 0; r < numRounds; r++) {
     const matchCount = size / Math.pow(2, r + 1)
     const teamsInRound = size / Math.pow(2, r)
-    const matches: BracketMatch[] = []
+    const matches: InteractiveBracketMatch[] = []
+
     for (let m = 0; m < matchCount; m++) {
+      let team1: Tournament['teams'][0] | null = null
+      let team2: Tournament['teams'][0] | null = null
+
       if (r === 0) {
-        matches.push({ team1: seeded[m * 2] ?? null, team2: seeded[m * 2 + 1] ?? null })
+        team1 = seeded[m * 2] ?? null
+        team2 = seeded[m * 2 + 1] ?? null
       } else {
-        matches.push({ team1: null, team2: null })
+        const w1Id = winnerMap.get(`${r - 1}_${m * 2}`) ?? null
+        const w2Id = winnerMap.get(`${r - 1}_${m * 2 + 1}`) ?? null
+        team1 = w1Id ? (teams.find(t => t.id === w1Id) ?? null) : null
+        team2 = w2Id ? (teams.find(t => t.id === w2Id) ?? null) : null
       }
+
+      const winnerId = winnerMap.get(`${r}_${m}`) ?? null
+      matches.push({ team1, team2, winnerId, round: r, matchIndex: m })
     }
+
     rounds.push({ name: ROUND_NAMES[teamsInRound] ?? `Round ${r + 1}`, matches, roundIndex: r })
   }
+
   return rounds
 }
 
@@ -67,6 +100,7 @@ export default function TournamentBracketPage() {
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastRefresh, setLastRefresh] = useState(new Date())
+  const [savingKey, setSavingKey] = useState<string | null>(null)
   const now = useNow()
 
   const load = useCallback(async () => {
@@ -87,6 +121,25 @@ export default function TournamentBracketPage() {
     const timer = setInterval(load, 30_000)
     return () => clearInterval(timer)
   }, [load])
+
+  async function handleClickTeam(match: InteractiveBracketMatch, clicked: Tournament['teams'][0]) {
+    if (!id) return
+    const newWinnerId = match.winnerId === clicked.id ? null : clicked.id
+    const key = `${match.round}_${match.matchIndex}`
+    setSavingKey(key)
+    try {
+      const updated = await tournamentsApi.saveBracketMatch(id, {
+        round: match.round,
+        matchIndex: match.matchIndex,
+        winnerId: newWinnerId,
+      })
+      setTournament(updated)
+    } catch {
+      toast.error('Erro ao salvar resultado')
+    } finally {
+      setSavingKey(null)
+    }
+  }
 
   function enterFullscreen() {
     if (document.documentElement.requestFullscreen) {
@@ -110,11 +163,14 @@ export default function TournamentBracketPage() {
     )
   }
 
-  const rounds = buildRounds(tournament.teams)
+  const bracketData = parseBracketData(tournament.bracketData)
+  const rounds = buildRounds(tournament.teams, bracketData)
   const secondsSinceRefresh = Math.floor((now.getTime() - lastRefresh.getTime()) / 1000)
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      <Toaster position="top-right" />
+
       {/* Header */}
       <div className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-4 min-w-0">
@@ -176,48 +232,44 @@ export default function TournamentBracketPage() {
         </div>
       )}
 
-      {/* Bracket */}
-      <div className="flex-1 overflow-auto p-6 sm:p-10">
-        {tournament.teams.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-500">
-            <Trophy size={56} className="text-gray-700" />
-            <p className="text-xl font-medium">Aguardando participantes</p>
-            <p className="text-gray-600">{tournament.maxTeams} vagas disponíveis</p>
-          </div>
-        ) : (
-          <div className="flex items-start gap-8 min-w-max mx-auto">
-            {rounds.map((round) => (
-              <BracketRoundColumn key={round.roundIndex} round={round} />
-            ))}
+      {/* Bracket — centered in viewport */}
+      <div className="flex-1 overflow-auto">
+        <div className="min-h-full flex items-center justify-center p-6 sm:p-10">
+          {tournament.teams.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 text-gray-500">
+              <Trophy size={56} className="text-gray-700" />
+              <p className="text-xl font-medium">Aguardando participantes</p>
+              <p className="text-gray-600">{tournament.maxTeams} vagas disponíveis</p>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2">
+              {rounds.map((round) => (
+                <BracketRoundColumn
+                  key={round.roundIndex}
+                  round={round}
+                  savingKey={savingKey}
+                  onClickTeam={handleClickTeam}
+                />
+              ))}
 
-            {/* Champion slot */}
-            <div
-              className="flex flex-col shrink-0"
-              style={{ paddingTop: CARD_H * (Math.pow(2, rounds.length) - 1) * GAP_MULTIPLIER / 2 }}
-            >
-              <div className="text-center text-xs font-bold text-yellow-400 uppercase tracking-widest mb-4 whitespace-nowrap">
-                🏆 Campeão
-              </div>
-              <div className="w-36 border-2 border-yellow-500 rounded-2xl bg-yellow-900/20 p-3 text-center flex flex-col items-center gap-2 min-h-[120px] justify-center">
-                {tournament.champion ? (
-                  <>
-                    <div className="w-14 h-14 rounded-full bg-yellow-500/20 border-2 border-yellow-500 flex items-center justify-center">
-                      <Trophy size={24} className="text-yellow-400" />
-                    </div>
-                    <p className="font-bold text-yellow-300 text-sm leading-tight">{tournament.champion}</p>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-700 flex items-center justify-center">
-                      <Trophy size={20} className="text-gray-700" />
-                    </div>
-                    <p className="text-gray-600 text-xs italic">A definir</p>
-                  </>
-                )}
+              {/* Champion slot */}
+              <div
+                className="flex flex-col shrink-0 ml-2"
+                style={{ paddingTop: SLOT_H * (Math.pow(2, rounds.length) - 1) }}
+              >
+                <div className="text-center text-xs font-bold text-yellow-400 uppercase tracking-widest mb-3 whitespace-nowrap">
+                  🏆 Campeão
+                </div>
+                <div className="w-56 border-2 border-yellow-500 rounded-xl bg-yellow-900/20 px-4 py-4 text-center min-h-[56px] flex items-center justify-center">
+                  {tournament.champion
+                    ? <p className="font-bold text-yellow-300 text-sm">{tournament.champion}</p>
+                    : <p className="text-gray-600 text-xs italic">A definir</p>
+                  }
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Footer */}
@@ -225,74 +277,72 @@ export default function TournamentBracketPage() {
         <span>ArenaHub — Chaveamento · {tournament.name}</span>
         <span className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
-          Atualização automática a cada 30s
+          Clique em um participante para avançá-lo de fase · Auto-refresh a cada 30s
         </span>
       </div>
     </div>
   )
 }
 
-function BracketRoundColumn({ round }: { round: BracketRound }) {
-  const gap = CARD_H * (Math.pow(2, round.roundIndex + 1) - 2) * GAP_MULTIPLIER / 2
-  const paddingTop = CARD_H * (Math.pow(2, round.roundIndex) - 1) * GAP_MULTIPLIER / 2
+function BracketRoundColumn({
+  round,
+  savingKey,
+  onClickTeam,
+}: {
+  round: BracketRound
+  savingKey: string | null
+  onClickTeam: (match: InteractiveBracketMatch, team: Tournament['teams'][0]) => void
+}) {
+  const paddingTop = SLOT_H * (Math.pow(2, round.roundIndex) - 1)
+  const gap = 2 * SLOT_H * (Math.pow(2, round.roundIndex) - 1)
 
   return (
     <div className="flex flex-col shrink-0" style={{ paddingTop }}>
-      {/* Round name */}
-      <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2 whitespace-nowrap">
+      <div className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-2 whitespace-nowrap">
         {round.name}
       </div>
 
       <div className="flex flex-col" style={{ gap }}>
-        {round.matches.map((match, mIdx) => (
-          <div key={mIdx} className="flex items-center gap-2">
-            <div className="flex flex-col gap-1">
-              <MatchCard team={match.team1} isFirst={round.roundIndex === 0} matchIndex={mIdx} position={0} />
-              <div className="flex items-center gap-1 my-0.5">
-                <div className="flex-1 h-px bg-gray-800" />
-                <span className="text-[10px] text-gray-700 font-bold">VS</span>
-                <div className="flex-1 h-px bg-gray-800" />
+        {round.matches.map((match, mIdx) => {
+          const key = `${match.round}_${match.matchIndex}`
+          const isSaving = savingKey === key
+          return (
+            <div key={mIdx} className="flex items-center">
+              <div className={`w-56 border rounded-xl overflow-hidden bg-gray-900 shadow-lg transition-opacity ${isSaving ? 'opacity-60' : ''} ${
+                match.winnerId ? 'border-gray-700' : 'border-gray-700'
+              }`}>
+                <MatchSlot match={match} teamSlot="team1" onClickTeam={onClickTeam} />
+                <div className="border-t border-gray-700" />
+                <MatchSlot match={match} teamSlot="team2" onClickTeam={onClickTeam} />
               </div>
-              <MatchCard team={match.team2} isFirst={round.roundIndex === 0} matchIndex={mIdx} position={1} />
+              <div className="w-4 h-px bg-gray-700 shrink-0" />
             </div>
-            {/* Connector line */}
-            <div className="w-6 h-px bg-gray-700 shrink-0" />
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
 }
 
-function MatchCard({
-  team,
-  isFirst,
-  matchIndex,
-  position,
+function MatchSlot({
+  match,
+  teamSlot,
+  onClickTeam,
 }: {
-  team: Tournament['teams'][0] | null
-  isFirst: boolean
-  matchIndex: number
-  position: number
+  match: InteractiveBracketMatch
+  teamSlot: 'team1' | 'team2'
+  onClickTeam: (match: InteractiveBracketMatch, team: Tournament['teams'][0]) => void
 }) {
-  const seed = matchIndex * 2 + position + 1
+  const team = match[teamSlot]
+  const isWinner = !!team && match.winnerId === team.id
+  const isLoser = !!team && !!match.winnerId && match.winnerId !== team.id
+  const canClick = !!team
 
-  if (!isFirst || !team) {
+  // Pending slot (later round, no winner yet)
+  if (!team) {
     return (
-      <div
-        className="w-36 rounded-xl border border-dashed border-gray-800 bg-gray-900/50 flex flex-col items-center justify-center gap-1 py-3"
-        style={{ minHeight: CARD_H / 2 - 12 }}
-      >
-        {isFirst ? (
-          <span className="text-gray-700 text-xs italic">BYE</span>
-        ) : (
-          <>
-            <div className="w-10 h-10 rounded-full border-2 border-dashed border-gray-800 flex items-center justify-center">
-              <span className="text-gray-700 text-xs font-bold">?</span>
-            </div>
-            <span className="text-gray-700 text-[10px]">Vencedor #{seed}</span>
-          </>
-        )}
+      <div className="flex items-center gap-3 px-4 text-gray-600 text-xs italic" style={{ height: SLOT_H }}>
+        Aguardando vencedor
       </div>
     )
   }
@@ -301,33 +351,53 @@ function MatchCard({
   const photo = players[0]?.photo
 
   return (
-    <div
-      className="w-36 rounded-xl border border-gray-700 bg-gray-800 hover:border-orange-500/50 hover:bg-gray-750 transition-all shadow-lg flex flex-col items-center gap-2 py-3 px-2"
-      style={{ minHeight: CARD_H / 2 - 12 }}
+    <button
+      type="button"
+      onClick={() => canClick && onClickTeam(match, team)}
+      disabled={!canClick}
+      className={`w-full flex items-center gap-3 px-4 text-left transition-all ${
+        isWinner
+          ? 'bg-green-900/30 hover:bg-green-900/40'
+          : isLoser
+          ? 'opacity-30 hover:opacity-50'
+          : 'hover:bg-gray-800'
+      } ${canClick ? 'cursor-pointer' : 'cursor-default'}`}
+      style={{ height: SLOT_H }}
     >
-      {/* Photo above name */}
+      {/* Avatar */}
       {photo ? (
-        <img
-          src={photo}
-          alt={team.name}
-          className="w-14 h-14 rounded-full object-cover border-2 border-orange-500/60 shadow-md shrink-0"
-        />
+        <img src={photo} alt={team.name} className="w-9 h-9 rounded-full object-cover border-2 border-gray-600 shrink-0" />
       ) : (
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500/30 to-orange-600/20 border-2 border-orange-500/40 flex items-center justify-center text-lg font-bold text-orange-400 shrink-0 shadow-md">
+        <div className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-sm font-bold shrink-0 ${
+          isWinner
+            ? 'bg-green-500/20 border-green-500/60 text-green-400'
+            : 'bg-orange-500/20 border-orange-500/40 text-orange-400'
+        }`}>
           {team.name.charAt(0).toUpperCase()}
         </div>
       )}
 
-      {/* Name below photo */}
-      <div className="text-center min-w-0 w-full px-1">
-        <p className="text-xs font-bold text-white leading-tight truncate">{team.name}</p>
+      {/* Name */}
+      <div className="min-w-0 flex-1">
+        <p className={`text-sm font-semibold truncate ${isWinner ? 'text-green-300' : 'text-white'}`}>
+          {team.name}
+        </p>
         {players.length > 1 && (
-          <p className="text-[10px] text-gray-400 truncate mt-0.5">{players.map((p) => p.name).join(' · ')}</p>
+          <p className="text-[11px] text-gray-500 truncate">{players.map(p => p.name).join(' · ')}</p>
         )}
         {players.length === 1 && players[0].name !== team.name && (
-          <p className="text-[10px] text-gray-400 truncate mt-0.5">{players[0].name}</p>
+          <p className="text-[11px] text-gray-500 truncate">{players[0].name}</p>
         )}
       </div>
-    </div>
+
+      {/* Winner indicator */}
+      {isWinner && (
+        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )}
+    </button>
   )
 }

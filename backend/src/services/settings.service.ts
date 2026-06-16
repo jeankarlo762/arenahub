@@ -1,5 +1,6 @@
 import { prisma } from '../config/database'
 import { getTenantId } from '../config/tenant-context'
+import { randomBytes } from 'crypto'
 
 const PAYMENT_METHODS = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'TRANSFER']
 
@@ -10,6 +11,25 @@ export async function getPaymentFees() {
     method,
     feePercent: Number(fees.find((f) => f.method === method)?.feePercent ?? 0),
   }))
+}
+
+export async function getBookingSlug() {
+  const tenantId = getTenantId()
+  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { bookingSlug: true } })
+  return { slug: tenant?.bookingSlug ?? null }
+}
+
+export async function setBookingSlug(slug?: string) {
+  const tenantId = getTenantId()
+  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  const newSlug = slug?.trim() || randomBytes(6).toString('hex')
+  const existing = await prisma.tenant.findUnique({ where: { bookingSlug: newSlug } })
+  if (existing && existing.id !== tenantId) {
+    throw Object.assign(new Error('Este slug já está em uso'), { statusCode: 409 })
+  }
+  await prisma.tenant.update({ where: { id: tenantId }, data: { bookingSlug: newSlug } })
+  return { slug: newSlug }
 }
 
 export async function upsertPaymentFee(method: string, feePercent: number) {

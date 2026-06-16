@@ -1,6 +1,23 @@
 import api from './axios'
 import type { BarProduct, BarOrder, BarOrderStatus } from '../types/bar'
 
+// Categories
+export interface BarCategory { id: string; name: string; createdAt: string }
+
+export async function listCategories(): Promise<BarCategory[]> {
+  const res = await api.get<BarCategory[]>('/bar/categories')
+  return res.data
+}
+
+export async function createCategory(name: string): Promise<BarCategory> {
+  const res = await api.post<BarCategory>('/bar/categories', { name })
+  return res.data
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await api.delete(`/bar/categories/${id}`)
+}
+
 // Products
 export async function listProducts(active?: boolean): Promise<BarProduct[]> {
   const res = await api.get<BarProduct[]>('/bar/products', {

@@ -16,4 +16,7 @@ export async function tournamentRoutes(app: FastifyInstance) {
   app.post('/:id/draw', tournamentController.performDraw)
   app.post('/:id/draw/pairs', tournamentController.drawPairs)
   app.post('/:id/draw/teams', tournamentController.drawTeamGroups)
+  app.patch('/:id/bracket', tournamentController.saveBracket)
+  app.patch('/:id/teams/:teamId/position', tournamentController.updateTeamPosition)
+  app.get('/ranking', tournamentController.getPlayerRanking)
 }

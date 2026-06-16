@@ -7,6 +7,24 @@ import {
   AddItemInput,
 } from '../schemas/bar.schema'
 
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+export async function listCategories() {
+  return prisma.barCategory.findMany({ orderBy: { name: 'asc' } })
+}
+
+export async function createCategory(name: string) {
+  return prisma.barCategory.create({ data: { name } })
+}
+
+export async function deleteCategory(id: string) {
+  const cat = await prisma.barCategory.findUnique({ where: { id } })
+  if (!cat) throw Object.assign(new Error('Categoria não encontrada'), { statusCode: 404 })
+  // Remove category from products that use it
+  await prisma.barProduct.updateMany({ where: { category: cat.name }, data: { category: null } })
+  return prisma.barCategory.delete({ where: { id } })
+}
+
 // ─── Products ────────────────────────────────────────────────────────────────
 
 export async function listProducts(activeOnly?: boolean) {

@@ -71,3 +71,33 @@ export async function drawTeamGroups(tournamentId: string, playersPerTeam: numbe
   const res = await api.post<Tournament>(`/tournaments/${tournamentId}/draw/teams`, { playersPerTeam })
   return res.data
 }
+
+/** Save a bracket match result (winnerId) */
+export async function saveBracketMatch(
+  tournamentId: string,
+  match: { round: number; matchIndex: number; winnerId: string | null },
+): Promise<Tournament> {
+  const res = await api.patch<Tournament>(`/tournaments/${tournamentId}/bracket`, { match })
+  return res.data
+}
+
+/** Update a team's final position */
+export async function updateTeamPosition(
+  tournamentId: string,
+  teamId: string,
+  finalPosition: number | null,
+): Promise<void> {
+  await api.patch(`/tournaments/${tournamentId}/teams/${teamId}/position`, { finalPosition })
+}
+
+export interface PlayerRankingEntry {
+  rank: number
+  name: string
+  points: number
+  tournaments: { tournamentName: string; position: number | null; points: number; date: string }[]
+}
+
+export async function getPlayerRanking(): Promise<PlayerRankingEntry[]> {
+  const res = await api.get<PlayerRankingEntry[]>('/tournaments/ranking')
+  return res.data
+}

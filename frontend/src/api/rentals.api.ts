@@ -71,3 +71,17 @@ export async function updateRental(id: string, data: Partial<{
 export async function deleteRental(id: string): Promise<void> {
   await api.delete(`/rentals/${id}`)
 }
+
+export interface RentalReport {
+  activeCount: number
+  inactiveCount: number
+  totalCount: number
+  estimatedRevenue: number
+  topCourts: { courtName: string; rentalCount: number; estimatedRevenue: number }[]
+  weekdayActivity: { weekday: number; rentalCount: number }[]
+}
+
+export async function getRentalReport(params?: { startDate?: string; endDate?: string }): Promise<RentalReport> {
+  const res = await api.get<RentalReport>('/rentals/report', { params })
+  return res.data
+}
