@@ -16,6 +16,30 @@ import * as rentalsApi from '../../api/rentals.api'
 
 const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
+const PLAN_OPTIONS = [
+  { value: 'CUSTOM', label: 'Personalizado (datas)' },
+  { value: '1M', label: '1 mês' },
+  { value: '3M', label: '3 meses' },
+  { value: '6M', label: '6 meses' },
+  { value: '12M', label: '1 ano' },
+]
+const PLAN_MONTHS: Record<string, number> = { '1M': 1, '3M': 3, '6M': 6, '12M': 12 }
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: '', label: 'Não informado' },
+  { value: 'PIX', label: 'PIX' },
+  { value: 'CASH', label: 'Dinheiro' },
+  { value: 'CREDIT_CARD', label: 'Cartão de Crédito' },
+  { value: 'DEBIT_CARD', label: 'Cartão de Débito' },
+  { value: 'TRANSFER', label: 'Transferência' },
+]
+
+function addMonths(dateStr: string, months: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setMonth(d.getMonth() + months)
+  return d.toISOString().slice(0, 10)
+}
+
 const schema = z.object({
   courtId: z.string().optional(),
   clientName: z.string().min(1, 'Cliente obrigatório'),
@@ -28,6 +52,9 @@ const schema = z.object({
   })).min(1, 'Adicione ao menos um horário'),
   startDate: z.string().min(1, 'Data de início obrigatória'),
   endDate: z.string().optional(),
+  plan: z.string().default('CUSTOM'),
+  paymentMethod: z.string().optional(),
+  paymentDay: z.string().optional(),
   notes: z.string().optional(),
 })
 type FormData = z.infer<typeof schema>
@@ -46,10 +73,13 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
 
   const { register, handleSubmit, reset, setValue, watch, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { weekdays: [], slots: [{ startTime: '', endTime: '', price: 0 }] },
+    defaultValues: { weekdays: [], slots: [{ startTime: '', endTime: '', price: 0 }], plan: 'CUSTOM' },
   })
 
   const { fields, append, remove } = useFieldArray({ control, name: 'slots' })
+
+  const plan = watch('plan')
+  const startDate = watch('startDate')
 
   useEffect(() => {
     if (open) {
@@ -64,14 +94,22 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
           slots: rental.slots.map(s => ({ ...s, price: s.price ?? 0 })),
           startDate: rental.startDate.slice(0, 10),
           endDate: rental.endDate?.slice(0, 10) ?? '',
+          plan: rental.plan ?? 'CUSTOM',
+          paymentMethod: rental.paymentMethod ?? '',
+          paymentDay: rental.paymentDay != null ? String(rental.paymentDay) : '',
           notes: rental.notes ?? '',
         })
       } else {
         setSelectedWeekdays([])
-        reset({ courtId: '', clientName: '', clientId: '', weekdays: [], slots: [{ startTime: '', endTime: '', price: 0 }], startDate: '', endDate: '', notes: '' })
+        reset({ courtId: '', clientName: '', clientId: '', weekdays: [], slots: [{ startTime: '', endTime: '', price: 0 }], startDate: '', endDate: '', plan: 'CUSTOM', paymentMethod: '', paymentDay: '', notes: '' })
       }
     }
   }, [open, rental, reset])
+
+  // Auto-compute end date for fixed plans
+  const computedEndDate = plan !== 'CUSTOM' && startDate && PLAN_MONTHS[plan]
+    ? addMonths(startDate, PLAN_MONTHS[plan])
+    : null
 
   function toggleWeekday(d: number) {
     const updated = selectedWeekdays.includes(d)
@@ -82,23 +120,41 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
   }
 
   async function onSubmit(data: FormData) {
+    const isFixedPlan = data.plan !== 'CUSTOM' && PLAN_MONTHS[data.plan]
+    const endDate = isFixedPlan
+      ? addMonths(data.startDate, PLAN_MONTHS[data.plan])
+      : (data.endDate || undefined)
+    const paymentDayNum = data.paymentDay && data.paymentDay.trim()
+      ? parseInt(data.paymentDay, 10)
+      : null
+    if (paymentDayNum != null && (isNaN(paymentDayNum) || paymentDayNum < 1 || paymentDayNum > 31)) {
+      toast.error('Dia de pagamento deve ser entre 1 e 31')
+      return
+    }
     try {
       const payload = {
-        ...data,
         courtId: data.courtId || undefined,
-        endDate: data.endDate || undefined,
         clientId: data.clientId || undefined,
+        clientName: data.clientName,
+        weekdays: data.weekdays,
+        slots: data.slots,
+        startDate: data.startDate,
+        endDate,
+        plan: data.plan,
+        paymentMethod: data.paymentMethod || undefined,
+        paymentDay: paymentDayNum,
+        notes: data.notes,
       }
       if (isEdit) {
         await rentalsApi.updateRental(rental.id, payload)
-        toast.success('Aluguel atualizado')
+        toast.success('Locação atualizada')
       } else {
         await rentalsApi.createRental(payload)
-        toast.success('Aluguel cadastrado')
+        toast.success('Locação cadastrada')
       }
       onSuccess()
       onClose()
-    } catch { toast.error('Erro ao salvar aluguel') }
+    } catch { toast.error('Erro ao salvar locação') }
   }
 
   return (
@@ -219,10 +275,33 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
           {errors.slots && <p className="text-xs text-red-500 mt-1">Preencha todos os horários</p>}
         </div>
 
-        {/* Período */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Plano / Período */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select label="Plano" options={PLAN_OPTIONS} {...register('plan')} />
           <Input label="Data de início *" type="date" error={errors.startDate?.message} {...register('startDate')} />
+        </div>
+
+        {plan === 'CUSTOM' ? (
           <Input label="Data de término (opcional)" type="date" {...register('endDate')} />
+        ) : (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 text-sm text-orange-700">
+            {computedEndDate
+              ? <>Término calculado automaticamente: <strong>{new Date(computedEndDate + 'T12:00:00').toLocaleDateString('pt-BR')}</strong></>
+              : 'Informe a data de início para calcular o término do plano.'}
+          </div>
+        )}
+
+        {/* Pagamento */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Select label="Forma de pagamento" options={PAYMENT_METHOD_OPTIONS} {...register('paymentMethod')} />
+          <Input
+            label="Dia de pagamento (1-31)"
+            type="number"
+            min={1}
+            max={31}
+            placeholder="ex: 5"
+            {...register('paymentDay')}
+          />
         </div>
 
         <Textarea label="Observações" {...register('notes')} placeholder="Ex: Professor de Beach Tennis, turma avançada" />

@@ -12,6 +12,9 @@ interface RentalRaw {
   slots: string
   startDate: string
   endDate?: string
+  plan?: string | null
+  paymentMethod?: string | null
+  paymentDay?: number | null
   notes?: string
   active: boolean
   createdAt: string
@@ -23,7 +26,14 @@ function parseRental(r: RentalRaw): Rental {
   let slots: RentalSlot[] = []
   try { weekdays = JSON.parse(r.weekdays) } catch { weekdays = [] }
   try { slots = JSON.parse(r.slots) } catch { slots = [] }
-  return { ...r, weekdays, slots }
+  return {
+    ...r,
+    weekdays,
+    slots,
+    plan: (r.plan as Rental['plan']) ?? null,
+    paymentMethod: (r.paymentMethod as Rental['paymentMethod']) ?? null,
+    paymentDay: r.paymentDay ?? null,
+  }
 }
 
 export async function listRentals(params?: {
@@ -49,6 +59,9 @@ export async function createRental(data: {
   slots: RentalSlot[]
   startDate: string
   endDate?: string
+  plan?: string
+  paymentMethod?: string
+  paymentDay?: number | null
   notes?: string
 }): Promise<Rental> {
   const res = await api.post<RentalRaw>('/rentals', data)
@@ -56,11 +69,16 @@ export async function createRental(data: {
 }
 
 export async function updateRental(id: string, data: Partial<{
+  courtId: string
+  clientId: string
   clientName: string
   weekdays: number[]
   slots: RentalSlot[]
   startDate: string
   endDate: string
+  plan: string
+  paymentMethod: string
+  paymentDay: number | null
   notes: string
   active: boolean
 }>): Promise<Rental> {

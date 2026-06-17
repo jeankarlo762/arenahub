@@ -4,6 +4,9 @@ export interface RentalSlot {
   price: number
 }
 
+export type RentalPlan = '1M' | '3M' | '6M' | '12M' | 'CUSTOM'
+export type RentalPaymentMethod = 'CASH' | 'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'TRANSFER'
+
 export interface Rental {
   id: string
   courtId?: string
@@ -15,6 +18,9 @@ export interface Rental {
   slots: RentalSlot[]  // parsed from JSON string
   startDate: string
   endDate?: string
+  plan?: RentalPlan | null
+  paymentMethod?: RentalPaymentMethod | null
+  paymentDay?: number | null
   notes?: string
   active: boolean
   createdAt: string
