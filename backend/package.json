@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc && npx prisma generate",
+    "build": "npx prisma generate && tsc",
     "start": "npx prisma db push --accept-data-loss --skip-generate && npx tsx prisma/seed.ts && node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
