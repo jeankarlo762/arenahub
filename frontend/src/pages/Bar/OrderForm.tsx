@@ -25,10 +25,11 @@ interface OrderFormProps {
   onClose: () => void
   onSuccess: (order: BarOrder) => void
   order?: BarOrder
+  presetNumber?: number
   onBack?: () => void
 }
 
-export function OrderForm({ open, onClose, onSuccess, order, onBack }: OrderFormProps) {
+export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBack }: OrderFormProps) {
   const isEdit = !!order
   const { register, handleSubmit, reset, setValue, watch, getValues, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -44,10 +45,10 @@ export function OrderForm({ open, onClose, onSuccess, order, onBack }: OrderForm
     if (open) {
       reset(order
         ? { number: order.number, customerName: order.customerName, notes: order.notes ?? '' }
-        : { customerName: '', notes: '' })
+        : { number: presetNumber, customerName: '', notes: '' })
       setConflictOrder(null)
     }
-  }, [open, order, reset])
+  }, [open, order, presetNumber, reset])
 
   async function handleNumberBlur() {
     if (isEdit) return

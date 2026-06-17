@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Clock, CheckCircle2, History, LayoutGrid, List } from 'lucide-react'
+import { Plus, Search, History, Trash2 } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import type { BarOrder } from '../../types/bar'
 import * as barApi from '../../api/bar.api'
 import { formatCurrency } from '../../utils/format'
 import { formatDate } from '../../utils/date'
+import toast from 'react-hot-toast'
 
 import { OrderDetail } from '../Bar/OrderDetail'
 import { OrderForm } from '../Bar/OrderForm'
@@ -19,7 +21,8 @@ const PAYMENT_LABELS: Record<string, string> = {
   TRANSFER: 'Transferência',
 }
 
-type ViewFormat = 'cards' | 'list'
+// Minimum number of comanda cells shown (SAIPOS-style grid)
+const MIN_CELLS = 20
 
 export default function ComandasPage() {
   const [openOrders, setOpenOrders] = useState<BarOrder[]>([])
@@ -27,9 +30,11 @@ export default function ComandasPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [formOpen, setFormOpen] = useState(false)
+  const [presetNumber, setPresetNumber] = useState<number | undefined>(undefined)
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
-  const [viewFormat, setViewFormat] = useState<ViewFormat>('cards')
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -52,13 +57,42 @@ export default function ComandasPage() {
     setDetailOpen(true)
   }
 
-  const filteredOpen = search.trim()
-    ? openOrders.filter((o) => o.customerName.toLowerCase().includes(search.toLowerCase()) || String(o.number).includes(search))
-    : openOrders
+  function openNewWithNumber(num?: number) {
+    setPresetNumber(num)
+    setFormOpen(true)
+  }
 
-  const filteredClosed = search.trim()
-    ? closedOrders.filter((o) => o.customerName.toLowerCase().includes(search.toLowerCase()) || String(o.number).includes(search))
+  async function handleClearAll() {
+    setClearing(true)
+    try {
+      await Promise.all(openOrders.map((o) => barApi.updateOrderStatus(o.id, 'CANCELLED')))
+      toast.success('Comandas removidas')
+      setConfirmClear(false)
+      load()
+    } catch {
+      toast.error('Erro ao remover comandas')
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  // Map open orders by their number for the grid
+  const ordersByNumber = new Map<number, BarOrder>()
+  for (const o of openOrders) ordersByNumber.set(o.number, o)
+
+  const highestNumber = openOrders.reduce((max, o) => Math.max(max, o.number), 0)
+  const cellCount = Math.max(MIN_CELLS, highestNumber)
+  const cells = Array.from({ length: cellCount }, (_, i) => i + 1)
+
+  const searchNum = search.trim()
+  const filteredClosed = searchNum
+    ? closedOrders.filter((o) => o.customerName.toLowerCase().includes(searchNum.toLowerCase()) || String(o.number).includes(searchNum))
     : closedOrders
+
+  function matchesSearch(o: BarOrder): boolean {
+    if (!searchNum) return true
+    return o.customerName.toLowerCase().includes(searchNum.toLowerCase()) || String(o.number).includes(searchNum)
+  }
 
   return (
     <Layout title="Comandas">
@@ -76,25 +110,12 @@ export default function ComandasPage() {
             />
           </div>
 
-          {/* View format toggle */}
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
-            <button
-              onClick={() => setViewFormat('cards')}
-              title="Cards"
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${viewFormat === 'cards' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-            >
-              <LayoutGrid size={15} />
-            </button>
-            <button
-              onClick={() => setViewFormat('list')}
-              title="Lista"
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-l border-gray-200 transition-colors ${viewFormat === 'list' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-            >
-              <List size={15} />
-            </button>
-          </div>
-
-          <Button onClick={() => setFormOpen(true)}>
+          {openOrders.length > 0 && (
+            <Button variant="secondary" onClick={() => setConfirmClear(true)}>
+              <Trash2 size={16} /> Remover todas
+            </Button>
+          )}
+          <Button onClick={() => openNewWithNumber(undefined)}>
             <Plus size={16} /> Nova Comanda
           </Button>
         </div>
@@ -103,83 +124,54 @@ export default function ComandasPage() {
           <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>
         ) : (
           <>
-            {/* ── Fila de atendimento (OPEN) ── */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Clock size={16} className="text-orange-500" />
-                <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider">
-                  Fila de atendimento
-                </h2>
-                {filteredOpen.length > 0 && (
-                  <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
-                    {filteredOpen.length}
-                  </span>
-                )}
-              </div>
+            {/* Legend */}
+            <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-green-500 inline-block" /> Disponível
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-red-500 inline-block" /> Em consumo
+              </span>
+            </div>
 
-              {filteredOpen.length === 0 ? (
-                <div className="border-2 border-dashed border-gray-200 rounded-xl py-10 text-center">
-                  <CheckCircle2 size={32} className="mx-auto mb-2 text-green-400" />
-                  <p className="text-sm text-gray-400">Nenhuma comanda em aberto</p>
-                  <button
-                    onClick={() => setFormOpen(true)}
-                    className="mt-3 text-sm text-orange-500 hover:text-orange-600 font-medium transition-colors"
-                  >
-                    + Nova comanda
-                  </button>
-                </div>
-              ) : viewFormat === 'cards' ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
-                  {filteredOpen.slice(0, 20).map((order) => (
+            {/* ── Grade de comandas (estilo SAIPOS) ── */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+              {cells.map((num) => {
+                const order = ordersByNumber.get(num)
+                const dimmed = !!searchNum && order ? !matchesSearch(order) : false
+
+                if (order) {
+                  return (
                     <button
-                      key={order.id}
+                      key={num}
                       onClick={() => openDetail(order.id)}
-                      className="bg-white rounded-xl border-2 border-orange-200 p-3 text-left flex flex-col gap-2 hover:border-orange-400 hover:shadow-sm transition-all"
+                      className={`relative rounded-lg p-2.5 text-left text-white bg-red-500 hover:bg-red-600 transition-all min-h-[78px] flex flex-col justify-between shadow-sm ${dimmed ? 'opacity-30' : ''}`}
                     >
                       <div className="flex items-start justify-between gap-1">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-bold text-gray-900 text-base">#{order.number}</p>
-                            <span className="bg-green-100 text-green-700 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">Liberada</span>
-                          </div>
-                          <p className="text-xs font-medium text-gray-700 truncate">{order.customerName}</p>
-                        </div>
-                        <p className="font-bold text-orange-600 text-sm shrink-0">{formatCurrency(Number(order.total))}</p>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px] text-gray-400">
-                        <span>{order.items.length} {order.items.length === 1 ? 'item' : 'itens'}</span>
-                        <span>{formatDate(order.createdAt)}</span>
-                      </div>
-                      {order.notes && <p className="text-[10px] text-gray-400 truncate">{order.notes}</p>}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl border-2 border-orange-100 divide-y divide-gray-100 overflow-hidden">
-                  {filteredOpen.map((order) => (
-                    <button
-                      key={order.id}
-                      onClick={() => openDetail(order.id)}
-                      className="w-full flex items-center gap-4 px-4 py-3 hover:bg-orange-50 transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                        <p className="text-xs font-bold text-orange-700">#{order.number}</p>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{order.customerName}</p>
-                        <p className="text-xs text-gray-400">
+                        <span className="font-bold text-lg leading-none">{num}</span>
+                        <span className="text-[10px] bg-white/20 rounded-full px-1.5 py-0.5 leading-none">
                           {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
-                          {' · '}{formatDate(order.createdAt)}
-                        </p>
+                        </span>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-orange-600">{formatCurrency(Number(order.total))}</p>
-                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Liberada</span>
+                      <div>
+                        <p className="text-[11px] font-medium truncate">{order.customerName}</p>
+                        <p className="text-xs font-bold">{formatCurrency(Number(order.total))}</p>
                       </div>
                     </button>
-                  ))}
-                </div>
-              )}
+                  )
+                }
+
+                return (
+                  <button
+                    key={num}
+                    onClick={() => openNewWithNumber(num)}
+                    title={`Abrir comanda ${num}`}
+                    className="rounded-lg p-2.5 text-white bg-green-500 hover:bg-green-600 transition-all min-h-[78px] flex items-center justify-center shadow-sm"
+                  >
+                    <span className="font-bold text-2xl">{num}</span>
+                  </button>
+                )
+              })}
             </div>
 
             {/* ── Histórico (CLOSED) ── */}
@@ -196,7 +188,7 @@ export default function ComandasPage() {
 
               {filteredClosed.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">Nenhuma comanda paga ainda</p>
-              ) : viewFormat === 'list' ? (
+              ) : (
                 <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
                   {filteredClosed.map((order) => (
                     <button
@@ -219,32 +211,6 @@ export default function ComandasPage() {
                     </button>
                   ))}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {filteredClosed.map((order) => (
-                    <button
-                      key={order.id}
-                      onClick={() => openDetail(order.id)}
-                      className="bg-white rounded-xl border border-gray-200 p-4 text-left flex flex-col gap-3 hover:border-gray-300 hover:shadow-sm transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="font-bold text-gray-700 text-lg">#{order.number}</p>
-                          <p className="text-sm text-gray-700 truncate">{order.customerName}</p>
-                        </div>
-                        <p className="font-bold text-gray-700 text-base shrink-0">{formatCurrency(Number(order.total))}</p>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>{order.items.length} {order.items.length === 1 ? 'item' : 'itens'}</span>
-                        {order.paymentMethod && (
-                          <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full font-medium">
-                            {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
               )}
             </div>
           </>
@@ -254,6 +220,7 @@ export default function ComandasPage() {
       <OrderForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
+        presetNumber={presetNumber}
         onSuccess={(order) => {
           setFormOpen(false)
           load()
@@ -269,6 +236,15 @@ export default function ComandasPage() {
           onRefresh={load}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmClear}
+        onClose={() => setConfirmClear(false)}
+        onConfirm={handleClearAll}
+        title="Remover todas as comandas"
+        message={`Isso vai cancelar as ${openOrders.length} comanda(s) em aberto. Esta ação não pode ser desfeita.`}
+        confirmLabel={clearing ? 'Removendo...' : 'Remover todas'}
+      />
     </Layout>
   )
 }
