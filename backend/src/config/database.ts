@@ -20,6 +20,7 @@ const TENANT_MODELS = new Set<string>([
   'BarCategory',
   'Client',
   'Rental',
+  'Player',
 ])
 
 function delegateFor(model: string) {

@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Trophy, Search, Crown, Medal, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trophy, Search, Crown, Users, ChevronDown, ChevronUp, Pencil, Trash2, UserPlus } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { TournamentForm } from './TournamentForm'
+import { PlayerForm } from './PlayerForm'
 import type { Tournament } from '../../types/tournament'
 import * as tournamentsApi from '../../api/tournaments.api'
-import type { PlayerRankingEntry } from '../../api/tournaments.api'
+import * as playersApi from '../../api/players.api'
+import type { Player } from '../../api/players.api'
 import { TOURNAMENT_STATUS_LABELS } from '../../utils/format'
 import { formatDate } from '../../utils/date'
+import toast from 'react-hot-toast'
 
 const MATCH_TYPE_LABELS: Record<string, string> = {
   INDIVIDUAL: 'Individual',
@@ -20,7 +24,7 @@ const MATCH_TYPE_LABELS: Record<string, string> = {
 }
 
 export default function TournamentsPage() {
-  const [tab, setTab] = useState<'list' | 'ranking'>('list')
+  const [tab, setTab] = useState<'list' | 'players'>('list')
   const [tournaments, setTournaments] = useState<Tournament[]>([])
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -52,7 +56,7 @@ export default function TournamentsPage() {
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex gap-1 border-b border-gray-200 w-full sm:w-auto">
-            {(['list', 'ranking'] as const).map((t) => (
+            {(['list', 'players'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -62,7 +66,7 @@ export default function TournamentsPage() {
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {t === 'list' ? 'Torneios' : 'Ranking de Jogadores'}
+                {t === 'list' ? 'Torneios' : 'Jogadores'}
               </button>
             ))}
           </div>
@@ -143,7 +147,7 @@ export default function TournamentsPage() {
           </>
         )}
 
-        {tab === 'ranking' && <PlayerRankingTab />}
+        {tab === 'players' && <PlayersTab />}
       </div>
 
       <TournamentForm
@@ -155,132 +159,208 @@ export default function TournamentsPage() {
   )
 }
 
-function PlayerRankingTab() {
-  const [ranking, setRanking] = useState<PlayerRankingEntry[]>([])
+function PlayersTab() {
+  const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
-  const [expandedPlayer, setExpandedPlayer] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState<Player | null>(null)
+  const [removing, setRemoving] = useState<Player | null>(null)
 
-  useEffect(() => {
-    tournamentsApi.getPlayerRanking()
-      .then(setRanking)
+  const load = useCallback(() => {
+    setLoading(true)
+    playersApi.listPlayers()
+      .then(setPlayers)
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <Spinner size="lg" className="text-orange-500" />
-      </div>
-    )
+  useEffect(() => { load() }, [load])
+
+  async function handleDelete() {
+    if (!removing) return
+    try {
+      await playersApi.deletePlayer(removing.id)
+      toast.success('Jogador removido')
+      setRemoving(null)
+      load()
+    } catch {
+      toast.error('Erro ao remover')
+    }
   }
 
-  if (ranking.length === 0) {
-    return (
-      <EmptyState
-        icon={<Medal size={48} />}
-        title="Nenhum dado de ranking"
-        description="O ranking é calculado a partir de torneios finalizados com posições definidas."
-      />
-    )
-  }
-
-  const medalColors: Record<number, string> = {
-    1: 'text-yellow-500',
-    2: 'text-gray-400',
-    3: 'text-orange-600',
-  }
+  const filtered = search.trim()
+    ? players.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    : players
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-gray-500">
-        Ranking calculado com base nas posições finais de torneios encerrados.
-      </p>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <p className="text-sm text-gray-500 flex-1">
+          Lista de jogadores com ranking e pontuação de torneios encerrados.
+        </p>
+        <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
+          <UserPlus size={16} /> Novo Jogador
+        </Button>
+      </div>
 
-      {ranking.map((player) => {
-        const isExpanded = expandedPlayer === player.name
-        const medal = player.rank <= 3 ? '🥇🥈🥉'[player.rank - 1] : null
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Buscar jogador..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+        />
+      </div>
 
-        return (
-          <div key={player.name} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            <button
-              type="button"
-              className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors"
-              onClick={() => setExpandedPlayer(isExpanded ? null : player.name)}
-            >
-              {/* Rank */}
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                player.rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                player.rank === 2 ? 'bg-gray-100 text-gray-600' :
-                player.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                'bg-gray-50 text-gray-500'
-              }`}>
-                {medal ?? `#${player.rank}`}
-              </div>
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" className="text-orange-500" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<Users size={48} />}
+          title={search ? 'Nenhum jogador encontrado' : 'Nenhum jogador cadastrado'}
+          description={!search ? 'Cadastre jogadores para acompanhar seu ranking e pontuação.' : undefined}
+          action={!search ? { label: 'Novo Jogador', onClick: () => { setEditing(null); setFormOpen(true) } } : undefined}
+        />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {filtered.map((player, idx) => {
+            const isExpanded = expanded === player.id
+            const rank = idx + 1
+            const medal = rank <= 3 && player.points > 0 ? '🥇🥈🥉'[rank - 1] : null
+            return (
+              <div key={player.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="w-full flex items-center gap-4 px-5 py-4">
+                  {/* Rank */}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                    medal && rank === 1 ? 'bg-yellow-100 text-yellow-700' :
+                    medal && rank === 2 ? 'bg-gray-100 text-gray-600' :
+                    medal && rank === 3 ? 'bg-orange-100 text-orange-700' :
+                    'bg-gray-50 text-gray-500'
+                  }`}>
+                    {medal ?? `#${rank}`}
+                  </div>
 
-              {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 border-2 border-orange-200 shrink-0">
-                {player.name.charAt(0).toUpperCase()}
-              </div>
-
-              {/* Name and points */}
-              <div className="flex-1 min-w-0">
-                <p className={`font-semibold text-gray-900 truncate ${medalColors[player.rank] ?? ''}`}>
-                  {player.name}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {player.tournaments.length} torneio{player.tournaments.length !== 1 ? 's' : ''} · {player.points} pts
-                </p>
-              </div>
-
-              {/* Points badge */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                  player.rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                  player.rank === 2 ? 'bg-gray-100 text-gray-600' :
-                  player.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                  'bg-orange-50 text-orange-600'
-                }`}>
-                  {player.points} pts
-                </span>
-                {isExpanded
-                  ? <ChevronUp size={16} className="text-gray-400" />
-                  : <ChevronDown size={16} className="text-gray-400" />
-                }
-              </div>
-            </button>
-
-            {/* Expanded history */}
-            {isExpanded && (
-              <div className="border-t border-gray-100 px-5 pb-4 pt-3">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Histórico de torneios</p>
-                <div className="flex flex-col gap-2">
-                  {player.tournaments.map((entry, i) => (
-                    <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800 truncate">{entry.tournamentName}</p>
-                        <p className="text-xs text-gray-400">{formatDate(entry.date)}</p>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        {entry.position ? (
-                          <span className="text-sm text-gray-600">
-                            {entry.position === 1 ? '🥇' : entry.position === 2 ? '🥈' : entry.position === 3 ? '🥉' : `${entry.position}º`}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">Posição não definida</span>
-                        )}
-                        <span className={`text-sm font-semibold ${entry.points > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
-                          +{entry.points} pts
-                        </span>
-                      </div>
+                  {/* Avatar */}
+                  {player.photo ? (
+                    <img src={player.photo} alt={player.name} className="w-11 h-11 rounded-full object-cover border-2 border-orange-200 shrink-0" />
+                  ) : (
+                    <div className="w-11 h-11 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 border-2 border-orange-200 shrink-0">
+                      {player.name.charAt(0).toUpperCase()}
                     </div>
-                  ))}
+                  )}
+
+                  {/* Name + meta */}
+                  <button
+                    type="button"
+                    className="flex-1 min-w-0 text-left"
+                    onClick={() => setExpanded(isExpanded ? null : player.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 truncate">{player.name}</p>
+                      {!player.registered && (
+                        <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">não cadastrado</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {player.age != null ? `${player.age} anos · ` : ''}
+                      {player.tournamentCount} torneio{player.tournamentCount !== 1 ? 's' : ''}
+                    </p>
+                  </button>
+
+                  {/* Points */}
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold shrink-0 ${
+                    player.points > 0 ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-400'
+                  }`}>
+                    {player.points} pts
+                  </span>
+
+                  {/* Actions */}
+                  {player.registered && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => { setEditing(player); setFormOpen(true) }}
+                        className="p-1.5 text-gray-400 hover:text-orange-500 transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        onClick={() => setRemoving(player)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Remover"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(isExpanded ? null : player.id)}
+                    className="p-1 text-gray-400 shrink-0"
+                  >
+                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
                 </div>
+
+                {isExpanded && (
+                  <div className="border-t border-gray-100 px-5 pb-4 pt-3">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Histórico de torneios</p>
+                    {player.tournaments.length === 0 ? (
+                      <p className="text-sm text-gray-400">Ainda não participou de torneios encerrados.</p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {player.tournaments.map((entry, i) => (
+                          <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-gray-800 truncate">{entry.tournamentName}</p>
+                              <p className="text-xs text-gray-400">{formatDate(entry.date)}</p>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              {entry.position ? (
+                                <span className="text-sm text-gray-600">
+                                  {entry.position === 1 ? '🥇' : entry.position === 2 ? '🥈' : entry.position === 3 ? '🥉' : `${entry.position}º`}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-400 italic">Posição não definida</span>
+                              )}
+                              <span className={`text-sm font-semibold ${entry.points > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+                                +{entry.points} pts
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )
-      })}
+            )
+          })}
+        </div>
+      )}
+
+      <PlayerForm
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSuccess={load}
+        player={editing}
+      />
+
+      <ConfirmDialog
+        open={!!removing}
+        onClose={() => setRemoving(null)}
+        onConfirm={handleDelete}
+        title="Remover jogador"
+        message={`Deseja remover ${removing?.name}? O histórico em torneios não será afetado.`}
+        confirmLabel="Remover"
+      />
     </div>
   )
 }

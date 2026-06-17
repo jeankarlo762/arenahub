@@ -226,22 +226,42 @@ model Client {
 
 // weekdays: JSON string of int array [0-6] (0=Sun)
 // slots: JSON string of [{startTime:"HH:MM",endTime:"HH:MM",price:number}]
+// plan: one of "1M" | "3M" | "6M" | "12M" | "CUSTOM"
+// paymentMethod: CASH | PIX | CREDIT_CARD | DEBIT_CARD | TRANSFER
+// paymentDay: day of month (1-31) the rental is charged
 model Rental {
-  id         String    @id @default(cuid())
-  tenantId   String?
-  courtId    String?
-  court      Court?    @relation(fields: [courtId], references: [id])
-  clientId   String?
-  client     Client?   @relation(fields: [clientId], references: [id])
-  clientName String
-  weekdays   String
-  slots      String
-  startDate  DateTime
-  endDate    DateTime?
-  notes      String?
-  active     Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  tenantId      String?
+  courtId       String?
+  court         Court?    @relation(fields: [courtId], references: [id])
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id])
+  clientName    String
+  weekdays      String
+  slots         String
+  startDate     DateTime
+  endDate       DateTime?
+  plan          String?
+  paymentMethod String?
+  paymentDay    Int?
+  notes         String?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([tenantId])
+}
+
+// Registered tournament players. Points and tournaments-played are derived
+// from finished tournaments (matched by name), not stored here.
+model Player {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  name      String
+  age       Int?
+  photo     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
 }

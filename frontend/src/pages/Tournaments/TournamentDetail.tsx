@@ -50,8 +50,6 @@ export function TournamentDetail({ tournament, onRefresh }: TournamentDetailProp
   const [drawingPairs, setDrawingPairs] = useState(false)
   const [playersPerTeam, setPlayersPerTeam] = useState('5')
   const [updatingStatus, setUpdatingStatus] = useState(false)
-  const [championInput, setChampionInput] = useState(tournament.champion ?? '')
-  const [savingChampion, setSavingChampion] = useState(false)
 
   const matchType = tournament.matchType ?? 'TEAM'
   const hasBracketDraw = tournament.teams.some((t) => t.groupNumber)
@@ -139,19 +137,6 @@ export function TournamentDetail({ tournament, onRefresh }: TournamentDetailProp
     }
   }
 
-  async function handleSaveChampion() {
-    setSavingChampion(true)
-    try {
-      await tournamentsApi.setChampion(tournament.id, championInput.trim() || null)
-      toast.success('Campeão definido')
-      onRefresh()
-    } catch {
-      toast.error('Erro ao salvar')
-    } finally {
-      setSavingChampion(false)
-    }
-  }
-
   function openBracket() {
     window.open(`/tournaments/${tournament.id}/bracket`, '_blank', 'width=1400,height=900')
   }
@@ -211,27 +196,18 @@ export function TournamentDetail({ tournament, onRefresh }: TournamentDetailProp
           </div>
         </Card>
 
-        {/* Champion section */}
+        {/* Champion section — auto-defined from the bracket final */}
         {canSetChampion && (
           <Card>
-            <div className="flex items-start gap-3 flex-wrap">
-              <Crown size={18} className="text-yellow-500 shrink-0 mt-1" />
+            <div className="flex items-center gap-3 flex-wrap">
+              <Crown size={18} className="text-yellow-500 shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900">Campeão</p>
-                {tournament.champion && (
+                {tournament.champion ? (
                   <p className="text-lg font-bold text-yellow-600 mt-0.5">{tournament.champion}</p>
+                ) : (
+                  <p className="text-sm text-gray-400 mt-0.5">Será definido automaticamente ao concluir o chaveamento</p>
                 )}
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <input
-                  type="text"
-                  placeholder="Nome do campeão..."
-                  value={championInput}
-                  onChange={(e) => setChampionInput(e.target.value)}
-                  className="flex-1 sm:w-56 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSaveChampion()}
-                />
-                <Button size="sm" loading={savingChampion} onClick={handleSaveChampion}>Salvar</Button>
               </div>
             </div>
           </Card>

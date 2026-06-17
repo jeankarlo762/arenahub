@@ -268,9 +268,28 @@ export async function saveBracketMatch(tournamentId: string, input: SaveBracketI
     existing.push(input.match)
   }
 
+  // Auto-define the champion from the final match.
+  // Bracket size = next power of two >= number of seeded teams; the final round
+  // is the last one (a single match). When that match has a winner, that team
+  // is the champion; if the winner is cleared, the champion is cleared too.
+  const teamCount = tournament.teams.length
+  let champion: string | null = tournament.champion ?? null
+  if (teamCount >= 2) {
+    let size = 1
+    while (size < teamCount) size *= 2
+    const finalRound = Math.log2(size) - 1
+    const finalMatch = existing.find((m) => m.round === finalRound && m.matchIndex === 0)
+    if (finalMatch?.winnerId) {
+      const winner = tournament.teams.find((t) => t.id === finalMatch.winnerId)
+      champion = winner?.name ?? champion
+    } else {
+      champion = null
+    }
+  }
+
   return prisma.tournament.update({
     where: { id: tournamentId },
-    data: { bracketData: JSON.stringify(existing) },
+    data: { bracketData: JSON.stringify(existing), champion },
     include: { teams: true, court: { select: { id: true, name: true, type: true } } },
   })
 }
