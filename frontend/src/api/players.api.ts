@@ -5,6 +5,8 @@ export interface PlayerTournamentEntry {
   position: number | null
   points: number
   date: string
+  matchType: string
+  sport: string
 }
 
 export interface Player {

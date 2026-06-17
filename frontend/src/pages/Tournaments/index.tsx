@@ -4,6 +4,7 @@ import { Plus, Trophy, Search, Crown, Users, ChevronDown, ChevronUp, Pencil, Tra
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
+import { Select } from '../../components/ui/Select'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
@@ -159,11 +160,20 @@ export default function TournamentsPage() {
   )
 }
 
+const MATCH_TYPE_FILTERS: { value: string; label: string }[] = [
+  { value: 'all', label: 'Todos os tipos' },
+  { value: 'INDIVIDUAL', label: 'Individual' },
+  { value: 'DOUBLES', label: 'Duplas' },
+  { value: 'TEAM', label: 'Equipes' },
+]
+
 function PlayersTab() {
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [sportFilter, setSportFilter] = useState('all')
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Player | null>(null)
   const [removing, setRemoving] = useState<Player | null>(null)
@@ -190,9 +200,17 @@ function PlayersTab() {
     }
   }
 
-  const filtered = search.trim()
-    ? players.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
-    : players
+  // Distinct sports (modalidades) across all players' tournament history
+  const sports = Array.from(
+    new Set(players.flatMap((p) => p.tournaments.map((t) => t.sport)).filter(Boolean)),
+  ).sort()
+
+  const filtered = players.filter((p) => {
+    if (search.trim() && !p.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (typeFilter !== 'all' && !p.tournaments.some((t) => t.matchType === typeFilter)) return false
+    if (sportFilter !== 'all' && !p.tournaments.some((t) => t.sport === sportFilter)) return false
+    return true
+  })
 
   return (
     <div className="flex flex-col gap-4">
@@ -203,6 +221,24 @@ function PlayersTab() {
         <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
           <UserPlus size={16} /> Novo Jogador
         </Button>
+      </div>
+
+      {/* Filtros tipo + modalidade */}
+      <div className="flex items-end gap-3 flex-wrap">
+        <Select
+          label="Tipo"
+          options={MATCH_TYPE_FILTERS}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="w-44"
+        />
+        <Select
+          label="Modalidade"
+          options={[{ value: 'all', label: 'Todas as modalidades' }, ...sports.map((s) => ({ value: s, label: s }))]}
+          value={sportFilter}
+          onChange={(e) => setSportFilter(e.target.value)}
+          className="w-52"
+        />
       </div>
 
       <div className="relative">

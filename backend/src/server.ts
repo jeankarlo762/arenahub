@@ -7,7 +7,8 @@ import { errorHandler } from './middlewares/errorHandler'
 import { prisma } from './config/database'
 import { tenantStore, createStore } from './config/tenant-context'
 
-const app = Fastify({ logger: env.NODE_ENV === 'development' })
+// bodyLimit raised to 8MB so base64 image payloads (player/team photos) fit
+const app = Fastify({ logger: env.NODE_ENV === 'development', bodyLimit: 8 * 1024 * 1024 })
 
 // Establish the tenant context at the very root of every request so it
 // reliably propagates to all hooks, handlers and the Prisma middleware.

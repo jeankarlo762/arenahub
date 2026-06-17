@@ -1,11 +1,20 @@
 import { prisma } from '../config/database'
 import { CreatePlayerInput, UpdatePlayerInput } from '../schemas/player.schema'
 
+interface TournamentEntry {
+  tournamentName: string
+  position: number | null
+  points: number
+  date: string
+  matchType: string
+  sport: string
+}
+
 interface RankingStats {
   name: string
   points: number
   tournamentCount: number
-  tournaments: { tournamentName: string; position: number | null; points: number; date: string }[]
+  tournaments: TournamentEntry[]
 }
 
 /**
@@ -33,6 +42,8 @@ async function buildRankingMap(): Promise<Map<string, RankingStats>> {
         position: team.finalPosition,
         points: pts,
         date: t.endDate.toISOString().slice(0, 10),
+        matchType: t.matchType,
+        sport: t.sport,
       })
       map.set(key, entry)
     }
@@ -47,7 +58,7 @@ export interface PlayerWithStats {
   photo: string | null
   points: number
   tournamentCount: number
-  tournaments: { tournamentName: string; position: number | null; points: number; date: string }[]
+  tournaments: TournamentEntry[]
   registered: boolean
 }
 

@@ -5,6 +5,7 @@ import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import * as playersApi from '../../api/players.api'
+import { resizeImageToDataUrl } from '../../utils/image'
 import type { Player } from '../../api/players.api'
 
 interface PlayerFormProps {
@@ -32,9 +33,9 @@ export function PlayerForm({ open, onClose, onSuccess, player }: PlayerFormProps
 
   function loadPhoto(file: File) {
     if (!file.type.startsWith('image/')) { toast.error('Apenas imagens'); return }
-    const reader = new FileReader()
-    reader.onload = (e) => setPhoto(e.target?.result as string)
-    reader.readAsDataURL(file)
+    resizeImageToDataUrl(file)
+      .then(setPhoto)
+      .catch(() => toast.error('Erro ao processar imagem'))
   }
 
   async function handleSave() {
