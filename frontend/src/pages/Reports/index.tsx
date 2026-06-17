@@ -40,7 +40,7 @@ export default function ReportsPage() {
     setLoading(true)
     try {
       const [cs, bs, rr, ts, d] = await Promise.all([
-        financialApi.getSummary({ startDate, endDate, source: 'all' }),
+        financialApi.getSummary({ startDate, endDate, source: 'courts' }),
         barApi.getBarStats(startDate, endDate),
         rentalsApi.getRentalReport({ startDate, endDate }),
         tournamentsApi.listTournaments(),
@@ -61,6 +61,11 @@ export default function ReportsPage() {
   const finishedTournaments = tournaments.filter(t => t.status === 'FINISHED')
   const activeTournaments = tournaments.filter(t => t.status === 'IN_PROGRESS' || t.status === 'OPEN')
 
+  const courtsReceived = courtsSummary?.received ?? 0
+  const barRevenue = barStats?.revenue ?? 0
+  const rentalsEstimated = rentalReport?.estimatedRevenue ?? 0
+  const totalGeral = courtsReceived + barRevenue + rentalsEstimated
+
   return (
     <Layout title="Relatório Geral">
       <div className="flex flex-col gap-6">
@@ -77,27 +82,27 @@ export default function ReportsPage() {
           <>
             {/* ─── Receita total ─── */}
             <section>
-              <h2 className="text-base font-semibold text-gray-700 mb-3">Receita Total (período)</h2>
+              <h2 className="text-base font-semibold text-gray-700 mb-3">Receita por Origem (período)</h2>
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Quadras + Bar</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(courtsSummary?.total ?? 0)}</p>
-                  <p className="text-xs text-gray-400">{courtsSummary?.paymentCount ?? 0} transações</p>
-                </Card>
-                <Card>
-                  <p className="text-xs text-gray-500 mb-1">Recebido</p>
-                  <p className="text-2xl font-bold text-green-700">{formatCurrency(courtsSummary?.received ?? 0)}</p>
-                  <p className="text-xs text-gray-400">{courtsSummary?.paymentCount ?? 0} agendamentos</p>
+                  <p className="text-xs text-gray-500 mb-1">Quadras (recebido)</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(courtsReceived)}</p>
+                  <p className="text-xs text-gray-400">{courtsSummary?.paymentCount ?? 0} pagamento(s)</p>
                 </Card>
                 <Card>
                   <p className="text-xs text-gray-500 mb-1">Bar</p>
-                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(barStats?.revenue ?? 0)}</p>
+                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(barRevenue)}</p>
                   <p className="text-xs text-gray-400">{barStats?.orderCount ?? 0} comandas</p>
                 </Card>
                 <Card>
                   <p className="text-xs text-gray-500 mb-1">Locações (estimado)</p>
-                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(rentalReport?.estimatedRevenue ?? 0)}</p>
+                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(rentalsEstimated)}</p>
                   <p className="text-xs text-gray-400">{rentalReport?.activeCount ?? 0} locações ativas</p>
+                </Card>
+                <Card className="border-orange-200 bg-orange-50/40">
+                  <p className="text-xs text-gray-500 mb-1">Total Geral</p>
+                  <p className="text-2xl font-bold text-green-700">{formatCurrency(totalGeral)}</p>
+                  <p className="text-xs text-gray-400">Quadras + Bar + Locações</p>
                 </Card>
               </div>
             </section>
