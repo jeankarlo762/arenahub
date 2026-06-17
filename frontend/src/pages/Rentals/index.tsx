@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Pencil, Trash2, CalendarRange, Power, PowerOff, MapPin, BarChart2 } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, CalendarRange, Power, PowerOff, MapPin } from 'lucide-react'
 import { formatCurrency } from '../../utils/format'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
