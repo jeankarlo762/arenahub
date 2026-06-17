@@ -38,7 +38,6 @@ export default function BookingsPage() {
   // History filters
   const [historySearch, setHistorySearch] = useState('')
   const [historyCourt, setHistoryCourt] = useState('')
-  const [historyStatus, setHistoryStatus] = useState('')
   const [historyStartDate, setHistoryStartDate] = useState('')
   const [historyEndDate, setHistoryEndDate] = useState('')
   const [historyBookings, setHistoryBookings] = useState<Booking[]>([])
@@ -61,17 +60,18 @@ export default function BookingsPage() {
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
     try {
-      const params: Record<string, string> = {}
+      const params: Record<string, string> = { status: 'COMPLETED' }
       if (historySearch) params.search = historySearch
       if (historyCourt) params.courtId = historyCourt
-      if (historyStatus) params.status = historyStatus
       if (historyStartDate) params.startDate = historyStartDate
       if (historyEndDate) params.endDate = historyEndDate
-      setHistoryBookings(await bookingsApi.listBookings(params))
+      const data = await bookingsApi.listBookings(params)
+      // History shows only completed bookings that were paid
+      setHistoryBookings(data.filter((b) => b.status === 'COMPLETED' && b.payment?.status === 'PAID'))
     } finally {
       setHistoryLoading(false)
     }
-  }, [historySearch, historyCourt, historyStatus, historyStartDate, historyEndDate])
+  }, [historySearch, historyCourt, historyStartDate, historyEndDate])
 
   useEffect(() => { courtsApi.listCourts().then(setCourts) }, [])
   useEffect(() => { if (viewMode === 'list') load() }, [load, viewMode])
@@ -250,13 +250,6 @@ export default function BookingsPage() {
                   options={[{ value: '', label: 'Todas' }, ...courts.map((c) => ({ value: c.id, label: c.name }))]}
                   value={historyCourt}
                   onChange={(e) => setHistoryCourt(e.target.value)}
-                  className="w-40"
-                />
-                <Select
-                  label="Status"
-                  options={statusOptions}
-                  value={historyStatus}
-                  onChange={(e) => setHistoryStatus(e.target.value)}
                   className="w-40"
                 />
                 <DatePicker label="De" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-36" />

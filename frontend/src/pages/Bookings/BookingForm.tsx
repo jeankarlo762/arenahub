@@ -73,6 +73,14 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
     } else if (preSelect) {
       reset({ courtId: preSelect.courtId, date: preSelect.date })
       setPendingTime(preSelect.startTime)
+    } else {
+      // Fresh booking — ensure no fields are pre-filled from a previous open
+      reset({ courtId: '', date: '', customerName: '', customerPhone: '', customerEmail: '', notes: '' })
+      setSelectedCourt(null)
+      setSlots([])
+      setSelectedTimes([])
+      setSlotsError('')
+      setPendingTime(null)
     }
   }, [open, reset, preSelect])
 
