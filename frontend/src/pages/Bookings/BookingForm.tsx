@@ -181,7 +181,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
       <div className="flex flex-col gap-4">
         <Select
           label="Quadra"
-          placeholder="Insira a quadra"
+          placeholder="Selecione a quadra"
           options={courts.filter((c) => c.active).map((c) => ({ value: c.id, label: c.name }))}
           error={errors.courtId?.message}
           {...register('courtId')}

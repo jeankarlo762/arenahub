@@ -175,9 +175,9 @@ export default function PublicBookingPage() {
                   )}
                   <p className="font-semibold text-gray-900">{court.name}</p>
                   <p className="text-sm text-gray-500">{court.type}</p>
-                  {court.pricePerSlot > 0 && (
+                  {Number(court.pricePerSlot) > 0 && (
                     <p className="text-sm font-medium text-orange-600 mt-1">
-                      R$ {court.pricePerSlot.toFixed(2)} / {court.slotMinutes} min
+                      R$ {Number(court.pricePerSlot).toFixed(2)} / {court.slotMinutes} min
                     </p>
                   )}
                   {court.description && (
@@ -267,8 +267,8 @@ export default function PublicBookingPage() {
                       <Clock size={12} className="text-orange-500 shrink-0" />
                       <span className="text-sm font-semibold text-gray-900">{slot.startTime} – {slot.endTime}</span>
                     </div>
-                    {slot.price > 0 && (
-                      <p className="text-xs text-orange-600 font-medium">R$ {slot.price.toFixed(2)}</p>
+                    {Number(slot.price) > 0 && (
+                      <p className="text-xs text-orange-600 font-medium">R$ {Number(slot.price).toFixed(2)}</p>
                     )}
                     {!slot.available && (
                       <p className="text-xs text-red-400">Ocupado</p>
@@ -308,10 +308,10 @@ export default function PublicBookingPage() {
                   <p className="text-gray-500 text-xs">Horário</p>
                   <p className="font-medium text-gray-900">{selectedSlot.startTime} – {selectedSlot.endTime}</p>
                 </div>
-                {selectedSlot.price > 0 && (
+                {Number(selectedSlot.price) > 0 && (
                   <div>
                     <p className="text-gray-500 text-xs">Valor</p>
-                    <p className="font-semibold text-orange-600">R$ {selectedSlot.price.toFixed(2)}</p>
+                    <p className="font-semibold text-orange-600">R$ {Number(selectedSlot.price).toFixed(2)}</p>
                   </div>
                 )}
               </div>

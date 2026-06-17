@@ -99,50 +99,57 @@ export default function FinancialPage() {
   return (
     <Layout title="Financeiro">
       <div className="flex flex-col gap-6">
-        {/* Filters */}
-        <div className="flex flex-col gap-3">
-          {/* Quick periods */}
-          <div className="flex gap-2 flex-wrap">
-            {(['today', 'week', 'month', 'custom'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => applyQuickPeriod(p)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  quickPeriod === p
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {p === 'today' ? 'Hoje' : p === 'week' ? 'Semana' : p === 'month' ? 'Mês' : 'Personalizado'}
-              </button>
-            ))}
-          </div>
+        {/* Filters — horizontal */}
+        <Card>
+          <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+            {/* Quick periods */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-500">Período</span>
+              <div className="flex gap-2 flex-wrap">
+                {(['today', 'week', 'month', 'custom'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => applyQuickPeriod(p)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      quickPeriod === p
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {p === 'today' ? 'Hoje' : p === 'week' ? 'Semana' : p === 'month' ? 'Mês' : 'Personalizado'}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          {/* Date pickers (visible in custom mode or always) */}
-          <div className="flex items-end gap-3 flex-wrap">
-            <DatePicker label="De" value={startDate} onChange={(e) => { setStartDate(e.target.value); setQuickPeriod('custom') }} className="w-36" />
-            <DatePicker label="Até" value={endDate} onChange={(e) => { setEndDate(e.target.value); setQuickPeriod('custom') }} className="w-36" />
-            <Button variant="secondary" onClick={load}>Filtrar</Button>
-          </div>
+            {/* Date pickers */}
+            <div className="flex items-end gap-3 flex-wrap">
+              <DatePicker label="De" value={startDate} onChange={(e) => { setStartDate(e.target.value); setQuickPeriod('custom') }} className="w-36" />
+              <DatePicker label="Até" value={endDate} onChange={(e) => { setEndDate(e.target.value); setQuickPeriod('custom') }} className="w-36" />
+              <Button variant="secondary" onClick={load}>Filtrar</Button>
+            </div>
 
-          {/* Source filter */}
-          <div className="flex gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-600 self-center">Origem:</span>
-            {([['courts', 'Quadras'], ['bar', 'Bar'], ['rentals', 'Locação'], ['all', 'Tudo']] as const).map(([val, label]) => (
-              <button
-                key={val}
-                onClick={() => setSource(val)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  source === val
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {/* Source filter */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-500">Origem</span>
+              <div className="flex gap-2 flex-wrap">
+                {([['courts', 'Quadras'], ['bar', 'Bar'], ['rentals', 'Locação'], ['all', 'Tudo']] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    onClick={() => setSource(val)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      source === val
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        </Card>
 
         {loading ? (
           <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Plus, Shuffle, Trash2, ArrowLeft, Tv, Crown, Network, Users } from 'lucide-react'
+import { Plus, Shuffle, Trash2, ArrowLeft, Crown, Network, Users } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
@@ -174,9 +174,6 @@ export function TournamentDetail({ tournament, onRefresh }: TournamentDetailProp
           <div className="ml-auto flex gap-2">
             <Button variant="secondary" size="sm" onClick={openBracket}>
               <Network size={15} /> Exibir Chaveamento
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => window.open(`/tournaments/${tournament.id}/tv`, '_blank')}>
-              <Tv size={15} /> TV
             </Button>
           </div>
         </div>
