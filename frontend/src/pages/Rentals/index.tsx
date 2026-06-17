@@ -20,6 +20,53 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
+// Sum of all slot prices for a single occurrence
+function rentalSlotRevenue(r: Rental): number {
+  return r.slots.reduce((s, sl) => s + (Number(sl.price) || 0), 0)
+}
+
+function countWeekdayOccurrences(weekdays: number[], start: Date, end: Date): number {
+  let count = 0
+  const cur = new Date(start)
+  while (cur <= end) {
+    if (weekdays.includes(cur.getDay())) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return count
+}
+
+// Total value over the whole rental period (needs endDate)
+function rentalTotalValue(r: Rental): number | null {
+  if (!r.endDate) return null
+  const start = new Date(r.startDate.slice(0, 10) + 'T00:00:00')
+  const end = new Date(r.endDate.slice(0, 10) + 'T00:00:00')
+  if (end < start) return 0
+  return countWeekdayOccurrences(r.weekdays, start, end) * rentalSlotRevenue(r)
+}
+
+// Approx monthly value (slot revenue × weekday count × ~4.33 weeks)
+function rentalMonthlyValue(r: Rental): number {
+  return rentalSlotRevenue(r) * r.weekdays.length * 4.33
+}
+
+// Days until expiration; null when indefinite
+function daysUntilExpiration(r: Rental): number | null {
+  if (!r.endDate) return null
+  const end = new Date(r.endDate.slice(0, 10) + 'T00:00:00')
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Math.round((end.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
+}
+
+function expirationLabel(r: Rental): { text: string; tone: 'gray' | 'green' | 'orange' | 'red' } {
+  const days = daysUntilExpiration(r)
+  if (days === null) return { text: 'Sem prazo definido', tone: 'gray' }
+  if (days < 0) return { text: 'Expirada', tone: 'red' }
+  if (days === 0) return { text: 'Expira hoje', tone: 'red' }
+  if (days <= 7) return { text: `Expira em ${days} dia${days !== 1 ? 's' : ''}`, tone: 'orange' }
+  return { text: `Expira em ${days} dias`, tone: 'green' }
+}
+
 export default function RentalsPage() {
   const [tab, setTab] = useState<'list' | 'report'>('list')
   const [rentals, setRentals] = useState<Rental[]>([])
@@ -141,6 +188,34 @@ export default function RentalsPage() {
                           </span>
                         ))}
                       </div>
+
+                      {/* Valor total + expiração */}
+                      {(() => {
+                        const total = rentalTotalValue(r)
+                        const exp = expirationLabel(r)
+                        const toneClass =
+                          exp.tone === 'red' ? 'bg-red-100 text-red-700'
+                          : exp.tone === 'orange' ? 'bg-amber-100 text-amber-700'
+                          : exp.tone === 'green' ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-500'
+                        return (
+                          <div className="flex items-center gap-2 flex-wrap mt-2">
+                            {total !== null ? (
+                              <span className="text-xs font-medium text-gray-700">
+                                Valor total: <span className="font-bold text-green-700">{formatCurrency(total)}</span>
+                              </span>
+                            ) : (
+                              <span className="text-xs font-medium text-gray-700">
+                                Valor mensal aprox.: <span className="font-bold text-green-700">{formatCurrency(rentalMonthlyValue(r))}</span>
+                              </span>
+                            )}
+                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${toneClass}`}>
+                              {exp.text}
+                            </span>
+                          </div>
+                        )
+                      })()}
+
                       {r.notes && <p className="text-xs text-gray-400 mt-1">{r.notes}</p>}
                     </div>
                     <div className="flex gap-2 shrink-0">

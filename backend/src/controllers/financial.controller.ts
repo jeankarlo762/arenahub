@@ -24,7 +24,8 @@ export async function getByCourt(request: FastifyRequest, reply: FastifyReply) {
 
 export async function getByMethod(request: FastifyRequest, reply: FastifyReply) {
   const filters = financialFiltersSchema.parse(request.query)
-  return reply.send(await financialService.getRevenueByMethod(filters))
+  const { source } = sourceSchema.parse(request.query)
+  return reply.send(await financialService.getRevenueByMethod({ ...filters, source }))
 }
 
 export async function getTransactions(request: FastifyRequest, reply: FastifyReply) {

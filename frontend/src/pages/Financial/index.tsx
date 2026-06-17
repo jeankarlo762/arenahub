@@ -65,7 +65,7 @@ export default function FinancialPage() {
         financialApi.getSummary(params),
         financialApi.getDailyRevenue(params),
         showCourts ? financialApi.getRevenueByCourt({ startDate, endDate }) : Promise.resolve([]),
-        showCourts ? financialApi.getRevenueByMethod({ startDate, endDate }) : Promise.resolve([]),
+        financialApi.getRevenueByMethod({ startDate, endDate, source }),
         source === 'bar' ? barApi.getBarStats(startDate, endDate) : Promise.resolve(null),
       ])
       setSummary(s)
@@ -79,6 +79,13 @@ export default function FinancialPage() {
   }, [startDate, endDate, source])
 
   useEffect(() => { load() }, [load])
+
+  // Atualização instantânea: recarrega ao voltar o foco para a aba
+  useEffect(() => {
+    function onFocus() { load() }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [load])
 
   function applyQuickPeriod(p: QuickPeriod) {
     setQuickPeriod(p)
@@ -177,8 +184,9 @@ export default function FinancialPage() {
               </ResponsiveContainer>
             </Card>
 
-            {(source === 'courts' || source === 'all') && (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Receita por Quadra (courts/all) + Métodos de Pagamento (sempre) */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {(source === 'courts' || source === 'all') && (
                 <Card>
                   <h2 className="text-base font-semibold text-gray-900 mb-4">Receita por Quadra</h2>
                   {byCourt.length === 0 ? (
@@ -195,72 +203,41 @@ export default function FinancialPage() {
                     </ResponsiveContainer>
                   )}
                 </Card>
+              )}
 
-                <Card>
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">Métodos de Pagamento</h2>
-                  {byMethod.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-8">Sem dados</p>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={byMethod.map((m) => ({ name: METHOD_LABELS[m.method ?? ''] ?? m.method, value: m.revenue }))}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={70}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          labelLine={false}
-                        >
-                          {byMethod.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip formatter={(v) => [formatCurrency(Number(v)), 'Receita']} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </Card>
-              </div>
-            )}
+              <Card>
+                <h2 className="text-base font-semibold text-gray-900 mb-4">Formas de Pagamento</h2>
+                {byMethod.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">Sem dados no período</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={byMethod.map((m) => ({ name: METHOD_LABELS[m.method ?? ''] ?? (m.method || 'Outro'), value: m.revenue, count: m.count }))}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={75}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {byMethod.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip
+                        formatter={(v, _n, p) => [
+                          `${formatCurrency(Number(v))} (${(p.payload as { count: number }).count} transações)`,
+                          'Total',
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </Card>
+            </div>
 
             {source === 'bar' && barStats && (
               <div className="flex flex-col gap-6">
-                {/* Payment methods pie chart */}
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <Card>
-                    <h2 className="text-base font-semibold text-gray-900 mb-4">Formas de Pagamento</h2>
-                    {barStats.byPaymentMethod.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-8">Sem dados no período</p>
-                    ) : (
-                      <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-                          <Pie
-                            data={barStats.byPaymentMethod.map((m) => ({
-                              name: METHOD_LABELS[m.method] ?? m.method,
-                              value: m.total,
-                              count: m.count,
-                            }))}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={75}
-                            dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            labelLine={false}
-                          >
-                            {barStats.byPaymentMethod.map((_, i) => (
-                              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(v, _n, p) => [
-                              `${formatCurrency(Number(v))} (${(p.payload as { count: number }).count} comandas)`,
-                              'Total',
-                            ]}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    )}
-                  </Card>
-
                   {/* Top products by quantity */}
                   <Card>
                     <h2 className="text-base font-semibold text-gray-900 mb-4">Produtos Mais Vendidos</h2>
