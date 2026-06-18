@@ -225,13 +225,26 @@ export async function listRentalPayments(rentalId: string) {
 }
 
 export async function toggleRentalPayment(paymentId: string, paid: boolean) {
-  return prisma.rentalPayment.update({
+  const updated = await prisma.rentalPayment.update({
     where: { id: paymentId },
     data: {
       status: paid ? 'PAID' : 'PENDING',
       paidAt: paid ? new Date() : null,
     },
   })
+
+  // Auto-inactivate rental when all payments are paid
+  if (paid) {
+    const all = await prisma.rentalPayment.findMany({
+      where: { rentalId: updated.rentalId },
+      select: { status: true },
+    })
+    if (all.length > 0 && all.every(p => p.status === 'PAID')) {
+      await prisma.rental.update({ where: { id: updated.rentalId }, data: { active: false } })
+    }
+  }
+
+  return updated
 }
 
 export async function getRentalReport(startDate?: string, endDate?: string) {

@@ -8,6 +8,7 @@ import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
 import { Modal } from '../../components/ui/Modal'
 import { Input } from '../../components/ui/Input'
+import { formatPhone } from '../../utils/format'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
@@ -33,7 +34,7 @@ export default function ClientsPage() {
   const [detailClient, setDetailClient] = useState<Client | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) })
+  const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -152,7 +153,8 @@ export default function ClientsPage() {
             <Input label="Nome *" placeholder="João" error={errors.firstName?.message} {...register('firstName')} />
             <Input label="Sobrenome *" placeholder="Silva" error={errors.lastName?.message} {...register('lastName')} />
           </div>
-          <Input label="Telefone" placeholder="(11) 99999-9999" {...register('phone')} />
+          <Input label="Telefone" placeholder="(11) 99999-9999" inputMode="tel"
+            {...register('phone')} onChange={(e) => setValue('phone', formatPhone(e.target.value))} />
         </div>
       </Modal>
 

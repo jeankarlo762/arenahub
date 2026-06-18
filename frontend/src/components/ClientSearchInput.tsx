@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, UserPlus, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { formatPhone } from '../utils/format'
 import type { Client } from '../types/client'
 import * as clientsApi from '../api/clients.api'
 
@@ -129,8 +130,8 @@ export function ClientSearchInput({ value, onChange, error, label = 'Cliente *' 
             <input value={newLast} onChange={e => setNewLast(e.target.value)} placeholder="Sobrenome *"
               className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 outline-none focus:border-orange-400 bg-white" />
           </div>
-          <input value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="Telefone (opcional)"
-            className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 outline-none focus:border-orange-400 bg-white" />
+          <input value={newPhone} onChange={e => setNewPhone(formatPhone(e.target.value))} placeholder="(11) 99999-9999"
+            inputMode="tel" className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 outline-none focus:border-orange-400 bg-white" />
           <button type="button" onClick={handleCreateNew}
             className="bg-orange-500 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-orange-600 transition-colors">
             Cadastrar

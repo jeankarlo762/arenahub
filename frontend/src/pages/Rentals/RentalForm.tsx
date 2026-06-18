@@ -3,6 +3,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Plus, Trash2 } from 'lucide-react'
+import { formatPhone } from '../../utils/format'
 import toast from 'react-hot-toast'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
@@ -241,9 +242,10 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
           />
           <Input
             label="Telefone do cliente"
-            type="tel"
-            placeholder="(00) 00000-0000"
+            placeholder="(11) 99999-9999"
+            inputMode="tel"
             {...register('clientPhone')}
+            onChange={(e) => setValue('clientPhone', formatPhone(e.target.value))}
           />
         </div>
 

@@ -13,7 +13,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import type { Court, AvailabilitySlot } from '../../types/court'
 import * as courtsApi from '../../api/courts.api'
 import * as bookingsApi from '../../api/bookings.api'
-import { formatCurrency } from '../../utils/format'
+import { formatCurrency, formatPhone } from '../../utils/format'
 import { toInputDate } from '../../utils/date'
 
 const schema = z.object({
@@ -35,13 +35,6 @@ interface BookingFormProps {
   preSelect?: { courtId: string; date: string; startTime: string }
 }
 
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
-}
 
 export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: BookingFormProps) {
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null)
@@ -56,6 +49,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
 
@@ -282,12 +276,9 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
             <Input
               label="Telefone (opcional)"
               placeholder="(11) 99999-9999"
+              inputMode="tel"
               {...register('customerPhone')}
-              onChange={(e) => {
-                const formatted = formatPhone(e.target.value)
-                e.target.value = formatted
-                register('customerPhone').onChange(e)
-              }}
+              onChange={(e) => setValue('customerPhone', formatPhone(e.target.value))}
             />
             <Input
               label="Email (opcional)"

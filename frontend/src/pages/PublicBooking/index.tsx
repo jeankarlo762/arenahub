@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import toast, { Toaster } from 'react-hot-toast'
 import axios from 'axios'
+import { formatPhone } from '../../utils/format'
 
 const publicApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api',
@@ -34,13 +35,6 @@ interface AvailabilitySlot {
 
 type Step = 'courts' | 'date' | 'slots' | 'form' | 'success'
 
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11)
-  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
-}
 
 function brl(v: number): string {
   return `R$ ${Number(v).toFixed(2).replace('.', ',')}`
