@@ -3,12 +3,14 @@ import { Layout } from '../../components/layout/Layout'
 import { UsersTab } from './UsersTab'
 import { CourtsConfigTab } from './CourtsConfigTab'
 import { PaymentFeesTab } from './PaymentFeesTab'
+import { BrandingTab } from './BrandingTab'
 import { useAuthStore } from '../../store/auth.store'
 
 const ALL_TABS = [
   { key: 'courts', label: 'Quadras' },
   { key: 'financial', label: 'Financeiro' },
   { key: 'users', label: 'Usuários', adminOnly: true },
+  { key: 'branding', label: 'Branding', adminOnly: true },
 ] as const
 
 type Tab = (typeof ALL_TABS)[number]['key']
@@ -41,6 +43,7 @@ export default function SettingsPage() {
         {activeTab === 'courts' && <CourtsConfigTab />}
         {activeTab === 'financial' && <PaymentFeesTab />}
         {activeTab === 'users' && user?.role === 'ADMIN' && <UsersTab />}
+        {activeTab === 'branding' && user?.role === 'ADMIN' && <BrandingTab />}
       </div>
     </Layout>
   )

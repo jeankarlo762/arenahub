@@ -7,4 +7,7 @@ export async function settingsRoutes(app: FastifyInstance) {
 
   app.get('/payment-fees', settingsController.getPaymentFees)
   app.put('/payment-fees/:method', settingsController.upsertPaymentFee)
+
+  app.get('/branding', settingsController.getBranding)
+  app.put('/branding', settingsController.upsertBranding)
 }

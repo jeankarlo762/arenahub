@@ -205,6 +205,14 @@ model PaymentFee {
   @@id([tenantId, method])
 }
 
+model TenantBranding {
+  tenantId     String   @id
+  primaryColor String   @default("#f97316")
+  logoUrl      String?
+  companyName  String?
+  updatedAt    DateTime @updatedAt
+}
+
 model Client {
   id        String   @id @default(cuid())
   tenantId  String?

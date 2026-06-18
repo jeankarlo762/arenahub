@@ -16,6 +16,7 @@ import {
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
 import { useUIStore } from '../../store/ui.store'
+import { useBrandingStore } from '../../store/branding.store'
 import * as authApi from '../../api/auth.api'
 import toast from 'react-hot-toast'
 
@@ -35,6 +36,7 @@ const navItems = [
 export function Sidebar() {
   const { user, refreshToken, clearAuth } = useAuthStore()
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { logoUrl, companyName } = useBrandingStore()
   const navigate = useNavigate()
 
   const isAdmin = user?.role === 'ADMIN'
@@ -74,7 +76,9 @@ export function Sidebar() {
             <Menu size={20} />
           </button>
           {sidebarOpen && (
-            <span className="font-bold text-lg tracking-tight">ArenaHub</span>
+            logoUrl
+              ? <img src={logoUrl} alt="Logo" className="h-8 max-w-[140px] object-contain" />
+              : <span className="font-bold text-lg tracking-tight">{companyName || 'ArenaHub'}</span>
           )}
         </div>
 

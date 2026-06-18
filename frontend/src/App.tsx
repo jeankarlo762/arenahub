@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useEffect } from 'react'
 import { useAuthStore } from './store/auth.store'
+import { useBrandingStore, applyBrandingCss } from './store/branding.store'
 import * as authApi from './api/auth.api'
+import * as settingsApi from './api/settings.api'
 
 import LoginPage from './pages/Login'
 import SuperAdminLoginPage from './pages/SuperAdmin/Login'
@@ -48,6 +50,7 @@ function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
 function AppInit() {
   const accessToken = useAuthStore((s) => s.accessToken)
   const user = useAuthStore((s) => s.user)
+  const { setBranding, setLoaded, loaded } = useBrandingStore()
 
   useEffect(() => {
     if (!accessToken || user) return
@@ -58,6 +61,18 @@ function AppInit() {
           useAuthStore.getState().clearAuth()
         }
       })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken])
+
+  useEffect(() => {
+    if (!accessToken || loaded) return
+    settingsApi.getBranding()
+      .then((b) => {
+        setBranding(b)
+        applyBrandingCss(b.primaryColor)
+      })
+      .catch(() => {})
+      .finally(() => setLoaded())
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken])
 
