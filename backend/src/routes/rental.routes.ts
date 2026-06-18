@@ -10,4 +10,6 @@ export async function rentalRoutes(app: FastifyInstance) {
   app.post('/rentals', rentalController.createRental)
   app.put('/rentals/:id', rentalController.updateRental)
   app.delete('/rentals/:id', rentalController.deleteRental)
+  app.get('/rentals/:id/payments', rentalController.listPayments)
+  app.patch('/rentals/:id/payments/:pid', rentalController.updatePayment)
 }

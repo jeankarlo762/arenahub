@@ -1,5 +1,5 @@
 import api from './axios'
-import type { Rental, RentalSlot } from '../types/rental'
+import type { Rental, RentalSlot, RentalPayment } from '../types/rental'
 
 interface RentalRaw {
   id: string
@@ -8,6 +8,7 @@ interface RentalRaw {
   clientId?: string
   client?: { id: string; firstName: string; lastName: string }
   clientName: string
+  clientPhone?: string | null
   weekdays: string
   slots: string
   startDate: string
@@ -15,6 +16,7 @@ interface RentalRaw {
   plan?: string | null
   paymentMethod?: string | null
   paymentDay?: number | null
+  paymentFrequency?: string | null
   notes?: string
   active: boolean
   createdAt: string
@@ -33,6 +35,8 @@ function parseRental(r: RentalRaw): Rental {
     plan: (r.plan as Rental['plan']) ?? null,
     paymentMethod: (r.paymentMethod as Rental['paymentMethod']) ?? null,
     paymentDay: r.paymentDay ?? null,
+    paymentFrequency: (r.paymentFrequency as Rental['paymentFrequency']) ?? null,
+    clientPhone: r.clientPhone ?? null,
   }
 }
 
@@ -55,6 +59,7 @@ export async function createRental(data: {
   courtId?: string
   clientId?: string
   clientName: string
+  clientPhone?: string
   weekdays: number[]
   slots: RentalSlot[]
   startDate: string
@@ -62,6 +67,7 @@ export async function createRental(data: {
   plan?: string
   paymentMethod?: string
   paymentDay?: number | null
+  paymentFrequency?: string
   notes?: string
 }): Promise<Rental> {
   const res = await api.post<RentalRaw>('/rentals', data)
@@ -72,6 +78,7 @@ export async function updateRental(id: string, data: Partial<{
   courtId: string
   clientId: string
   clientName: string
+  clientPhone: string
   weekdays: number[]
   slots: RentalSlot[]
   startDate: string
@@ -79,6 +86,7 @@ export async function updateRental(id: string, data: Partial<{
   plan: string
   paymentMethod: string
   paymentDay: number | null
+  paymentFrequency: string
   notes: string
   active: boolean
 }>): Promise<Rental> {
@@ -88,6 +96,16 @@ export async function updateRental(id: string, data: Partial<{
 
 export async function deleteRental(id: string): Promise<void> {
   await api.delete(`/rentals/${id}`)
+}
+
+export async function listRentalPayments(rentalId: string): Promise<RentalPayment[]> {
+  const res = await api.get<RentalPayment[]>(`/rentals/${rentalId}/payments`)
+  return res.data
+}
+
+export async function toggleRentalPayment(rentalId: string, paymentId: string, paid: boolean): Promise<RentalPayment> {
+  const res = await api.patch<RentalPayment>(`/rentals/${rentalId}/payments/${paymentId}`, { paid })
+  return res.data
 }
 
 export interface RentalReport {

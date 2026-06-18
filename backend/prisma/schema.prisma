@@ -229,26 +229,47 @@ model Client {
 // plan: one of "1M" | "3M" | "6M" | "12M" | "CUSTOM"
 // paymentMethod: CASH | PIX | CREDIT_CARD | DEBIT_CARD | TRANSFER
 // paymentDay: day of month (1-31) the rental is charged
+// paymentFrequency: DAILY | MONTHLY
 model Rental {
-  id            String    @id @default(cuid())
-  tenantId      String?
-  courtId       String?
-  court         Court?    @relation(fields: [courtId], references: [id])
-  clientId      String?
-  client        Client?   @relation(fields: [clientId], references: [id])
-  clientName    String
-  weekdays      String
-  slots         String
-  startDate     DateTime
-  endDate       DateTime?
-  plan          String?
-  paymentMethod String?
-  paymentDay    Int?
-  notes         String?
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String          @id @default(cuid())
+  tenantId         String?
+  courtId          String?
+  court            Court?          @relation(fields: [courtId], references: [id])
+  clientId         String?
+  client           Client?         @relation(fields: [clientId], references: [id])
+  clientName       String
+  clientPhone      String?
+  weekdays         String
+  slots            String
+  startDate        DateTime
+  endDate          DateTime?
+  plan             String?
+  paymentMethod    String?
+  paymentDay       Int?
+  paymentFrequency String?
+  notes            String?
+  active           Boolean         @default(true)
+  payments         RentalPayment[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
+  @@index([tenantId])
+}
+
+// status: PENDING | PAID
+model RentalPayment {
+  id        String    @id @default(cuid())
+  tenantId  String?
+  rentalId  String
+  rental    Rental    @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  dueDate   DateTime
+  amount    Decimal   @default(0)
+  status    String    @default("PENDING")
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([rentalId])
   @@index([tenantId])
 }
 

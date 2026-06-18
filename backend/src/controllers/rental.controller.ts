@@ -30,3 +30,15 @@ export async function getRentalReport(request: FastifyRequest, reply: FastifyRep
   const { startDate, endDate } = request.query as { startDate?: string; endDate?: string }
   return reply.send(await rentalService.getRentalReport(startDate, endDate))
 }
+
+export async function listPayments(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  return reply.send(await rentalService.listRentalPayments(request.params.id))
+}
+
+export async function updatePayment(
+  request: FastifyRequest<{ Params: { id: string; pid: string } }>,
+  reply: FastifyReply
+) {
+  const { paid } = request.body as { paid: boolean }
+  return reply.send(await rentalService.toggleRentalPayment(request.params.pid, paid))
+}

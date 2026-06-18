@@ -41,9 +41,10 @@ function addMonths(dateStr: string, months: number): string {
 }
 
 const schema = z.object({
-  courtId: z.string().optional(),
+  courtId: z.string().min(1, 'Selecione uma quadra'),
   clientName: z.string().min(1, 'Cliente obrigatório'),
   clientId: z.string().optional(),
+  clientPhone: z.string().optional(),
   weekdays: z.array(z.number()).min(1, 'Selecione ao menos um dia'),
   slots: z.array(z.object({
     startTime: z.string().min(1, 'Horário obrigatório'),
@@ -54,6 +55,7 @@ const schema = z.object({
   endDate: z.string().optional(),
   plan: z.string().default('CUSTOM'),
   paymentMethod: z.string().optional(),
+  paymentFrequency: z.enum(['DAILY', 'MONTHLY']).default('MONTHLY'),
   paymentDay: z.string().optional(),
   notes: z.string().optional(),
 })
@@ -73,13 +75,27 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
 
   const { register, handleSubmit, reset, setValue, watch, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { weekdays: [], slots: [{ startTime: '', endTime: '', price: 0 }], plan: 'CUSTOM' },
+    defaultValues: {
+      courtId: '',
+      weekdays: [],
+      slots: [{ startTime: '', endTime: '', price: 0 }],
+      plan: 'CUSTOM',
+      paymentFrequency: 'MONTHLY',
+    },
   })
 
   const { fields, append, remove } = useFieldArray({ control, name: 'slots' })
 
   const plan = watch('plan')
   const startDate = watch('startDate')
+  const courtId = watch('courtId')
+  const paymentFrequency = watch('paymentFrequency')
+
+  // Determine which weekdays the selected court operates
+  const selectedCourt = courts.find(c => c.id === courtId)
+  const availableDays = selectedCourt
+    ? new Set(selectedCourt.schedules.filter(s => s.active).map(s => s.dayOfWeek))
+    : new Set([0, 1, 2, 3, 4, 5, 6])
 
   useEffect(() => {
     if (open) {
@@ -90,28 +106,57 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
           courtId: rental.courtId ?? '',
           clientName: rental.clientName,
           clientId: rental.clientId,
+          clientPhone: rental.clientPhone ?? '',
           weekdays: wds,
           slots: rental.slots.map(s => ({ ...s, price: s.price ?? 0 })),
           startDate: rental.startDate.slice(0, 10),
           endDate: rental.endDate?.slice(0, 10) ?? '',
           plan: rental.plan ?? 'CUSTOM',
           paymentMethod: rental.paymentMethod ?? '',
+          paymentFrequency: rental.paymentFrequency ?? 'MONTHLY',
           paymentDay: rental.paymentDay != null ? String(rental.paymentDay) : '',
           notes: rental.notes ?? '',
         })
       } else {
         setSelectedWeekdays([])
-        reset({ courtId: '', clientName: '', clientId: '', weekdays: [], slots: [{ startTime: '', endTime: '', price: 0 }], startDate: '', endDate: '', plan: 'CUSTOM', paymentMethod: '', paymentDay: '', notes: '' })
+        reset({
+          courtId: '',
+          clientName: '',
+          clientId: '',
+          clientPhone: '',
+          weekdays: [],
+          slots: [{ startTime: '', endTime: '', price: 0 }],
+          startDate: '',
+          endDate: '',
+          plan: 'CUSTOM',
+          paymentMethod: '',
+          paymentFrequency: 'MONTHLY',
+          paymentDay: '',
+          notes: '',
+        })
       }
     }
   }, [open, rental, reset])
 
-  // Auto-compute end date for fixed plans
+  // When court changes, remove selected weekdays that are no longer available
+  useEffect(() => {
+    if (!courtId) return
+    const court = courts.find(c => c.id === courtId)
+    if (!court) return
+    const available = new Set(court.schedules.filter(s => s.active).map(s => s.dayOfWeek))
+    const filtered = selectedWeekdays.filter(d => available.has(d))
+    if (filtered.length !== selectedWeekdays.length) {
+      setSelectedWeekdays(filtered)
+      setValue('weekdays', filtered, { shouldValidate: true })
+    }
+  }, [courtId, courts]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const computedEndDate = plan !== 'CUSTOM' && startDate && PLAN_MONTHS[plan]
     ? addMonths(startDate, PLAN_MONTHS[plan])
     : null
 
   function toggleWeekday(d: number) {
+    if (!availableDays.has(d)) return
     const updated = selectedWeekdays.includes(d)
       ? selectedWeekdays.filter(x => x !== d)
       : [...selectedWeekdays, d].sort()
@@ -133,15 +178,17 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
     }
     try {
       const payload = {
-        courtId: data.courtId || undefined,
+        courtId: data.courtId,
         clientId: data.clientId || undefined,
         clientName: data.clientName,
+        clientPhone: data.clientPhone || undefined,
         weekdays: data.weekdays,
         slots: data.slots,
         startDate: data.startDate,
         endDate,
         plan: data.plan,
         paymentMethod: data.paymentMethod || undefined,
+        paymentFrequency: data.paymentFrequency,
         paymentDay: paymentDayNum,
         notes: data.notes,
       }
@@ -161,7 +208,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Editar Aluguel' : 'Novo Aluguel'}
+      title={isEdit ? 'Editar Locação' : 'Nova Locação'}
       size="lg"
       footer={
         <>
@@ -171,7 +218,18 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
       }
     >
       <div className="flex flex-col gap-5">
-        {/* Cliente + Quadra */}
+        {/* Quadra (obrigatória) */}
+        <Select
+          label="Quadra *"
+          options={[
+            { value: '', label: 'Selecione uma quadra' },
+            ...courts.filter(c => c.active).map(c => ({ value: c.id, label: c.name })),
+          ]}
+          error={errors.courtId?.message}
+          {...register('courtId')}
+        />
+
+        {/* Cliente + Telefone */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <ClientSearchInput
             value={watch('clientName') ?? ''}
@@ -181,34 +239,47 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
             }}
             error={errors.clientName?.message}
           />
-          <Select
-            label="Quadra (opcional)"
-            options={[
-              { value: '', label: 'Sem quadra definida' },
-              ...courts.filter(c => c.active).map(c => ({ value: c.id, label: c.name })),
-            ]}
-            {...register('courtId')}
+          <Input
+            label="Telefone do cliente"
+            type="tel"
+            placeholder="(00) 00000-0000"
+            {...register('clientPhone')}
           />
         </div>
 
         {/* Dias da semana */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Dias da semana *</p>
+          <p className="text-sm font-medium text-gray-700 mb-1.5">
+            Dias da semana *
+            {courtId && selectedCourt && (
+              <span className="ml-2 text-xs font-normal text-gray-400">
+                (dias disponíveis da quadra selecionada)
+              </span>
+            )}
+          </p>
           <div className="flex gap-2 flex-wrap">
-            {WEEKDAY_LABELS.map((label, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => toggleWeekday(i)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                  selectedWeekdays.includes(i)
-                    ? 'bg-orange-500 text-white border-orange-500'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+            {WEEKDAY_LABELS.map((label, i) => {
+              const isAvailable = availableDays.has(i)
+              const isSelected = selectedWeekdays.includes(i)
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggleWeekday(i)}
+                  disabled={!isAvailable}
+                  title={!isAvailable ? 'Dia sem funcionamento nesta quadra' : undefined}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                    !isAvailable
+                      ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                      : isSelected
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              )
+            })}
           </div>
           {errors.weekdays && <p className="text-xs text-red-500 mt-1">{errors.weekdays.message}</p>}
         </div>
@@ -227,7 +298,6 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
           </div>
 
           <div className="bg-gray-50 rounded-xl p-3 flex flex-col gap-2">
-            {/* Header */}
             <div className="grid grid-cols-[1fr_auto_1fr_1fr_auto] gap-2 items-center px-1">
               <span className="text-xs font-semibold text-gray-500">Início</span>
               <span className="text-xs text-gray-400 w-4 text-center">–</span>
@@ -292,16 +362,42 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
         )}
 
         {/* Pagamento */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select label="Forma de pagamento" options={PAYMENT_METHOD_OPTIONS} {...register('paymentMethod')} />
-          <Input
-            label="Dia de pagamento (1-31)"
-            type="number"
-            min={1}
-            max={31}
-            placeholder="ex: 5"
-            {...register('paymentDay')}
-          />
+        <div className="border border-gray-100 rounded-xl p-4 flex flex-col gap-4">
+          <p className="text-sm font-semibold text-gray-700">Pagamento</p>
+
+          {/* Frequência */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-2">Frequência de cobrança</p>
+            <div className="flex gap-2">
+              {(['DAILY', 'MONTHLY'] as const).map((f) => (
+                <label key={f} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value={f}
+                    {...register('paymentFrequency')}
+                    className="accent-orange-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    {f === 'DAILY' ? 'Diário (por dia de uso)' : 'Mensal (resumo mensal)'}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select label="Forma de pagamento" options={PAYMENT_METHOD_OPTIONS} {...register('paymentMethod')} />
+            {paymentFrequency === 'MONTHLY' && (
+              <Input
+                label="Dia de vencimento (1-31)"
+                type="number"
+                min={1}
+                max={31}
+                placeholder="ex: 5"
+                {...register('paymentDay')}
+              />
+            )}
+          </div>
         </div>
 
         <Textarea label="Observações" {...register('notes')} placeholder="Ex: Professor de Beach Tennis, turma avançada" />

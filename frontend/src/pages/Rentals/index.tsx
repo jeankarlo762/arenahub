@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, Pencil, Trash2, CalendarRange, Power, PowerOff, MapPin } from 'lucide-react'
+import { Plus, Search, Pencil, Trash2, CalendarRange, Power, PowerOff, MapPin, ChevronRight } from 'lucide-react'
+import { RentalDetailModal } from './RentalDetailModal'
 import { formatCurrency } from '../../utils/format'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
@@ -59,6 +60,13 @@ function daysUntilExpiration(r: Rental): number | null {
 }
 
 function expirationLabel(r: Rental): { text: string; tone: 'gray' | 'green' | 'orange' | 'red' } {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const start = new Date(r.startDate.slice(0, 10) + 'T00:00:00')
+  if (start > today) {
+    const daysToStart = Math.round((start.getTime() - today.getTime()) / (24 * 60 * 60 * 1000))
+    return { text: `Inicia em ${daysToStart} dia${daysToStart !== 1 ? 's' : ''}`, tone: 'gray' }
+  }
   const days = daysUntilExpiration(r)
   if (days === null) return { text: 'Sem prazo definido', tone: 'gray' }
   if (days < 0) return { text: 'Expirada', tone: 'red' }
@@ -78,6 +86,7 @@ export default function RentalsPage() {
   const [selected, setSelected] = useState<Rental | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('active')
+  const [detailRental, setDetailRental] = useState<Rental | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -173,7 +182,11 @@ export default function RentalsPage() {
                     : exp.tone === 'green' ? 'bg-green-100 text-green-700'
                     : 'bg-gray-100 text-gray-500'
                   return (
-                  <div key={r.id} className={`bg-white rounded-xl border px-5 py-3.5 ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+                  <div
+                    key={r.id}
+                    onClick={() => setDetailRental(r)}
+                    className={`bg-white rounded-xl border px-5 py-3.5 cursor-pointer hover:border-orange-300 hover:shadow-sm transition-all ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}
+                  >
                     <div className="flex items-center gap-6">
 
                       {/* Col 1 — Cliente + Quadra */}
@@ -226,7 +239,7 @@ export default function RentalsPage() {
                       </div>
 
                       {/* Col 5 — Ações */}
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                         <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={r.active ? 'Desativar' : 'Ativar'}>
                           {r.active ? <PowerOff size={15} /> : <Power size={15} />}
                         </button>
@@ -236,6 +249,7 @@ export default function RentalsPage() {
                         <button onClick={() => { setSelected(r); setDeleteOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
                           <Trash2 size={15} />
                         </button>
+                        <ChevronRight size={15} className="text-gray-300 ml-1" />
                       </div>
 
                     </div>
@@ -249,6 +263,8 @@ export default function RentalsPage() {
 
         {tab === 'report' && <RentalReportTab />}
       </div>
+
+      <RentalDetailModal open={!!detailRental} onClose={() => setDetailRental(null)} rental={detailRental} />
 
       <RentalForm open={formOpen} onClose={() => setFormOpen(false)} onSuccess={load} courts={courts} rental={selected ?? undefined} />
 

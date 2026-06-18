@@ -30,38 +30,19 @@ async function getCourtsSummary(startDate?: string, endDate?: string) {
   return { total, received, pending, paymentCount: payments.length }
 }
 
-function countWeekdayOccurrences(weekday: number, start: Date, end: Date): number {
-  let count = 0
-  const cur = new Date(start)
-  while (cur <= end) {
-    if (cur.getDay() === weekday) count++
-    cur.setDate(cur.getDate() + 1)
-  }
-  return count
-}
-
 async function getRentalRevenueSummary(startDate?: string, endDate?: string) {
-  const periodStart = startDate ? new Date(startDate + 'T00:00:00') : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  const periodEnd = endDate ? new Date(endDate + 'T23:59:59') : new Date()
-
-  const rentals = await prisma.rental.findMany({ where: { active: true } })
-  let revenue = 0
-
-  for (const rental of rentals) {
-    const rentalStart = rental.startDate > periodStart ? rental.startDate : periodStart
-    const rentalEnd = rental.endDate ? (rental.endDate < periodEnd ? rental.endDate : periodEnd) : periodEnd
-    if (rentalStart > rentalEnd) continue
-
-    const weekdays: number[] = JSON.parse(rental.weekdays)
-    const slots: { price: number }[] = JSON.parse(rental.slots)
-    const slotRevenue = slots.reduce((s, sl) => s + (sl.price || 0), 0)
-
-    for (const wd of weekdays) {
-      revenue += countWeekdayOccurrences(wd, rentalStart, rentalEnd) * slotRevenue
-    }
-  }
-
-  return { total: revenue, received: revenue, pending: 0, paymentCount: rentals.length }
+  const dateFilter = startDate || endDate ? buildDateFilter(startDate, endDate) : undefined
+  const paidPayments = await prisma.rentalPayment.findMany({
+    where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+    select: { amount: true },
+  })
+  const pendingPayments = await prisma.rentalPayment.findMany({
+    where: { status: 'PENDING', ...(dateFilter ? { dueDate: dateFilter } : {}) },
+    select: { amount: true },
+  })
+  const received = paidPayments.reduce((s, p) => s + Number(p.amount), 0)
+  const pending = pendingPayments.reduce((s, p) => s + Number(p.amount), 0)
+  return { total: received + pending, received, pending, paymentCount: paidPayments.length + pendingPayments.length }
 }
 
 async function getBarRevenueSummary(startDate?: string, endDate?: string) {
@@ -148,22 +129,14 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
   }
 
   if (source === 'rentals' || source === 'all') {
-    const rentals = await prisma.rental.findMany({ where: { active: true } })
-    for (const rental of rentals) {
-      const weekdays: number[] = JSON.parse(rental.weekdays)
-      const slots: { price: number }[] = JSON.parse(rental.slots)
-      const slotRevenue = slots.reduce((s, sl) => s + (sl.price || 0), 0)
-      if (slotRevenue === 0) continue
-      for (const [dateKey] of dailyMap) {
-        const d = new Date(dateKey + 'T00:00:00')
-        if (weekdays.includes(d.getDay())) {
-          const rentalStart = rental.startDate
-          const rentalEnd = rental.endDate ?? end
-          if (d >= rentalStart && d <= rentalEnd) {
-            dailyMap.set(dateKey, (dailyMap.get(dateKey) ?? 0) + slotRevenue)
-          }
-        }
-      }
+    const rentalPayments = await prisma.rentalPayment.findMany({
+      where: { status: 'PAID', paidAt: { gte: start, lt: endExclusive } },
+      select: { amount: true, paidAt: true },
+    })
+    for (const p of rentalPayments) {
+      if (!p.paidAt) continue
+      const key = p.paidAt.toISOString().slice(0, 10)
+      dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(p.amount))
     }
   }
 
@@ -291,23 +264,14 @@ export async function getRevenueByMethod({ startDate, endDate, source = 'courts'
     }
   }
 
-  // Rentals — indefinite recurring income; attribute the period's estimated
-  // revenue to the rental's configured payment method.
+  // Rentals — only count PAID RentalPayment records, grouped by rental.paymentMethod
   if (source === 'rentals' || source === 'all') {
-    const periodStart = startDate ? new Date(startDate + 'T00:00:00') : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    const periodEnd = endDate ? new Date(endDate + 'T23:59:59') : new Date()
-    const rentals = await prisma.rental.findMany({ where: { active: true } })
-    for (const rental of rentals) {
-      const rentalStart = rental.startDate > periodStart ? rental.startDate : periodStart
-      const rentalEnd = rental.endDate ? (rental.endDate < periodEnd ? rental.endDate : periodEnd) : periodEnd
-      if (rentalStart > rentalEnd) continue
-      const weekdays: number[] = JSON.parse(rental.weekdays)
-      const slots: { price: number }[] = JSON.parse(rental.slots)
-      const slotRevenue = slots.reduce((s, sl) => s + (sl.price || 0), 0)
-      if (slotRevenue === 0) continue
-      let revenue = 0
-      for (const wd of weekdays) revenue += countWeekdayOccurrences(wd, rentalStart, rentalEnd) * slotRevenue
-      if (revenue > 0) add(rental.paymentMethod ?? 'UNKNOWN', revenue)
+    const rentalPayments = await prisma.rentalPayment.findMany({
+      where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+      include: { rental: { select: { paymentMethod: true } } },
+    })
+    for (const p of rentalPayments) {
+      add(p.rental.paymentMethod ?? 'UNKNOWN', Number(p.amount))
     }
   }
 

@@ -40,58 +40,6 @@ export async function getRental(id: string) {
   return rental
 }
 
-export async function createRental(input: CreateRentalInput) {
-  return prisma.rental.create({
-    data: {
-      courtId: input.courtId ?? null,
-      clientId: input.clientId,
-      clientName: input.clientName,
-      weekdays: JSON.stringify(input.weekdays),
-      slots: JSON.stringify(input.slots),
-      startDate: new Date(input.startDate + 'T00:00:00'),
-      endDate: input.endDate ? new Date(input.endDate + 'T00:00:00') : null,
-      plan: input.plan ?? null,
-      paymentMethod: input.paymentMethod ?? null,
-      paymentDay: input.paymentDay ?? null,
-      notes: input.notes,
-    },
-    include: {
-      court: { select: { id: true, name: true } },
-      client: { select: { id: true, firstName: true, lastName: true } },
-    },
-  })
-}
-
-export async function updateRental(id: string, input: UpdateRentalInput) {
-  await getRental(id)
-  return prisma.rental.update({
-    where: { id },
-    data: {
-      ...(input.courtId && { courtId: input.courtId }),
-      ...(input.clientId !== undefined && { clientId: input.clientId }),
-      ...(input.clientName && { clientName: input.clientName }),
-      ...(input.weekdays && { weekdays: JSON.stringify(input.weekdays) }),
-      ...(input.slots && { slots: JSON.stringify(input.slots) }),
-      ...(input.startDate && { startDate: new Date(input.startDate + 'T00:00:00') }),
-      ...(input.endDate !== undefined && { endDate: input.endDate ? new Date(input.endDate + 'T00:00:00') : null }),
-      ...(input.plan !== undefined && { plan: input.plan ?? null }),
-      ...(input.paymentMethod !== undefined && { paymentMethod: input.paymentMethod ?? null }),
-      ...(input.paymentDay !== undefined && { paymentDay: input.paymentDay ?? null }),
-      ...(input.notes !== undefined && { notes: input.notes }),
-      ...(input.active !== undefined && { active: input.active }),
-    },
-    include: {
-      court: { select: { id: true, name: true } },
-      client: { select: { id: true, firstName: true, lastName: true } },
-    },
-  })
-}
-
-export async function deleteRental(id: string) {
-  await getRental(id)
-  return prisma.rental.delete({ where: { id } })
-}
-
 function countWeekdayOccurrences(weekday: number, start: Date, end: Date): number {
   let count = 0
   const cur = new Date(start)
@@ -100,6 +48,172 @@ function countWeekdayOccurrences(weekday: number, start: Date, end: Date): numbe
     cur.setDate(cur.getDate() + 1)
   }
   return count
+}
+
+async function generateRentalPayments(
+  rentalId: string,
+  input: {
+    weekdays: number[]
+    slots: { price: number }[]
+    startDate: string
+    endDate?: string
+    paymentDay?: number | null
+    paymentFrequency?: string | null
+  }
+) {
+  const slotRevenue = input.slots.reduce((s, sl) => s + (sl.price || 0), 0)
+  if (slotRevenue === 0 || input.weekdays.length === 0) return
+
+  const startDate = new Date(input.startDate + 'T00:00:00')
+  const endDate = input.endDate
+    ? new Date(input.endDate + 'T00:00:00')
+    : new Date(startDate.getFullYear() + 1, startDate.getMonth(), startDate.getDate())
+
+  const frequency = input.paymentFrequency ?? 'MONTHLY'
+  const payments: { dueDate: Date; amount: number }[] = []
+
+  if (frequency === 'DAILY') {
+    const cur = new Date(startDate)
+    while (cur <= endDate) {
+      if (input.weekdays.includes(cur.getDay())) {
+        payments.push({ dueDate: new Date(cur), amount: slotRevenue })
+      }
+      cur.setDate(cur.getDate() + 1)
+    }
+  } else {
+    // MONTHLY — one payment per calendar month
+    const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+    while (cur <= endDate) {
+      const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0)
+      const effectiveStart = cur > startDate ? cur : startDate
+      const effectiveEnd = monthEnd < endDate ? monthEnd : endDate
+
+      let monthAmount = 0
+      for (const wd of input.weekdays) {
+        monthAmount += countWeekdayOccurrences(wd, effectiveStart, effectiveEnd) * slotRevenue
+      }
+
+      if (monthAmount > 0) {
+        const dueDay = input.paymentDay ?? 1
+        const cappedDay = Math.min(dueDay, monthEnd.getDate())
+        payments.push({
+          dueDate: new Date(cur.getFullYear(), cur.getMonth(), cappedDay),
+          amount: monthAmount,
+        })
+      }
+
+      cur.setMonth(cur.getMonth() + 1)
+    }
+  }
+
+  if (payments.length > 0) {
+    await prisma.rentalPayment.createMany({
+      data: payments.map((p) => ({
+        rentalId,
+        dueDate: p.dueDate,
+        amount: p.amount,
+        status: 'PENDING',
+      })),
+    })
+  }
+}
+
+export async function createRental(input: CreateRentalInput) {
+  const rental = await prisma.rental.create({
+    data: {
+      courtId: input.courtId ?? null,
+      clientId: input.clientId,
+      clientName: input.clientName,
+      clientPhone: input.clientPhone ?? null,
+      weekdays: JSON.stringify(input.weekdays),
+      slots: JSON.stringify(input.slots),
+      startDate: new Date(input.startDate + 'T00:00:00'),
+      endDate: input.endDate ? new Date(input.endDate + 'T00:00:00') : null,
+      plan: input.plan ?? null,
+      paymentMethod: input.paymentMethod ?? null,
+      paymentDay: input.paymentDay ?? null,
+      paymentFrequency: input.paymentFrequency ?? 'MONTHLY',
+      notes: input.notes,
+    },
+    include: {
+      court: { select: { id: true, name: true } },
+      client: { select: { id: true, firstName: true, lastName: true } },
+    },
+  })
+
+  await generateRentalPayments(rental.id, input)
+
+  return rental
+}
+
+export async function updateRental(id: string, input: UpdateRentalInput) {
+  await getRental(id)
+
+  const updated = await prisma.rental.update({
+    where: { id },
+    data: {
+      ...(input.courtId !== undefined && { courtId: input.courtId || null }),
+      ...(input.clientId !== undefined && { clientId: input.clientId }),
+      ...(input.clientName && { clientName: input.clientName }),
+      ...(input.clientPhone !== undefined && { clientPhone: input.clientPhone ?? null }),
+      ...(input.weekdays && { weekdays: JSON.stringify(input.weekdays) }),
+      ...(input.slots && { slots: JSON.stringify(input.slots) }),
+      ...(input.startDate && { startDate: new Date(input.startDate + 'T00:00:00') }),
+      ...(input.endDate !== undefined && { endDate: input.endDate ? new Date(input.endDate + 'T00:00:00') : null }),
+      ...(input.plan !== undefined && { plan: input.plan ?? null }),
+      ...(input.paymentMethod !== undefined && { paymentMethod: input.paymentMethod ?? null }),
+      ...(input.paymentDay !== undefined && { paymentDay: input.paymentDay ?? null }),
+      ...(input.paymentFrequency !== undefined && { paymentFrequency: input.paymentFrequency ?? null }),
+      ...(input.notes !== undefined && { notes: input.notes }),
+      ...(input.active !== undefined && { active: input.active }),
+    },
+    include: {
+      court: { select: { id: true, name: true } },
+      client: { select: { id: true, firstName: true, lastName: true } },
+    },
+  })
+
+  // Regenerate payments when financial structure changes
+  const needsRegen = input.weekdays || input.slots || input.startDate || input.endDate !== undefined
+    || input.paymentFrequency !== undefined || input.paymentDay !== undefined
+  if (needsRegen) {
+    await prisma.rentalPayment.deleteMany({ where: { rentalId: id } })
+    const full = await prisma.rental.findFirst({ where: { id } })
+    if (full) {
+      await generateRentalPayments(id, {
+        weekdays: JSON.parse(full.weekdays),
+        slots: JSON.parse(full.slots),
+        startDate: full.startDate.toISOString().slice(0, 10),
+        endDate: full.endDate?.toISOString().slice(0, 10),
+        paymentDay: full.paymentDay,
+        paymentFrequency: full.paymentFrequency,
+      })
+    }
+  }
+
+  return updated
+}
+
+export async function deleteRental(id: string) {
+  await getRental(id)
+  return prisma.rental.delete({ where: { id } })
+}
+
+export async function listRentalPayments(rentalId: string) {
+  return prisma.rentalPayment.findMany({
+    where: { rentalId },
+    orderBy: { dueDate: 'asc' },
+  })
+}
+
+export async function toggleRentalPayment(paymentId: string, paid: boolean) {
+  return prisma.rentalPayment.update({
+    where: { id: paymentId },
+    data: {
+      status: paid ? 'PAID' : 'PENDING',
+      paidAt: paid ? new Date() : null,
+    },
+  })
 }
 
 export async function getRentalReport(startDate?: string, endDate?: string) {
