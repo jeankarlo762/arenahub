@@ -61,9 +61,9 @@ async function generateRentalPayments(
     paymentFrequency?: string | null
   }
 ) {
-  const slotRevenue = input.slots.reduce((s, sl) => s + (sl.price || 0), 0)
-  if (slotRevenue === 0 || input.weekdays.length === 0) return
+  if (input.weekdays.length === 0) return
 
+  const slotRevenue = input.slots.reduce((s, sl) => s + (sl.price || 0), 0)
   const startDate = new Date(input.startDate + 'T00:00:00')
   const endDate = input.endDate
     ? new Date(input.endDate + 'T00:00:00')
@@ -81,7 +81,7 @@ async function generateRentalPayments(
       cur.setDate(cur.getDate() + 1)
     }
   } else {
-    // MONTHLY — one payment per calendar month
+    // MONTHLY — one payment per calendar month, dueDate always >= startDate
     const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
     while (cur <= endDate) {
       const monthEnd = new Date(cur.getFullYear(), cur.getMonth() + 1, 0)
@@ -93,13 +93,13 @@ async function generateRentalPayments(
         monthAmount += countWeekdayOccurrences(wd, effectiveStart, effectiveEnd) * slotRevenue
       }
 
-      if (monthAmount > 0) {
-        const dueDay = input.paymentDay ?? 1
-        const cappedDay = Math.min(dueDay, monthEnd.getDate())
-        payments.push({
-          dueDate: new Date(cur.getFullYear(), cur.getMonth(), cappedDay),
-          amount: monthAmount,
-        })
+      const dueDay = input.paymentDay ?? 1
+      const cappedDay = Math.min(dueDay, monthEnd.getDate())
+      const dueDate = new Date(cur.getFullYear(), cur.getMonth(), cappedDay)
+
+      // Only add payment if dueDate is on or after startDate
+      if (dueDate >= startDate) {
+        payments.push({ dueDate, amount: monthAmount })
       }
 
       cur.setMonth(cur.getMonth() + 1)

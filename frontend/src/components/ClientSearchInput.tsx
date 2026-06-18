@@ -109,7 +109,13 @@ export function ClientSearchInput({ value, onChange, error, label = 'Cliente *' 
       {query.trim().length >= 2 && !creating && (
         <button
           type="button"
-          onClick={() => setCreating(true)}
+          onClick={() => {
+            // Auto-fill from query: "João Silva" → Nome=João, Sobrenome=Silva
+            const parts = query.trim().split(/\s+/)
+            setNewFirst(parts[0] ?? '')
+            setNewLast(parts.slice(1).join(' ') ?? '')
+            setCreating(true)
+          }}
           className="self-start flex items-center gap-1.5 text-xs text-orange-500 hover:text-orange-600 font-medium mt-0.5"
         >
           <UserPlus size={13} /> Cadastrar novo cliente

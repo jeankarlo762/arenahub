@@ -277,16 +277,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
         {/* Dias da semana — apenas para planos mensais, após plano selecionado */}
         {showWeekdays && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1.5">
-              Dias da semana *
-              {selectedCourt && (
-                <span className="ml-2 text-xs font-normal text-gray-400">
-                  {selectedCourt.schedules.filter(s => s.active).length > 0
-                    ? `disponíveis: ${selectedCourt.schedules.filter(s => s.active).map(s => WEEKDAY_LABELS[s.dayOfWeek]).join(', ')}`
-                    : 'nenhum dia configurado nesta quadra'}
-                </span>
-              )}
-            </p>
+            <p className="text-sm font-medium text-gray-700 mb-1.5">Dias da semana *</p>
             <div className="flex gap-2 flex-wrap">
               {WEEKDAY_LABELS.map((label, i) => {
                 const isAvailable = availableDays.has(i)
