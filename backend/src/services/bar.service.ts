@@ -302,22 +302,31 @@ export async function getOrderByNumber(number: number) {
   })
 }
 
-export async function reopenOrder(id: string, clearItems: boolean) {
+export async function reopenOrder(id: string, clearItems: boolean, newCustomerName?: string) {
   const order = await getOrder(id)
   if (clearItems) {
     await prisma.$transaction([
       prisma.barOrderItem.deleteMany({ where: { orderId: id } }),
       prisma.barOrder.update({
         where: { id },
-        // paidAmount keeps the previously paid amount so next payment only covers new items
-        data: { status: 'OPEN', total: 0, paymentMethod: null, paidAmount: order.total },
+        data: {
+          status: 'OPEN',
+          total: 0,
+          paymentMethod: null,
+          paidAmount: 0,
+          ...(newCustomerName ? { customerName: newCustomerName } : {}),
+        },
       }),
     ])
   } else {
     await prisma.barOrder.update({
       where: { id },
-      // paidAmount = current total (already paid), new items will increase total beyond this
-      data: { status: 'OPEN', paymentMethod: null, paidAmount: order.total },
+      data: {
+        status: 'OPEN',
+        paymentMethod: null,
+        paidAmount: order.total,
+        ...(newCustomerName ? { customerName: newCustomerName } : {}),
+      },
     })
   }
   return getOrder(id)

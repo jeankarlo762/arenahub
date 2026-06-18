@@ -42,3 +42,8 @@ export async function updatePayment(
   const res = await api.patch(`/bookings/${bookingId}/payment`, data)
   return res.data
 }
+
+export async function getNotifications(): Promise<Booking[]> {
+  const res = await api.get<Booking[]>('/bookings/notifications')
+  return res.data
+}

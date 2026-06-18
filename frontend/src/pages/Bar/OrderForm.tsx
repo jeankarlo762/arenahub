@@ -65,11 +65,11 @@ export function OrderForm({ open, onClose, onSuccess, order, onBack }: OrderForm
     finally { setCheckingNumber(false) }
   }
 
-  async function handleReopen(clearItems: boolean) {
+  async function handleReopen(clearItems: boolean, newName?: string) {
     if (!conflictOrder) return
     setReopening(true)
     try {
-      const result = await barApi.reopenOrder(conflictOrder.id, clearItems)
+      const result = await barApi.reopenOrder(conflictOrder.id, clearItems, newName)
       toast.success(`Comanda #${result.number} reaberta`)
       setConflictOrder(null)
       onSuccess(result)
@@ -178,16 +178,25 @@ export function OrderForm({ open, onClose, onSuccess, order, onBack }: OrderForm
                 </div>
               </>
             ) : (
-              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-semibold text-amber-800">Número já utilizado</p>
-                  <p className="text-amber-700 mt-0.5">
-                    A comanda <strong>#{conflictOrder.number}</strong> pertence a <strong>{conflictOrder.customerName}</strong>.
-                    Por favor, use um número diferente.
-                  </p>
+              <>
+                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-amber-800">Comanda #{conflictOrder.number} pertencia a outro cliente</p>
+                    <p className="text-amber-700 mt-0.5">
+                      Último uso: <strong>{conflictOrder.customerName}</strong> · {conflictOrder.status === 'CLOSED' ? 'Paga' : 'Cancelada'}
+                    </p>
+                  </div>
                 </div>
-              </div>
+                {conflictOrder.status === 'CLOSED' && (
+                  <>
+                    <p className="text-sm text-gray-600">Deseja reabrir esta comanda para <strong>{currentName || 'novo cliente'}</strong>?</p>
+                    <Button onClick={() => handleReopen(true, currentName || undefined)} loading={reopening} className="w-full justify-center">
+                      <RefreshCw size={15} /> Reabrir vazia para {currentName || 'novo cliente'}
+                    </Button>
+                  </>
+                )}
+              </>
             )}
           </div>
         </Modal>

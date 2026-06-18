@@ -3,6 +3,7 @@ export interface Tenant {
   name: string
   email: string
   phone?: string
+  tag?: string
   mrrValue: number
   setupFee: number
   active: boolean
@@ -15,6 +16,7 @@ export interface CreateTenantInput {
   name: string
   email: string
   phone?: string
+  tag?: string
   mrrValue: number
   setupFee: number
   adminName: string

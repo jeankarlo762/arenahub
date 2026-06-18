@@ -125,7 +125,7 @@ export async function getOrderByNumber(number: number): Promise<BarOrder | null>
   return res.data
 }
 
-export async function reopenOrder(id: string, clearItems: boolean): Promise<BarOrder> {
-  const res = await api.patch<BarOrder>(`/bar/orders/${id}/reopen`, { clearItems })
+export async function reopenOrder(id: string, clearItems: boolean, newCustomerName?: string): Promise<BarOrder> {
+  const res = await api.patch<BarOrder>(`/bar/orders/${id}/reopen`, { clearItems, newCustomerName })
   return res.data
 }

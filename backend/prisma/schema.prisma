@@ -12,6 +12,7 @@ model Tenant {
   name      String
   email     String   @unique
   phone     String?
+  tag       String?  @unique
   mrrValue  Decimal  @default(0)
   setupFee  Decimal  @default(0)
   active    Boolean  @default(true)

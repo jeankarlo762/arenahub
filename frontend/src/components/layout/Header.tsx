@@ -1,5 +1,6 @@
 import { Menu } from 'lucide-react'
 import { useUIStore } from '../../store/ui.store'
+import { NotificationBell } from '../ui/NotificationBell'
 
 interface HeaderProps {
   title: string
@@ -17,10 +18,11 @@ export function Header({ title, breadcrumb }: HeaderProps) {
       >
         <Menu size={20} />
       </button>
-      <div>
+      <div className="flex-1 min-w-0">
         {breadcrumb && <p className="text-xs text-gray-400">{breadcrumb}</p>}
         <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
       </div>
+      <NotificationBell />
     </header>
   )
 }

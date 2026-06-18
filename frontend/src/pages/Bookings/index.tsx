@@ -77,6 +77,12 @@ export default function BookingsPage() {
   useEffect(() => { if (viewMode === 'list') load() }, [load, viewMode])
   useEffect(() => { if (viewMode === 'history') loadHistory() }, [viewMode, loadHistory])
 
+  useEffect(() => {
+    if (viewMode !== 'list') return
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
+  }, [viewMode, load])
+
   function openDetail(booking: Booking) {
     setSelected(booking)
     setDetailOpen(true)

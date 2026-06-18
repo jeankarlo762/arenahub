@@ -8,6 +8,7 @@ const createTenantSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
+  tag: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, 'Tag deve conter apenas letras minúsculas, números e hífens').optional(),
   mrrValue: z.coerce.number().min(0).default(0),
   setupFee: z.coerce.number().min(0).default(0),
   adminName: z.string().min(1, 'Nome do admin obrigatório'),
@@ -48,11 +49,19 @@ export async function superAdminRoutes(app: FastifyInstance) {
       return reply.status(409).send({ error: true, message: 'Email do admin já está em uso', code: 'CONFLICT' })
     }
 
+    if (input.tag) {
+      const existingTag = await prisma.tenant.findUnique({ where: { tag: input.tag } })
+      if (existingTag) {
+        return reply.status(409).send({ error: true, message: 'Tag já está em uso por outra arena', code: 'CONFLICT' })
+      }
+    }
+
     const tenant = await prisma.tenant.create({
       data: {
         name: input.name,
         email: input.email,
         phone: input.phone,
+        tag: input.tag ?? null,
         mrrValue: input.mrrValue,
         setupFee: input.setupFee,
       },
@@ -77,9 +86,17 @@ export async function superAdminRoutes(app: FastifyInstance) {
       active: z.boolean().optional(),
       name: z.string().min(1).optional(),
       phone: z.string().optional(),
+      tag: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/).nullable().optional(),
       mrrValue: z.coerce.number().min(0).optional(),
       setupFee: z.coerce.number().min(0).optional(),
     }).parse(req.body)
+
+    if (data.tag) {
+      const existingTag = await prisma.tenant.findFirst({ where: { tag: data.tag, id: { not: req.params.id } } })
+      if (existingTag) {
+        return reply.status(409).send({ error: true, message: 'Tag já está em uso por outra arena', code: 'CONFLICT' })
+      }
+    }
 
     const tenant = await prisma.tenant.update({
       where: { id: req.params.id },

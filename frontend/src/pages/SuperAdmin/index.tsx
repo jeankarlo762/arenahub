@@ -16,6 +16,7 @@ const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
+  tag: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, 'Apenas letras minúsculas, números e hífens').optional().or(z.literal('')),
   mrrValue: z.coerce.number().min(0, 'Valor inválido'),
   setupFee: z.coerce.number().min(0, 'Valor inválido'),
   adminName: z.string().min(1, 'Nome do admin obrigatório'),
@@ -28,6 +29,7 @@ type FormData = z.infer<typeof schema>
 const editSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   phone: z.string().optional(),
+  tag: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, 'Apenas letras minúsculas, números e hífens').optional().or(z.literal('')),
   mrrValue: z.coerce.number().min(0, 'Valor inválido'),
   setupFee: z.coerce.number().min(0, 'Valor inválido'),
 })
@@ -50,13 +52,13 @@ export default function TenantsPage() {
 
   function openEdit(tenant: Tenant) {
     setEditTenant(tenant)
-    editForm.reset({ name: tenant.name, phone: tenant.phone ?? '', mrrValue: tenant.mrrValue, setupFee: tenant.setupFee })
+    editForm.reset({ name: tenant.name, phone: tenant.phone ?? '', tag: tenant.tag ?? '', mrrValue: tenant.mrrValue, setupFee: tenant.setupFee })
   }
 
   async function onEdit(data: EditForm) {
     if (!editTenant) return
     try {
-      await superAdminApi.updateTenant(editTenant.id, data)
+      await superAdminApi.updateTenant(editTenant.id, { ...data, tag: data.tag || undefined })
       toast.success('Tenant atualizado')
       setEditTenant(null)
       load()
@@ -85,7 +87,7 @@ export default function TenantsPage() {
 
   async function onSubmit(data: FormData) {
     try {
-      await superAdminApi.createTenant(data)
+      await superAdminApi.createTenant({ ...data, tag: data.tag || undefined })
       toast.success('Tenant criado — login do admin já está ativo')
       setOpenModal(false)
       reset()
@@ -168,7 +170,7 @@ export default function TenantsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                {['Arena', 'Email', 'Usuários', 'MRR', 'Implantação', 'Status', 'Ações'].map((h) => (
+                {['Arena', 'Email', 'Tag', 'Usuários', 'MRR', 'Implantação', 'Status', 'Ações'].map((h) => (
                   <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
@@ -188,6 +190,11 @@ export default function TenantsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-600">{tenant.email}</td>
+                  <td className="px-5 py-4">
+                    {tenant.tag
+                      ? <span className="inline-block px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 text-xs font-mono font-medium">{tenant.tag}</span>
+                      : <span className="text-xs text-gray-400">—</span>}
+                  </td>
                   <td className="px-5 py-4 text-sm text-gray-600">{tenant._count?.users ?? 0}</td>
                   <td className="px-5 py-4 text-sm font-medium text-green-600">{formatCurrency(tenant.mrrValue)}</td>
                   <td className="px-5 py-4 text-sm text-gray-600">{formatCurrency(tenant.setupFee)}</td>
@@ -255,6 +262,11 @@ export default function TenantsPage() {
                 <input {...register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
               </div>
               <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">Tag (identificador único, opcional)</label>
+                <input {...register('tag')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="arena-xyz" />
+                {errors.tag && <p className="text-xs text-red-500">{errors.tag.message}</p>}
+              </div>
+              <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
                 <input {...register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="199.00" />
                 {errors.mrrValue && <p className="text-xs text-red-500">{errors.mrrValue.message}</p>}
@@ -313,6 +325,11 @@ export default function TenantsPage() {
           <div className="flex flex-col gap-1 sm:col-span-2">
             <label className="text-sm font-medium text-gray-700">Telefone</label>
             <input {...editForm.register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
+          </div>
+          <div className="flex flex-col gap-1 sm:col-span-2">
+            <label className="text-sm font-medium text-gray-700">Tag (identificador único, opcional)</label>
+            <input {...editForm.register('tag')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="arena-xyz" />
+            {editForm.formState.errors.tag && <p className="text-xs text-red-500">{editForm.formState.errors.tag.message}</p>}
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
