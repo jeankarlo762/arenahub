@@ -173,29 +173,26 @@ export default function RentalsPage() {
                     : exp.tone === 'green' ? 'bg-green-100 text-green-700'
                     : 'bg-gray-100 text-gray-500'
                   return (
-                  <div key={r.id} className={`bg-white rounded-xl border p-4 ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
-                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-start">
+                  <div key={r.id} className={`bg-white rounded-xl border px-5 py-3.5 ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+                    <div className="flex items-center gap-6">
 
-                      {/* Col 1 — Cliente */}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
+                      {/* Col 1 — Cliente + Quadra */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
                           <p className="font-semibold text-gray-900 truncate">{r.clientName}</p>
                           <Badge label={r.active ? 'Ativo' : 'Inativo'} status={r.active ? 'active' : 'inactive'} />
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
                           <MapPin size={11} className="shrink-0" />
                           <span className="truncate">{r.court?.name ?? 'Sem quadra definida'}</span>
                         </div>
-                        {r.notes && <p className="text-xs text-gray-400 mt-1 truncate">{r.notes}</p>}
+                        {r.notes && <p className="text-xs text-gray-400 mt-0.5 truncate">{r.notes}</p>}
                       </div>
 
-                      {/* Divider */}
-                      <div className="hidden sm:block w-px h-full bg-gray-100 self-stretch" />
-
                       {/* Col 2 — Dias */}
-                      <div className="min-w-[80px]">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Dias</p>
-                        <div className="flex gap-1 flex-wrap">
+                      <div className="shrink-0">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Dias</p>
+                        <div className="flex gap-1 flex-wrap max-w-[160px]">
                           {r.weekdays.map(d => (
                             <span key={d} className="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-md">{WEEKDAY_LABELS[d]}</span>
                           ))}
@@ -203,21 +200,21 @@ export default function RentalsPage() {
                       </div>
 
                       {/* Col 3 — Horários */}
-                      <div className="min-w-[120px]">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Horários</p>
-                        <div className="flex flex-col gap-1">
+                      <div className="shrink-0 min-w-[130px]">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Horários</p>
+                        <div className="flex flex-col gap-0.5">
                           {r.slots.map((s, i) => (
-                            <span key={i} className="flex items-center gap-1.5 text-xs text-gray-600">
-                              <span className="font-medium">{s.startTime}–{s.endTime}</span>
+                            <div key={i} className="flex items-center gap-1.5 text-xs">
+                              <span className="font-medium text-gray-700">{s.startTime}–{s.endTime}</span>
                               {s.price > 0 && <span className="text-green-700 font-semibold">{formatCurrency(s.price)}</span>}
-                            </span>
+                            </div>
                           ))}
                         </div>
                       </div>
 
                       {/* Col 4 — Valor / Expiração */}
-                      <div className="min-w-[130px]">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Valor</p>
+                      <div className="shrink-0 min-w-[130px]">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Valor total</p>
                         {total !== null ? (
                           <p className="text-sm font-bold text-green-700">{formatCurrency(total)}</p>
                         ) : (
@@ -229,7 +226,7 @@ export default function RentalsPage() {
                       </div>
 
                       {/* Col 5 — Ações */}
-                      <div className="flex sm:flex-col gap-1 items-center sm:items-end justify-end">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={r.active ? 'Desativar' : 'Ativar'}>
                           {r.active ? <PowerOff size={15} /> : <Power size={15} />}
                         </button>
