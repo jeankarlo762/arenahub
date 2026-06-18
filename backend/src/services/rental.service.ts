@@ -200,10 +200,28 @@ export async function deleteRental(id: string) {
 }
 
 export async function listRentalPayments(rentalId: string) {
-  return prisma.rentalPayment.findMany({
+  const existing = await prisma.rentalPayment.findMany({
     where: { rentalId },
     orderBy: { dueDate: 'asc' },
   })
+
+  // Backfill for rentals created before the payments system
+  if (existing.length === 0) {
+    const rental = await prisma.rental.findFirst({ where: { id: rentalId } })
+    if (rental) {
+      await generateRentalPayments(rentalId, {
+        weekdays: JSON.parse(rental.weekdays),
+        slots: JSON.parse(rental.slots),
+        startDate: rental.startDate.toISOString().slice(0, 10),
+        endDate: rental.endDate?.toISOString().slice(0, 10),
+        paymentDay: rental.paymentDay,
+        paymentFrequency: rental.paymentFrequency,
+      })
+      return prisma.rentalPayment.findMany({ where: { rentalId }, orderBy: { dueDate: 'asc' } })
+    }
+  }
+
+  return existing
 }
 
 export async function toggleRentalPayment(paymentId: string, paid: boolean) {
