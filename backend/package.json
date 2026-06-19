@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npx prisma generate && npx tsc",
+    "build": "npx prisma generate && ./node_modules/.bin/tsc",
     "start": "npx prisma db push --accept-data-loss --skip-generate && node dist/server.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
@@ -20,13 +20,13 @@
     "fastify": "^4.28.1",
     "jsonwebtoken": "^9.0.2",
     "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22.9.0",
-    "prisma": "^5.22.0",
-    "typescript": "^5.6.3"
+    "prisma": "^5.22.0"
   }
 }
