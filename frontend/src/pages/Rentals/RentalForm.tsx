@@ -13,8 +13,7 @@ import { ClientSearchInput } from '../../components/ClientSearchInput'
 import type { Rental } from '../../types/rental'
 import type { Court } from '../../types/court'
 import * as rentalsApi from '../../api/rentals.api'
-
-const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+import { WEEKDAY_LABELS } from '../../utils/date'
 
 const schema = z.object({
   courtId: z.string().optional(),

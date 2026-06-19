@@ -12,18 +12,11 @@ import * as financialApi from '../../api/financial.api'
 import * as barApi from '../../api/bar.api'
 import type { BarStats } from '../../api/bar.api'
 import type { FinancialSummary, DailyRevenue, RevenueItem } from '../../types/financial'
-import { formatCurrency } from '../../utils/format'
+import { formatCurrency, PAYMENT_METHOD_LABELS_SHORT, CHART_COLORS } from '../../utils/format'
 import { formatDate } from '../../utils/date'
 
-const COLORS = ['#f97316', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
-
-const METHOD_LABELS: Record<string, string> = {
-  CASH: 'Dinheiro',
-  CREDIT_CARD: 'Crédito',
-  DEBIT_CARD: 'Débito',
-  PIX: 'PIX',
-  TRANSFER: 'Transf.',
-}
+const COLORS = CHART_COLORS
+const METHOD_LABELS = PAYMENT_METHOD_LABELS_SHORT
 
 type Source = 'courts' | 'bar' | 'all'
 type QuickPeriod = 'today' | 'week' | 'month' | 'custom'

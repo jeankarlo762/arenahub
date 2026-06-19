@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/layout/Layout'
 import { Card } from '../../components/ui/Card'
@@ -19,6 +19,7 @@ import { formatDate } from '../../utils/date'
 import { toInputDate } from '../../utils/date'
 import { BOOKING_STATUS_LABELS } from '../../utils/format'
 import { useAuthStore } from '../../store/auth.store'
+import toast from 'react-hot-toast'
 
 // ── Operator dashboard (simplified) ──────────────────────────────────────────
 
@@ -42,6 +43,7 @@ function OperatorDashboard() {
           tournaments.filter((t) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length,
         )
       })
+      .catch(() => toast.error('Erro ao carregar dados do dashboard'))
       .finally(() => setLoading(false))
   }, [today])
 
@@ -56,7 +58,7 @@ function OperatorDashboard() {
   const metrics = [
     { label: 'Agendamentos Hoje', value: todayBookings.length, icon: CalendarDays, color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Quadras Ativas', value: activeCourts, icon: MapPin, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Torneios em Aberto', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Torneios Ativos', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50' },
   ]
 
   return (
@@ -114,7 +116,10 @@ function AdminDashboard() {
   const [openOrders, setOpenOrders] = useState<BarOrder[]>([])
   const [topClients, setTopClients] = useState<{ customerName: string; total: number; orderCount: number }[]>([])
 
-  const monthStart = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
+  const monthStart = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -140,6 +145,7 @@ function AdminDashboard() {
         setOpenOrders(orders)
         setTopClients(top as { customerName: string; total: number; orderCount: number }[])
       })
+      .catch(() => toast.error('Erro ao carregar dados do dashboard'))
       .finally(() => setLoading(false))
   }, [today, monthStart])
 
@@ -155,7 +161,7 @@ function AdminDashboard() {
     { label: 'Agendamentos Hoje', value: todayBookings.length, icon: CalendarDays, color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Receita do Mês', value: formatCurrency(summary?.received ?? 0), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50' },
     { label: 'Quadras Ativas', value: activeCourts, icon: MapPin, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Torneios em Aberto', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Torneios Ativos', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50' },
   ]
 
   return (

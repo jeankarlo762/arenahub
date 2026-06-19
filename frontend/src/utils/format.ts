@@ -38,3 +38,13 @@ export const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
   FINISHED: 'Finalizado',
   CANCELLED: 'Cancelado',
 }
+
+export const PAYMENT_METHOD_LABELS_SHORT: Record<string, string> = {
+  CASH: 'Dinheiro',
+  CREDIT_CARD: 'Crédito',
+  DEBIT_CARD: 'Débito',
+  PIX: 'PIX',
+  TRANSFER: 'Transf.',
+}
+
+export const CHART_COLORS = ['#f97316', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#3b82f6']

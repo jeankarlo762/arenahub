@@ -8,7 +8,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { SearchableSelect } from '../../components/ui/SearchableSelect'
 import type { BarOrder, BarProduct } from '../../types/bar'
 import * as barApi from '../../api/bar.api'
-import { formatCurrency } from '../../utils/format'
+import { formatCurrency, PAYMENT_METHOD_LABELS } from '../../utils/format'
 
 interface OrderDetailProps {
   open: boolean
@@ -28,21 +28,7 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelada',
 }
 
-const PAYMENT_METHODS = [
-  { value: 'CASH', label: 'Dinheiro' },
-  { value: 'PIX', label: 'PIX' },
-  { value: 'CREDIT_CARD', label: 'Cartão de Crédito' },
-  { value: 'DEBIT_CARD', label: 'Cartão de Débito' },
-  { value: 'TRANSFER', label: 'Transferência' },
-]
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'PIX',
-  CREDIT_CARD: 'Cartão de Crédito',
-  DEBIT_CARD: 'Cartão de Débito',
-  TRANSFER: 'Transferência',
-}
+const PAYMENT_METHODS = Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => ({ value, label }))
 
 export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailProps) {
   const [order, setOrder] = useState<BarOrder | null>(null)

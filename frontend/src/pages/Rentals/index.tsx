@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Pencil, Trash2, CalendarRange, Power, PowerOff, MapPin } from 'lucide-react'
 import { formatCurrency } from '../../utils/format'
+import { WEEKDAY_LABELS } from '../../utils/date'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
@@ -13,8 +14,6 @@ import type { Rental } from '../../types/rental'
 import type { Court } from '../../types/court'
 import * as rentalsApi from '../../api/rentals.api'
 import * as courtsApi from '../../api/courts.api'
-
-const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 export default function RentalsPage() {
   const [rentals, setRentals] = useState<Rental[]>([])

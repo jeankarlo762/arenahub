@@ -5,19 +5,13 @@ import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
 import type { BarOrder } from '../../types/bar'
 import * as barApi from '../../api/bar.api'
-import { formatCurrency } from '../../utils/format'
+import { formatCurrency, PAYMENT_METHOD_LABELS } from '../../utils/format'
 import { formatDate } from '../../utils/date'
 
 import { OrderDetail } from '../Bar/OrderDetail'
 import { OrderForm } from '../Bar/OrderForm'
 
-const PAYMENT_LABELS: Record<string, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'PIX',
-  CREDIT_CARD: 'Crédito',
-  DEBIT_CARD: 'Débito',
-  TRANSFER: 'Transferência',
-}
+const PAYMENT_LABELS = PAYMENT_METHOD_LABELS
 
 type ViewFormat = 'cards' | 'list'
 type Tab = 'active' | 'report'
