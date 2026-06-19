@@ -70,8 +70,13 @@ export default function PublicBookingPage() {
     setNetworkError(false)
     publicApi.get(`/public/booking/${slug}`)
       .then(res => {
+        // If VITE_API_URL is not set the static server returns HTML (200) instead of JSON
+        if (!res.data?.tenant) {
+          setNetworkError(true)
+          return
+        }
         setTenant(res.data.tenant)
-        setCourts(res.data.courts)
+        setCourts(res.data.courts ?? [])
       })
       .catch((err) => {
         if (err?.response?.status === 404) {
