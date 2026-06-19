@@ -106,6 +106,7 @@ export async function superAdminRoutes(app: FastifyInstance) {
     const tenantId = req.params.id
     await prisma.$transaction([
       prisma.barOrderItem.deleteMany({ where: { tenantId } }),
+      prisma.barTransaction.deleteMany({ where: { tenantId } }),
       prisma.barOrder.deleteMany({ where: { tenantId } }),
       prisma.barProduct.deleteMany({ where: { tenantId } }),
       prisma.barCategory.deleteMany({ where: { tenantId } }),
@@ -113,11 +114,13 @@ export async function superAdminRoutes(app: FastifyInstance) {
       prisma.booking.deleteMany({ where: { tenantId } }),
       prisma.tournamentTeam.deleteMany({ where: { tenantId } }),
       prisma.tournament.deleteMany({ where: { tenantId } }),
-      prisma.schedule.deleteMany({ where: { tenantId } }),
+      prisma.rentalPayment.deleteMany({ where: { tenantId } }),
       prisma.rental.deleteMany({ where: { tenantId } }),
+      prisma.schedule.deleteMany({ where: { tenantId } }),
       prisma.court.deleteMany({ where: { tenantId } }),
       prisma.paymentFee.deleteMany({ where: { tenantId } }),
       prisma.client.deleteMany({ where: { tenantId } }),
+      prisma.player.deleteMany({ where: { tenantId } }),
       prisma.user.deleteMany({ where: { tenantId } }),
       prisma.tenant.delete({ where: { id: tenantId } }),
     ])
