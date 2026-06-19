@@ -4,11 +4,13 @@ import { UsersTab } from './UsersTab'
 import { CourtsConfigTab } from './CourtsConfigTab'
 import { CourtsManageSection } from './CourtsManageSection'
 import { PaymentFeesTab } from './PaymentFeesTab'
+import { BrandingTab } from './BrandingTab'
 import { useAuthStore } from '../../store/auth.store'
 
 const ALL_TABS = [
   { key: 'courts', label: 'Quadras' },
   { key: 'financial', label: 'Financeiro' },
+  { key: 'branding', label: 'Personalização', adminOnly: true },
   { key: 'users', label: 'Usuários', adminOnly: true },
 ] as const
 
@@ -46,6 +48,7 @@ export default function SettingsPage() {
           </div>
         )}
         {activeTab === 'financial' && <PaymentFeesTab />}
+        {activeTab === 'branding' && user?.role === 'ADMIN' && <BrandingTab />}
         {activeTab === 'users' && user?.role === 'ADMIN' && <UsersTab />}
       </div>
     </Layout>

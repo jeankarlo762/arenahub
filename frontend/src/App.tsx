@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useEffect } from 'react'
 import { useAuthStore } from './store/auth.store'
+import { useBrandingStore, applyBrandingCss } from './store/branding.store'
 import * as authApi from './api/auth.api'
+import * as settingsApi from './api/settings.api'
 
 import LoginPage from './pages/Login'
 import ForgotPasswordPage from './pages/ForgotPassword'
@@ -66,6 +68,19 @@ function AppInit() {
           useAuthStore.getState().clearAuth()
         }
       })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken])
+
+  // Load tenant branding (color/logo/name) once authenticated and apply globally.
+  useEffect(() => {
+    if (!accessToken || useAuthStore.getState().user?.role === 'SUPERADMIN') return
+    settingsApi.getBranding()
+      .then((b) => {
+        useBrandingStore.getState().setBranding(b)
+        applyBrandingCss(b.primaryColor)
+      })
+      .catch(() => {})
+      .finally(() => useBrandingStore.getState().setLoaded())
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken])
 

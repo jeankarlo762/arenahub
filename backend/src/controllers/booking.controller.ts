@@ -14,6 +14,10 @@ export async function list(request: FastifyRequest, reply: FastifyReply) {
   return reply.send(await bookingService.listBookings(filters))
 }
 
+export async function getNotifications(request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await bookingService.getRecentBookings(request.user.tenantId))
+}
+
 export async function getById(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply,

@@ -17,6 +17,11 @@ export async function getBooking(id: string): Promise<Booking> {
   return res.data
 }
 
+export async function getNotifications(): Promise<Booking[]> {
+  const res = await api.get<Booking[]>('/bookings/notifications')
+  return res.data
+}
+
 export async function createBooking(data: CreateBookingPayload): Promise<Booking> {
   const res = await api.post<Booking>('/bookings', data)
   return res.data
