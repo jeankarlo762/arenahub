@@ -40,6 +40,17 @@ function brl(v: number): string {
   return `R$ ${Number(v).toFixed(2).replace('.', ',')}`
 }
 
+// A slot is "past" only when the chosen date is today (in the customer's local
+// timezone) and its start time has already elapsed. Uses the browser clock so
+// it's correct regardless of the server timezone.
+function isSlotPast(dateStr: string, startTime: string): boolean {
+  const now = new Date()
+  const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  if (dateStr !== localToday) return false
+  const [h, m] = startTime.split(':').map(Number)
+  return h * 60 + m <= now.getHours() * 60 + now.getMinutes()
+}
+
 export default function PublicBookingPage() {
   const { slug } = useParams<{ slug: string }>()
 
@@ -316,14 +327,16 @@ export default function PublicBookingPage() {
               <div className="grid grid-cols-3 gap-2">
                 {slots.map((slot, i) => {
                   const isSelected = selectedTimes.includes(slot.startTime)
+                  const isPast = isSlotPast(selectedDate, slot.startTime)
+                  const disabled = !slot.available || isPast
                   return (
                     <button
                       key={i}
                       type="button"
-                      disabled={!slot.available}
-                      onClick={() => slot.available && toggleTime(slot.startTime)}
+                      disabled={disabled}
+                      onClick={() => !disabled && toggleTime(slot.startTime)}
                       className={`relative p-2.5 rounded-xl border text-center transition-all ${
-                        !slot.available
+                        disabled
                           ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'
                           : isSelected
                           ? 'bg-orange-500 border-orange-500 text-white shadow-md'
@@ -338,12 +351,14 @@ export default function PublicBookingPage() {
                       <span className="flex items-center justify-center gap-1 text-sm font-semibold">
                         <Clock size={11} /> {slot.startTime}
                       </span>
-                      {Number(slot.price) > 0 && (
+                      {Number(slot.price) > 0 && !isPast && (
                         <span className={`block text-[11px] font-medium ${isSelected ? 'text-white/90' : 'text-orange-600'}`}>
                           {brl(Number(slot.price))}
                         </span>
                       )}
-                      {!slot.available && <span className="block text-[10px]">Ocupado</span>}
+                      {isPast
+                        ? <span className="block text-[10px]">Encerrado</span>
+                        : !slot.available && <span className="block text-[10px]">Ocupado</span>}
                     </button>
                   )
                 })}

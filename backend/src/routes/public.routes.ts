@@ -66,6 +66,13 @@ export async function publicRoutes(app: FastifyInstance) {
       return reply.status(400).send({ message: 'Horário de início deve ser anterior ao término' })
     }
 
+    // Reject bookings for dates already in the past (UTC-date compare is
+    // tolerant enough — customers can never book a clearly elapsed day).
+    const todayStr = new Date().toISOString().slice(0, 10)
+    if (body.date < todayStr) {
+      return reply.status(400).send({ message: 'Não é possível agendar em uma data passada' })
+    }
+
     const tenant = await prisma.tenant.findUnique({ where: { bookingSlug: slug }, select: { id: true, active: true } })
     if (!tenant || !tenant.active) return reply.status(404).send({ message: 'Não encontrado' })
 
@@ -74,9 +81,43 @@ export async function publicRoutes(app: FastifyInstance) {
 
     const totalPrice = Number(court.pricePerSlot)
     const bookingDate = new Date(body.date + 'T00:00:00')
+    const dayOfWeek = bookingDate.getDay()
 
     try {
       const booking = await prisma.$transaction(async (tx) => {
+        // 1) Court must be open on this weekday and the slot inside its hours
+        const schedule = await tx.schedule.findFirst({
+          where: { courtId: body.courtId, dayOfWeek, active: true },
+        })
+        if (!schedule) {
+          throw Object.assign(new Error('Quadra fechada neste dia'), { statusCode: 400 })
+        }
+        if (body.startTime < schedule.openTime || body.endTime > schedule.closeTime) {
+          throw Object.assign(new Error('Horário fora do funcionamento da quadra'), { statusCode: 400 })
+        }
+
+        // 2) Slot must not collide with an active fixed rental for this weekday
+        const rentals = await tx.rental.findMany({
+          where: {
+            courtId: body.courtId,
+            active: true,
+            startDate: { lte: bookingDate },
+            OR: [{ endDate: null }, { endDate: { gte: bookingDate } }],
+          },
+          select: { weekdays: true, slots: true },
+        })
+        const rentalConflict = rentals.some((r) => {
+          let wds: number[] = []
+          let rSlots: { startTime: string; endTime: string }[] = []
+          try { wds = JSON.parse(r.weekdays); rSlots = JSON.parse(r.slots) } catch { return false }
+          if (!wds.includes(dayOfWeek)) return false
+          return rSlots.some((rs) => timesOverlap(body.startTime, body.endTime, rs.startTime, rs.endTime))
+        })
+        if (rentalConflict) {
+          throw Object.assign(new Error('Horário reservado para locação fixa'), { statusCode: 409 })
+        }
+
+        // 3) Slot must not collide with another booking
         const conflicts = await tx.booking.findMany({
           where: {
             courtId: body.courtId,

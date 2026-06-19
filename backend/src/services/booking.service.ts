@@ -87,6 +87,28 @@ export async function createBooking(input: CreateBookingInput) {
         throw Object.assign(new Error('Quadra fechada neste dia'), { statusCode: 400 })
       }
 
+      // Block bookings that collide with an active fixed rental on this weekday
+      const dayOfWeekNum = bookingDate.getDay()
+      const rentals = await tx.rental.findMany({
+        where: {
+          courtId: input.courtId,
+          active: true,
+          startDate: { lte: bookingDate },
+          OR: [{ endDate: null }, { endDate: { gte: bookingDate } }],
+        },
+        select: { weekdays: true, slots: true },
+      })
+      const rentalConflict = rentals.some((r) => {
+        let wds: number[] = []
+        let rSlots: { startTime: string; endTime: string }[] = []
+        try { wds = JSON.parse(r.weekdays); rSlots = JSON.parse(r.slots) } catch { return false }
+        if (!wds.includes(dayOfWeekNum)) return false
+        return rSlots.some((rs) => timesOverlap(input.startTime, input.endTime, rs.startTime, rs.endTime))
+      })
+      if (rentalConflict) {
+        throw Object.assign(new Error('Horário reservado para locação fixa'), { statusCode: 409 })
+      }
+
       const conflicts = await tx.booking.findMany({
         where: {
           courtId: input.courtId,
