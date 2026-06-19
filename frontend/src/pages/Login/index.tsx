@@ -40,8 +40,11 @@ export default function LoginPage() {
         return
       }
       navigate('/', { replace: true })
-    } catch {
-      toast.error('Email ou senha incorretos')
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } }).response?.status
+      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message
+      // Show the server message for blocked accounts (e.g. arena desativada); generic otherwise
+      toast.error(status === 403 && msg ? msg : 'Email ou senha incorretos')
     }
   }
 

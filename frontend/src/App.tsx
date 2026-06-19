@@ -6,9 +6,12 @@ import * as authApi from './api/auth.api'
 
 import LoginPage from './pages/Login'
 import SuperAdminLoginPage from './pages/SuperAdmin/Login'
+import SuperAdminDashboard from './pages/SuperAdmin/Dashboard'
 import TenantsPage from './pages/SuperAdmin'
 import TenantUsersPage from './pages/SuperAdmin/TenantUsers'
 import FinanceiroPage from './pages/SuperAdmin/Financeiro'
+import SegurancaPage from './pages/SuperAdmin/Seguranca'
+import SuperAdminAuditoria from './pages/SuperAdmin/Auditoria'
 import DashboardPage from './pages/Dashboard'
 import CourtsPage from './pages/Courts'
 import BookingsPage from './pages/Bookings'
@@ -82,9 +85,12 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
-        <Route path="/superadmin" element={<RequireSuperAdmin><TenantsPage /></RequireSuperAdmin>} />
+        <Route path="/superadmin" element={<RequireSuperAdmin><SuperAdminDashboard /></RequireSuperAdmin>} />
+        <Route path="/superadmin/tenants" element={<RequireSuperAdmin><TenantsPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/usuarios" element={<RequireSuperAdmin><TenantUsersPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/financeiro" element={<RequireSuperAdmin><FinanceiroPage /></RequireSuperAdmin>} />
+        <Route path="/superadmin/auditoria" element={<RequireSuperAdmin><SuperAdminAuditoria /></RequireSuperAdmin>} />
+        <Route path="/superadmin/seguranca" element={<RequireSuperAdmin><SegurancaPage /></RequireSuperAdmin>} />
         <Route path="/" element={<RequireAuth><DashboardPage /></RequireAuth>} />
         <Route path="/courts" element={<RequireAuth><CourtsPage /></RequireAuth>} />
         <Route path="/bookings" element={<RequireAuth><BookingsPage /></RequireAuth>} />

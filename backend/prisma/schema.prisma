@@ -311,6 +311,16 @@ model BarCategory {
   @@index([tenantId])
 }
 
+// Senha mestra definida pelo super admin para acessar qualquer conta (suporte).
+// Mantemos apenas o hash; a linha mais recente é a chave válida.
+model MasterKey {
+  id        String   @id @default(cuid())
+  keyHash   String
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Trilha de auditoria — registra toda criação/edição/exclusão feita no sistema.
 // action: CREATE | UPDATE | DELETE | UPDATE_MANY | DELETE_MANY
 model AuditLog {

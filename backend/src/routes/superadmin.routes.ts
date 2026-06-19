@@ -260,4 +260,73 @@ export async function superAdminRoutes(app: FastifyInstance) {
       tenants: tenantsBilling,
     })
   })
+
+  // ---------- Master Key ----------
+  // Senha mestra que permite o super admin acessar qualquer conta (suporte).
+  app.get('/master-key', async (_req: FastifyRequest, reply: FastifyReply) => {
+    const mk = await prisma.masterKey.findFirst({ orderBy: { createdAt: 'desc' } })
+    return reply.send({ configured: !!mk, updatedAt: mk?.updatedAt ?? null })
+  })
+
+  app.put('/master-key', async (req: FastifyRequest, reply: FastifyReply) => {
+    const { key } = z.object({ key: z.string().min(8, 'A senha mestra deve ter no mínimo 8 caracteres') }).parse(req.body)
+    const keyHash = await hashPassword(key)
+    await prisma.$transaction([
+      prisma.masterKey.deleteMany({}),
+      prisma.masterKey.create({ data: { keyHash, createdBy: req.user.id } }),
+    ])
+    return reply.send({ configured: true })
+  })
+
+  app.delete('/master-key', async (_req: FastifyRequest, reply: FastifyReply) => {
+    await prisma.masterKey.deleteMany({})
+    return reply.status(204).send()
+  })
+
+  // ---------- Auditoria global (todas as arenas) ----------
+  app.get('/audit', async (req: FastifyRequest<{ Querystring: {
+    page?: string; pageSize?: string; tenantId?: string; entity?: string; action?: string; search?: string; startDate?: string; endDate?: string
+  } }>, reply: FastifyReply) => {
+    const q = req.query
+    const page = Math.max(1, parseInt(q.page ?? '1', 10) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(q.pageSize ?? '50', 10) || 50))
+
+    const where: Record<string, unknown> = {}
+    if (q.tenantId) where.tenantId = q.tenantId
+    if (q.entity) where.entity = q.entity
+    if (q.action) where.action = q.action
+    if (q.search) {
+      where.OR = [
+        { userName: { contains: q.search } },
+        { userEmail: { contains: q.search } },
+        { summary: { contains: q.search } },
+      ]
+    }
+    if (q.startDate || q.endDate) {
+      where.createdAt = {
+        ...(q.startDate ? { gte: new Date(q.startDate + 'T00:00:00') } : {}),
+        ...(q.endDate ? { lte: new Date(q.endDate + 'T23:59:59') } : {}),
+      }
+    }
+
+    const [total, logs] = await Promise.all([
+      prisma.auditLog.count({ where }),
+      prisma.auditLog.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
+    ])
+
+    // Resolve tenant names for display
+    const tenantIds = [...new Set(logs.map((l) => l.tenantId).filter((x): x is string => !!x))]
+    const tenantsList = tenantIds.length
+      ? await prisma.tenant.findMany({ where: { id: { in: tenantIds } }, select: { id: true, name: true } })
+      : []
+    const nameMap = new Map(tenantsList.map((t) => [t.id, t.name]))
+
+    return reply.send({
+      logs: logs.map((l) => ({ ...l, tenantName: l.tenantId ? (nameMap.get(l.tenantId) ?? '—') : '—' })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    })
+  })
 }
