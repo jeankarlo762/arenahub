@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 import { verifyAccessToken } from '../utils/token'
 import { prisma } from '../config/database'
-import { setTenant } from '../config/tenant-context'
+import { setTenant, setUser } from '../config/tenant-context'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -29,7 +29,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, role: true, active: true, tenantId: true },
+      select: { id: true, name: true, email: true, role: true, active: true, tenantId: true },
     })
 
     if (!user || !user.active) {
@@ -44,6 +44,9 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     }
 
     request.user = { id: user.id, email: user.email, role: user.role, tenantId: user.tenantId }
+
+    // Record the acting user for the audit trail.
+    setUser({ id: user.id, name: user.name, email: user.email, role: user.role })
 
     // Activate tenant isolation for the rest of this request.
     if (user.tenantId) {

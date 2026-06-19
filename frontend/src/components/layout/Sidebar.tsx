@@ -14,6 +14,7 @@ import {
   CalendarRange,
   BarChart2,
   Link,
+  ScrollText,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
@@ -21,19 +22,25 @@ import { useUIStore } from '../../store/ui.store'
 import * as authApi from '../../api/auth.api'
 import toast from 'react-hot-toast'
 
-const navItems = [
+// Funções comuns — disponíveis para todos os usuários (operadores e admins)
+const commonItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/courts', icon: MapPin, label: 'Quadras' },
   { to: '/bookings', icon: CalendarDays, label: 'Agendamentos' },
   { to: '/tournaments', icon: Trophy, label: 'Torneios' },
-  { to: '/bar', icon: Beer, label: 'Bar', adminOnly: true },
-  { to: '/comandas', icon: ClipboardList, label: 'Comandas', adminOnly: true },
   { to: '/clients', icon: Users, label: 'Clientes' },
   { to: '/rentals', icon: CalendarRange, label: 'Locação' },
-  { to: '/financial', icon: DollarSign, label: 'Financeiro', adminOnly: true },
-  { to: '/reports', icon: BarChart2, label: 'Relatórios', adminOnly: true },
-  { to: '/auto-booking', icon: Link, label: 'Agendamento Auto.', adminOnly: true },
-  { to: '/settings', icon: Settings, label: 'Configurações', adminOnly: true },
+]
+
+// Funções administrativas — visíveis apenas para administradores
+const adminItems = [
+  { to: '/bar', icon: Beer, label: 'Bar' },
+  { to: '/comandas', icon: ClipboardList, label: 'Comandas' },
+  { to: '/financial', icon: DollarSign, label: 'Financeiro' },
+  { to: '/reports', icon: BarChart2, label: 'Relatórios' },
+  { to: '/auto-booking', icon: Link, label: 'Agendamento Auto.' },
+  { to: '/audit', icon: ScrollText, label: 'Auditoria' },
+  { to: '/settings', icon: Settings, label: 'Configurações' },
 ]
 
 export function Sidebar() {
@@ -42,7 +49,6 @@ export function Sidebar() {
   const navigate = useNavigate()
 
   const isAdmin = user?.role === 'ADMIN'
-  const visibleItems = navItems.filter((item) => !item.adminOnly || isAdmin)
 
   async function handleLogout() {
     try {
@@ -83,7 +89,7 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 py-4 overflow-y-auto">
-          {visibleItems.map(({ to, icon: Icon, label }) => (
+          {commonItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
@@ -101,6 +107,35 @@ export function Sidebar() {
               {sidebarOpen && <span>{label}</span>}
             </NavLink>
           ))}
+
+          {/* Divisória — funções administrativas */}
+          {isAdmin && (
+            <>
+              <div className="my-3 mx-4 border-t border-gray-700/70" />
+              {sidebarOpen && (
+                <p className="px-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                  Administração
+                </p>
+              )}
+              {adminItems.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-orange-500 text-white'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                    )
+                  }
+                >
+                  <Icon size={18} className="shrink-0" />
+                  {sidebarOpen && <span>{label}</span>}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         <div className="border-t border-gray-700 p-4 shrink-0">

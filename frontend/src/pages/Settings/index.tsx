@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Layout } from '../../components/layout/Layout'
 import { UsersTab } from './UsersTab'
 import { CourtsConfigTab } from './CourtsConfigTab'
+import { CourtsManageSection } from './CourtsManageSection'
 import { PaymentFeesTab } from './PaymentFeesTab'
 import { useAuthStore } from '../../store/auth.store'
 
@@ -38,7 +39,12 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {activeTab === 'courts' && <CourtsConfigTab />}
+        {activeTab === 'courts' && (
+          <div className="flex flex-col gap-4">
+            <CourtsManageSection />
+            <CourtsConfigTab />
+          </div>
+        )}
         {activeTab === 'financial' && <PaymentFeesTab />}
         {activeTab === 'users' && user?.role === 'ADMIN' && <UsersTab />}
       </div>

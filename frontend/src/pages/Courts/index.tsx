@@ -1,15 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import toast from 'react-hot-toast'
-import { Settings2, MapPin, Search } from 'lucide-react'
+import { MapPin, Search } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
-import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Spinner } from '../../components/ui/Spinner'
-import { CourtForm } from './CourtForm'
-import { CourtSettingsModal } from './CourtSettingsModal'
-import { CourtManageModal } from './CourtManageModal'
 import { CourtSlotsPanel } from './CourtSlotsPanel'
 import { CourtOccupancyBanner } from './CourtOccupancyBanner'
 import { BookingForm } from '../Bookings/BookingForm'
@@ -19,13 +13,6 @@ import * as courtsApi from '../../api/courts.api'
 export default function CourtsPage() {
   const [courts, setCourts] = useState<Court[]>([])
   const [loading, setLoading] = useState(true)
-  const [manageOpen, setManageOpen] = useState(false)
-  const [formOpen, setFormOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [deactivateOpen, setDeactivateOpen] = useState(false)
-  const [selected, setSelected] = useState<Court | null>(null)
-  const [deactivating, setDeactivating] = useState(false)
-  const [activating, setActivating] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [bookingFormOpen, setBookingFormOpen] = useState(false)
   const [bookingPreSelect, setBookingPreSelect] = useState<{ courtId: string; date: string; startTime: string } | undefined>()
@@ -47,34 +34,6 @@ export default function CourtsPage() {
     setBookingFormOpen(true)
   }
 
-  async function handleActivate(court: Court) {
-    setActivating(court.id)
-    try {
-      await courtsApi.activateCourt(court.id)
-      toast.success(`${court.name} ativada`)
-      load()
-    } catch {
-      toast.error('Erro ao ativar quadra')
-    } finally {
-      setActivating(null)
-    }
-  }
-
-  async function handleDeactivate() {
-    if (!selected) return
-    setDeactivating(true)
-    try {
-      await courtsApi.deactivateCourt(selected.id)
-      toast.success('Quadra desativada')
-      setDeactivateOpen(false)
-      load()
-    } catch {
-      toast.error('Erro ao desativar')
-    } finally {
-      setDeactivating(false)
-    }
-  }
-
   const visibleCourts = courts.filter((c) => c.active && (!search || c.name.toLowerCase().includes(search.toLowerCase())))
 
   return (
@@ -92,9 +51,6 @@ export default function CourtsPage() {
               className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
             />
           </div>
-          <Button variant="secondary" onClick={() => setManageOpen(true)}>
-            <Settings2 size={16} /> Configurar Quadras
-          </Button>
         </div>
 
         {loading ? (
@@ -105,8 +61,7 @@ export default function CourtsPage() {
           <EmptyState
             icon={<MapPin size={48} />}
             title={search ? 'Nenhuma quadra encontrada' : 'Nenhuma quadra ativa'}
-            description="Use “Configurar Quadras” para criar ou ativar uma quadra"
-            action={{ label: 'Configurar Quadras', onClick: () => setManageOpen(true) }}
+            description="Crie ou ative quadras em Configurações → Quadras"
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -128,50 +83,12 @@ export default function CourtsPage() {
         )}
       </div>
 
-      <CourtManageModal
-        open={manageOpen}
-        onClose={() => setManageOpen(false)}
-        courts={courts}
-        activatingId={activating}
-        onNew={() => { setSelected(null); setFormOpen(true) }}
-        onEdit={(court) => { setSelected(court); setFormOpen(true) }}
-        onConfigure={(court) => { setSelected(court); setSettingsOpen(true) }}
-        onActivate={handleActivate}
-        onDeactivate={(court) => { setSelected(court); setDeactivateOpen(true) }}
-      />
-
-      <CourtForm
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSuccess={load}
-        court={selected ?? undefined}
-      />
-
       <BookingForm
         open={bookingFormOpen}
         onClose={() => setBookingFormOpen(false)}
         onSuccess={() => { setBookingFormOpen(false); load() }}
         courts={courts}
         preSelect={bookingPreSelect}
-      />
-
-      {selected && (
-        <CourtSettingsModal
-          open={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-          court={selected}
-          onSuccess={load}
-        />
-      )}
-
-      <ConfirmDialog
-        open={deactivateOpen}
-        onClose={() => setDeactivateOpen(false)}
-        onConfirm={handleDeactivate}
-        title="Desativar quadra"
-        message={`Deseja desativar "${selected?.name}"? Agendamentos existentes não serão cancelados.`}
-        confirmLabel="Desativar"
-        loading={deactivating}
       />
     </Layout>
   )

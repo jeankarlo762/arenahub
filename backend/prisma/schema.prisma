@@ -311,3 +311,23 @@ model BarCategory {
   @@index([tenantId])
 }
 
+// Trilha de auditoria — registra toda criação/edição/exclusão feita no sistema.
+// action: CREATE | UPDATE | DELETE | UPDATE_MANY | DELETE_MANY
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  userName  String?
+  userEmail String?
+  userRole  String?
+  action    String
+  entity    String
+  entityId  String?
+  summary   String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entity])
+}
+
