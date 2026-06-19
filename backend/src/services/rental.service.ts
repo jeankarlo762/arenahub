@@ -177,7 +177,8 @@ export async function updateRental(id: string, input: UpdateRentalInput) {
   const needsRegen = input.weekdays || input.slots || input.startDate || input.endDate !== undefined
     || input.paymentFrequency !== undefined || input.paymentDay !== undefined
   if (needsRegen) {
-    await prisma.rentalPayment.deleteMany({ where: { rentalId: id } })
+    // Only delete PENDING payments — PAID payments represent real money received and must be preserved
+    await prisma.rentalPayment.deleteMany({ where: { rentalId: id, status: 'PENDING' } })
     const full = await prisma.rental.findFirst({ where: { id } })
     if (full) {
       await generateRentalPayments(id, {

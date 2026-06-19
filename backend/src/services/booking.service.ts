@@ -160,8 +160,22 @@ export async function updateBooking(id: string, input: UpdateBookingInput) {
   return prisma.booking.update({ where: { id }, data: input })
 }
 
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  CONFIRMED: ['COMPLETED', 'CANCELLED', 'NO_SHOW'],
+  COMPLETED: [],
+  CANCELLED: [],
+  NO_SHOW: ['CONFIRMED'],
+}
+
 export async function updateBookingStatus(id: string, status: string) {
-  await getBooking(id)
+  const booking = await getBooking(id)
+  const allowed = VALID_STATUS_TRANSITIONS[booking.status] ?? []
+  if (!allowed.includes(status)) {
+    throw Object.assign(
+      new Error(`Transição inválida: ${booking.status} → ${status}`),
+      { statusCode: 400 },
+    )
+  }
   return prisma.booking.update({ where: { id }, data: { status: status as never } })
 }
 

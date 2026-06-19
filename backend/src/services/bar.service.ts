@@ -97,14 +97,23 @@ export async function createOrder(input: CreateOrderInput) {
   if (exists) {
     throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
   }
-  return prisma.barOrder.create({
-    data: {
-      number: input.number,
-      customerName: input.customerName,
-      notes: input.notes,
-    },
-    include: { items: { include: { product: true } } },
-  })
+  try {
+    return await prisma.barOrder.create({
+      data: {
+        number: input.number,
+        customerName: input.customerName,
+        notes: input.notes,
+      },
+      include: { items: { include: { product: true } } },
+    })
+  } catch (err: unknown) {
+    const e = err as { code?: string }
+    if (e.code === 'P2002') {
+      // Race condition: another request created the same number between our check and insert
+      throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
+    }
+    throw err
+  }
 }
 
 export async function updateOrder(id: string, input: UpdateOrderInput) {
