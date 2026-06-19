@@ -5,6 +5,7 @@ import { useAuthStore } from './store/auth.store'
 import * as authApi from './api/auth.api'
 
 import LoginPage from './pages/Login'
+import ForgotPasswordPage from './pages/ForgotPassword'
 import SuperAdminLoginPage from './pages/SuperAdmin/Login'
 import SuperAdminDashboard from './pages/SuperAdmin/Dashboard'
 import TenantsPage from './pages/SuperAdmin'
@@ -84,6 +85,7 @@ export default function App() {
       />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/superadmin/login" element={<SuperAdminLoginPage />} />
         <Route path="/superadmin" element={<RequireSuperAdmin><SuperAdminDashboard /></RequireSuperAdmin>} />
         <Route path="/superadmin/tenants" element={<RequireSuperAdmin><TenantsPage /></RequireSuperAdmin>} />

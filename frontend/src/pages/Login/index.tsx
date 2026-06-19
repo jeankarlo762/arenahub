@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -181,13 +181,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-xs text-gray-400">
-            ArenaHub — Gestão de Quadras Esportivas
+          <p className="mt-6 text-center">
+            <Link to="/forgot-password" className="text-sm text-gray-400 hover:text-orange-500 transition-colors">
+              Esqueceu a senha?
+            </Link>
           </p>
-          <p className="mt-2 text-center text-xs text-gray-300">
-            <a href="/superadmin/login" className="text-gray-300 hover:text-orange-500 transition-colors">
-              Acesso Super Admin
-            </a>
+
+          <p className="mt-6 text-center text-xs text-gray-400">
+            ArenaHub — Gestão de Quadras Esportivas
           </p>
         </div>
       </div>

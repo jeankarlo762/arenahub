@@ -9,6 +9,10 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  // SMS (Twilio) — optional; recovery SMS will fail gracefully if not set
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_FROM_NUMBER: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

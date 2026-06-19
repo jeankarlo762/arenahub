@@ -1,7 +1,9 @@
+import crypto from 'node:crypto'
 import { prisma } from '../config/database'
-import { comparePassword } from '../utils/password'
-import { signAccessToken, signRefreshToken, verifyRefreshToken, TokenPayload } from '../utils/token'
+import { comparePassword, hashPassword } from '../utils/password'
+import { signAccessToken, signRefreshToken, verifyRefreshToken, verifyAccessToken, TokenPayload } from '../utils/token'
 import { LoginInput } from '../schemas/auth.schema'
+import { sendSms } from './sms.service'
 
 const refreshTokenStore = new Map<string, string>()
 
@@ -124,4 +126,63 @@ export async function getMe(userId: string) {
   }
 
   return user
+}
+
+export async function forgotPassword(phone: string): Promise<{ sent: boolean }> {
+  const user = await prisma.user.findFirst({ where: { phone } })
+  // Always respond "sent" to avoid phone number enumeration
+  if (!user || !user.active) return { sent: true }
+
+  const code = crypto.randomInt(100000, 999999).toString()
+  const codeHash = await hashPassword(code)
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000)
+
+  await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } })
+  await prisma.passwordResetToken.create({ data: { userId: user.id, codeHash, expiresAt } })
+
+  try {
+    await sendSms(phone, `ArenaHub: Seu código de recuperação é ${code}. Válido por 10 minutos. Não compartilhe.`)
+  } catch (err) {
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } })
+    throw err
+  }
+
+  return { sent: true }
+}
+
+export async function verifyResetCode(phone: string, code: string): Promise<{ resetToken: string }> {
+  const user = await prisma.user.findFirst({ where: { phone } })
+  if (!user) {
+    throw Object.assign(new Error('Código inválido ou expirado'), { statusCode: 400 })
+  }
+
+  const token = await prisma.passwordResetToken.findFirst({
+    where: { userId: user.id, used: false, expiresAt: { gt: new Date() } },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  if (!token || !(await comparePassword(code, token.codeHash))) {
+    throw Object.assign(new Error('Código inválido ou expirado'), { statusCode: 400 })
+  }
+
+  await prisma.passwordResetToken.update({ where: { id: token.id }, data: { used: true } })
+
+  const resetToken = signAccessToken({ sub: user.id, email: user.email, role: 'RESET' })
+  return { resetToken }
+}
+
+export async function resetPassword(resetToken: string, newPassword: string): Promise<void> {
+  let payload: TokenPayload
+  try {
+    payload = verifyAccessToken(resetToken)
+  } catch {
+    throw Object.assign(new Error('Token inválido ou expirado'), { statusCode: 400 })
+  }
+
+  if (payload.role !== 'RESET') {
+    throw Object.assign(new Error('Token inválido'), { statusCode: 400 })
+  }
+
+  const passwordHash = await hashPassword(newPassword)
+  await prisma.user.update({ where: { id: payload.sub }, data: { passwordHash } })
 }
