@@ -25,23 +25,34 @@ export function NotificationBell() {
     return () => clearInterval(interval)
   }, [load])
 
+  // Marca tudo como visto — só é chamado ao FECHAR o dropdown, para que as
+  // notificações não-vistas continuem destacadas enquanto o painel está aberto.
+  const markSeen = useCallback(() => {
+    const now = new Date().toISOString()
+    setLastSeen(now)
+    localStorage.setItem(STORAGE_KEY, now)
+  }, [])
+
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen((wasOpen) => {
+          if (wasOpen) markSeen()
+          return false
+        })
+      }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  }, [markSeen])
 
   const unread = bookings.filter((b) => new Date(b.createdAt) > new Date(lastSeen)).length
 
   function handleOpen() {
-    setOpen((v) => !v)
-    if (!open) {
-      const now = new Date().toISOString()
-      setLastSeen(now)
-      localStorage.setItem(STORAGE_KEY, now)
-    }
+    setOpen((v) => {
+      if (v) markSeen() // estava aberto → fechando: marca como visto
+      return !v
+    })
   }
 
   return (
@@ -61,9 +72,16 @@ export function NotificationBell() {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">Novos agendamentos</p>
-            <p className="text-xs text-gray-400">Últimas 24 horas</p>
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Novos agendamentos</p>
+              <p className="text-xs text-gray-400">Últimas 24 horas</p>
+            </div>
+            {unread > 0 && (
+              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full whitespace-nowrap">
+                {unread} {unread === 1 ? 'nova' : 'novas'}
+              </span>
+            )}
           </div>
           <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
             {bookings.length === 0 ? (
