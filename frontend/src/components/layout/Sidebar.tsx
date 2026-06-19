@@ -82,7 +82,7 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className="flex-1 py-4 overflow-y-auto">
+        <nav className="flex-1 py-4 flex flex-col gap-0.5 overflow-hidden">
           {visibleItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
