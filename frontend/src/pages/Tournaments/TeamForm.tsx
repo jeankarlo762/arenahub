@@ -5,6 +5,7 @@ import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import * as tournamentsApi from '../../api/tournaments.api'
+import { resizeImageToDataUrl } from '../../utils/image'
 import type { MatchType, TournamentPlayer } from '../../types/tournament'
 
 interface TeamFormProps {
@@ -31,9 +32,9 @@ function PlayerPhotoInput({
 }) {
   function loadPhoto(file: File) {
     if (!file.type.startsWith('image/')) { toast.error('Apenas imagens'); return }
-    const reader = new FileReader()
-    reader.onload = (e) => onChange({ ...player, photo: e.target?.result as string })
-    reader.readAsDataURL(file)
+    resizeImageToDataUrl(file)
+      .then((dataUrl) => onChange({ ...player, photo: dataUrl }))
+      .catch(() => toast.error('Erro ao processar imagem'))
   }
 
   return (

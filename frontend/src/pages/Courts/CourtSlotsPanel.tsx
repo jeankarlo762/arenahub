@@ -38,7 +38,11 @@ export function CourtSlotsPanel({ court, onBookSlot }: CourtSlotsPanelProps) {
     return () => document.removeEventListener('mousedown', handler)
   }, [popup])
 
+  // Quick badge only fetched separately when the panel starts collapsed.
+  // When open (default), counts are derived from the loaded slots — avoids a
+  // duplicate availability request per court card.
   useEffect(() => {
+    if (open) return
     const today = toInputDate(new Date())
     setQuickLoading(true)
     courtsApi
@@ -73,8 +77,16 @@ export function CourtSlotsPanel({ court, onBookSlot }: CourtSlotsPanelProps) {
       if (!av.available) {
         setClosed(true)
         setSlots([])
+        setQuickAvailable(0)
+        setQuickTotal(0)
       } else {
-        setSlots(av.slots ?? [])
+        const s = av.slots ?? []
+        setSlots(s)
+        // Keep the collapsed badge in sync without a second request
+        if (date === toInputDate(new Date())) {
+          setQuickAvailable(s.filter((sl) => sl.available).length)
+          setQuickTotal(s.length)
+        }
       }
     } catch {
       setSlots([])

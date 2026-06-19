@@ -1,24 +1,8 @@
 import { prisma } from '../config/database'
 import { getTenantId } from '../config/tenant-context'
+import { randomBytes } from 'crypto'
 
 const PAYMENT_METHODS = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'TRANSFER']
-
-export async function getBranding() {
-  const tenantId = getTenantId()
-  if (!tenantId) return { primaryColor: '#f97316', logoUrl: null, companyName: null }
-  const b = await prisma.tenantBranding.findUnique({ where: { tenantId } })
-  return b ?? { primaryColor: '#f97316', logoUrl: null, companyName: null }
-}
-
-export async function upsertBranding(data: { primaryColor?: string; logoUrl?: string | null; companyName?: string | null }) {
-  const tenantId = getTenantId()
-  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
-  return prisma.tenantBranding.upsert({
-    where: { tenantId },
-    create: { tenantId, ...data },
-    update: data,
-  })
-}
 
 export async function getPaymentFees() {
   const tenantId = getTenantId()
@@ -27,6 +11,29 @@ export async function getPaymentFees() {
     method,
     feePercent: Number(fees.find((f) => f.method === method)?.feePercent ?? 0),
   }))
+}
+
+export async function getBookingSlug() {
+  const tenantId = getTenantId()
+  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { bookingSlug: true } })
+  return { slug: tenant?.bookingSlug ?? null }
+}
+
+export async function setBookingSlug(slug?: string) {
+  const tenantId = getTenantId()
+  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  const newSlug = slug?.trim() || randomBytes(6).toString('hex')
+  try {
+    await prisma.tenant.update({ where: { id: tenantId }, data: { bookingSlug: newSlug } })
+    return { slug: newSlug }
+  } catch (err: unknown) {
+    const e = err as { code?: string }
+    if (e.code === 'P2002') {
+      throw Object.assign(new Error('Este slug já está em uso'), { statusCode: 409 })
+    }
+    throw err
+  }
 }
 
 export async function upsertPaymentFee(method: string, feePercent: number) {

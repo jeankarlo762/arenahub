@@ -5,6 +5,7 @@ import {
   AddTeamInput,
   DrawInput,
   SetChampionInput,
+  SaveBracketInput,
 } from '../schemas/tournament.schema'
 
 export async function listTournaments() {
@@ -45,6 +46,9 @@ export async function createTournament(input: CreateTournamentInput) {
       maxTeams: input.maxTeams,
       prizeInfo: input.prizeInfo,
       courtId: input.courtId ?? null,
+      pointsFirst: input.pointsFirst ?? 3,
+      pointsSecond: input.pointsSecond ?? 2,
+      pointsThird: input.pointsThird ?? 1,
     },
   })
 }
@@ -69,6 +73,10 @@ export async function updateTournamentStatus(id: string, status: string) {
 export async function addTeam(tournamentId: string, input: AddTeamInput) {
   const tournament = await getTournament(tournamentId)
 
+  if (tournament.status === 'FINISHED' || tournament.status === 'CANCELLED') {
+    throw Object.assign(new Error('Torneio encerrado não aceita inscrições'), { statusCode: 409 })
+  }
+
   if (tournament.teams.length >= tournament.maxTeams) {
     throw Object.assign(new Error('Número máximo de equipes atingido'), { statusCode: 409 })
   }
@@ -83,9 +91,13 @@ export async function addTeam(tournamentId: string, input: AddTeamInput) {
 }
 
 export async function removeTeam(tournamentId: string, teamId: string) {
-  const team = await prisma.tournamentTeam.findFirst({
-    where: { id: teamId, tournamentId },
-  })
+  const tournament = await getTournament(tournamentId)
+
+  if (tournament.status === 'FINISHED' || tournament.status === 'CANCELLED') {
+    throw Object.assign(new Error('Torneio encerrado não permite remoção de equipes'), { statusCode: 409 })
+  }
+
+  const team = tournament.teams.find((t) => t.id === teamId)
 
   if (!team) {
     throw Object.assign(new Error('Equipe não encontrada'), { statusCode: 404 })
@@ -229,4 +241,96 @@ export async function drawTeamGroups(tournamentId: string, playersPerTeam: numbe
   }
 
   return getTournament(tournamentId)
+}
+
+interface BracketMatch {
+  round: number
+  matchIndex: number
+  winnerId: string | null
+}
+
+export async function saveBracketMatch(tournamentId: string, input: SaveBracketInput) {
+  const tournament = await getTournament(tournamentId)
+  let existing: BracketMatch[] = []
+  try {
+    existing = tournament.bracketData ? JSON.parse(tournament.bracketData) : []
+  } catch {
+    existing = []
+  }
+
+  const idx = existing.findIndex(
+    (m) => m.round === input.match.round && m.matchIndex === input.match.matchIndex,
+  )
+
+  if (idx >= 0) {
+    existing[idx] = { ...existing[idx], ...input.match }
+  } else {
+    existing.push(input.match)
+  }
+
+  // Auto-define the champion from the final match.
+  // Bracket size = next power of two >= number of seeded teams; the final round
+  // is the last one (a single match). When that match has a winner, that team
+  // is the champion; if the winner is cleared, the champion is cleared too.
+  const teamCount = tournament.teams.length
+  let champion: string | null = tournament.champion ?? null
+  if (teamCount >= 2) {
+    let size = 1
+    while (size < teamCount) size *= 2
+    const finalRound = Math.log2(size) - 1
+    const finalMatch = existing.find((m) => m.round === finalRound && m.matchIndex === 0)
+    if (finalMatch?.winnerId) {
+      const winner = tournament.teams.find((t) => t.id === finalMatch.winnerId)
+      champion = winner?.name ?? champion
+    } else {
+      champion = null
+    }
+  }
+
+  return prisma.tournament.update({
+    where: { id: tournamentId },
+    data: { bracketData: JSON.stringify(existing), champion },
+    include: { teams: true, court: { select: { id: true, name: true, type: true } } },
+  })
+}
+
+export async function updateTeamPosition(tournamentId: string, teamId: string, finalPosition: number | null) {
+  const team = await prisma.tournamentTeam.findFirst({ where: { id: teamId, tournamentId } })
+  if (!team) throw Object.assign(new Error('Equipe não encontrada'), { statusCode: 404 })
+  return prisma.tournamentTeam.update({ where: { id: teamId }, data: { finalPosition } })
+}
+
+export async function getPlayerRanking() {
+  const tournaments = await prisma.tournament.findMany({
+    where: { status: 'FINISHED' },
+    include: { teams: true },
+    orderBy: { endDate: 'desc' },
+  })
+
+  const playerMap = new Map<string, {
+    name: string
+    points: number
+    tournaments: { tournamentName: string; position: number | null; points: number; date: string }[]
+  }>()
+
+  for (const t of tournaments) {
+    const scoring: Record<number, number> = { 1: t.pointsFirst, 2: t.pointsSecond, 3: t.pointsThird }
+    for (const team of t.teams) {
+      const key = team.name
+      const pts = team.finalPosition != null ? (scoring[team.finalPosition] ?? 0) : 0
+      const entry = playerMap.get(key) ?? { name: team.name, points: 0, tournaments: [] }
+      entry.points += pts
+      entry.tournaments.push({
+        tournamentName: t.name,
+        position: team.finalPosition,
+        points: pts,
+        date: t.endDate.toISOString().slice(0, 10),
+      })
+      playerMap.set(key, entry)
+    }
+  }
+
+  return Array.from(playerMap.values())
+    .sort((a, b) => b.points - a.points)
+    .map((p, i) => ({ ...p, rank: i + 1 }))
 }

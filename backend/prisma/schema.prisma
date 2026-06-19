@@ -8,17 +8,17 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  phone     String?
-  tag       String?  @unique
-  mrrValue  Decimal  @default(0)
-  setupFee  Decimal  @default(0)
-  active    Boolean  @default(true)
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  mrrValue     Decimal  @default(0)
+  setupFee     Decimal  @default(0)
+  active       Boolean  @default(true)
+  bookingSlug  String?  @unique
+  users        User[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // Role: ADMIN | OPERATOR | SUPERADMIN
@@ -26,6 +26,7 @@ model User {
   id           String   @id @default(cuid())
   name         String
   email        String   @unique
+  phone        String?  @unique
   passwordHash String
   role         String   @default("OPERATOR")
   active       Boolean  @default(true)
@@ -89,6 +90,7 @@ model Booking {
   updatedAt     DateTime @updatedAt
 
   @@index([tenantId])
+  @@index([tenantId, courtId, date])
 }
 
 // method: CASH | CREDIT_CARD | DEBIT_CARD | PIX | TRANSFER
@@ -111,24 +113,28 @@ model Payment {
 // status: DRAFT | OPEN | IN_PROGRESS | FINISHED | CANCELLED
 // matchType: INDIVIDUAL | DOUBLES | TEAM
 model Tournament {
-  id          String           @id @default(cuid())
-  tenantId    String?
-  name        String
-  description String?
-  sport       String
-  startDate   DateTime
-  endDate     DateTime
-  status      String           @default("DRAFT")
-  matchType   String           @default("TEAM")
-  maxTeams    Int
-  prizeInfo   String?
-  imageUrl    String?
-  champion    String?
-  courtId     String?
-  court       Court?           @relation(fields: [courtId], references: [id])
-  teams       TournamentTeam[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  tenantId     String?
+  name         String
+  description  String?
+  sport        String
+  startDate    DateTime
+  endDate      DateTime
+  status       String           @default("DRAFT")
+  matchType    String           @default("TEAM")
+  maxTeams     Int
+  prizeInfo    String?
+  imageUrl     String?
+  champion     String?
+  courtId      String?
+  court        Court?           @relation(fields: [courtId], references: [id])
+  teams        TournamentTeam[]
+  pointsFirst  Int              @default(3)
+  pointsSecond Int              @default(2)
+  pointsThird  Int              @default(1)
+  bracketData  String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([tenantId])
 }
@@ -167,6 +173,7 @@ model BarOrder {
 
   @@unique([tenantId, number])
   @@index([tenantId])
+  @@index([tenantId, status])
 }
 
 model BarTransaction {
@@ -205,14 +212,6 @@ model PaymentFee {
   @@id([tenantId, method])
 }
 
-model TenantBranding {
-  tenantId     String   @id
-  primaryColor String   @default("#f97316")
-  logoUrl      String?
-  companyName  String?
-  updatedAt    DateTime @updatedAt
-}
-
 model Client {
   id        String   @id @default(cuid())
   tenantId  String?
@@ -228,35 +227,130 @@ model Client {
 
 // weekdays: JSON string of int array [0-6] (0=Sun)
 // slots: JSON string of [{startTime:"HH:MM",endTime:"HH:MM",price:number}]
+// plan: one of "1M" | "3M" | "6M" | "12M" | "CUSTOM"
+// paymentMethod: CASH | PIX | CREDIT_CARD | DEBIT_CARD | TRANSFER
+// paymentDay: day of month (1-31) the rental is charged
+// paymentFrequency: DAILY | MONTHLY
 model Rental {
-  id         String    @id @default(cuid())
-  tenantId   String?
-  courtId    String?
-  court      Court?    @relation(fields: [courtId], references: [id])
-  clientId   String?
-  client     Client?   @relation(fields: [clientId], references: [id])
-  clientName String
-  weekdays   String
-  slots      String
-  startDate  DateTime
-  endDate    DateTime?
-  notes      String?
-  active     Boolean   @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id               String          @id @default(cuid())
+  tenantId         String?
+  courtId          String?
+  court            Court?          @relation(fields: [courtId], references: [id])
+  clientId         String?
+  client           Client?         @relation(fields: [clientId], references: [id])
+  clientName       String
+  clientPhone      String?
+  weekdays         String
+  slots            String
+  startDate        DateTime
+  endDate          DateTime?
+  plan             String?
+  paymentMethod    String?
+  paymentDay       Int?
+  paymentFrequency String?
+  notes            String?
+  active           Boolean         @default(true)
+  payments         RentalPayment[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([tenantId])
+}
+
+// status: PENDING | PAID
+model RentalPayment {
+  id        String    @id @default(cuid())
+  tenantId  String?
+  rentalId  String
+  rental    Rental    @relation(fields: [rentalId], references: [id], onDelete: Cascade)
+  dueDate   DateTime
+  amount    Decimal   @default(0)
+  status    String    @default("PENDING")
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([rentalId])
+  @@index([tenantId])
+}
+
+// Registered tournament players. Points and tournaments-played are derived
+// from finished tournaments (matched by name), not stored here.
+model Player {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  name      String
+  age       Int?
+  photo     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tenantId])
 }
 
 model TournamentTeam {
-  id           String     @id @default(cuid())
-  tenantId     String?
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-  name         String
-  players      String
-  groupNumber  Int?
-  createdAt    DateTime   @default(now())
+  id            String     @id @default(cuid())
+  tenantId      String?
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id])
+  name          String
+  players       String
+  groupNumber   Int?
+  finalPosition Int?
+  createdAt     DateTime   @default(now())
 
   @@index([tenantId])
 }
+
+model BarCategory {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+// Senha mestra definida pelo super admin para acessar qualquer conta (suporte).
+// Mantemos apenas o hash; a linha mais recente é a chave válida.
+model MasterKey {
+  id        String   @id @default(cuid())
+  keyHash   String
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Token OTP de recuperação de senha via SMS (expira em 10 min, uso único).
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  codeHash  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Trilha de auditoria — registra toda criação/edição/exclusão feita no sistema.
+// action: CREATE | UPDATE | DELETE | UPDATE_MANY | DELETE_MANY
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  userId    String?
+  userName  String?
+  userEmail String?
+  userRole  String?
+  action    String
+  entity    String
+  entityId  String?
+  summary   String?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entity])
+}
+

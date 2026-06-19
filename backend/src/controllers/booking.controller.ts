@@ -57,7 +57,3 @@ export async function updatePayment(
   const input = updatePaymentSchema.parse(request.body)
   return reply.send(await bookingService.updatePayment(request.params.id, input))
 }
-
-export async function getNotifications(request: FastifyRequest, reply: FastifyReply) {
-  return reply.send(await bookingService.getRecentBookings(request.user.tenantId))
-}

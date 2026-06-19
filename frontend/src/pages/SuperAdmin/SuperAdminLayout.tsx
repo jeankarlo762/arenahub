@@ -1,13 +1,16 @@
 import { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Building2, UsersRound, DollarSign, LogOut } from 'lucide-react'
+import { LayoutDashboard, Building2, UsersRound, DollarSign, ScrollText, KeyRound, LogOut } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
 
 const navItems = [
-  { to: '/superadmin', icon: Building2, label: 'Tenants', end: true },
+  { to: '/superadmin', icon: LayoutDashboard, label: 'Dashboard', end: true },
+  { to: '/superadmin/tenants', icon: Building2, label: 'Tenants', end: false },
   { to: '/superadmin/usuarios', icon: UsersRound, label: 'Usuários Tenants', end: false },
   { to: '/superadmin/financeiro', icon: DollarSign, label: 'Financeiro', end: false },
+  { to: '/superadmin/auditoria', icon: ScrollText, label: 'Auditoria', end: false },
+  { to: '/superadmin/seguranca', icon: KeyRound, label: 'Segurança', end: false },
 ]
 
 export function SuperAdminLayout({ children, title, subtitle, action }: {

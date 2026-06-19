@@ -1,7 +1,7 @@
 import api from './axios'
 import type { FinancialSummary, DailyRevenue, RevenueItem } from '../types/financial'
 
-type Source = 'courts' | 'bar' | 'all'
+type Source = 'courts' | 'bar' | 'rentals' | 'all'
 
 interface DateRange {
   startDate?: string

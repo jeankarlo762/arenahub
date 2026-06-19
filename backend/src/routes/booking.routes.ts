@@ -5,7 +5,6 @@ import { authenticate } from '../middlewares/auth'
 export async function bookingRoutes(app: FastifyInstance) {
   app.addHook('preHandler', authenticate)
 
-  app.get('/notifications', bookingController.getNotifications)
   app.get('/', bookingController.list)
   app.post('/', bookingController.create)
   app.get('/:id', bookingController.getById)

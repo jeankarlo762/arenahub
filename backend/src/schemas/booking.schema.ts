@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const createBookingSchema = z.object({
+const createBookingBase = z.object({
   courtId: z.string().min(1, 'Quadra obrigatória'),
   customerName: z.string().min(1, 'Nome do cliente obrigatório'),
   customerPhone: z.string().min(1, 'Telefone obrigatório'),
@@ -12,7 +12,12 @@ export const createBookingSchema = z.object({
   notes: z.string().optional(),
 })
 
-export const updateBookingSchema = createBookingSchema.partial()
+export const createBookingSchema = createBookingBase.refine(
+  (d) => d.startTime < d.endTime,
+  { message: 'Horário de início deve ser anterior ao término', path: ['endTime'] },
+)
+
+export const updateBookingSchema = createBookingBase.partial()
 
 export const bookingStatusSchema = z.object({
   status: z.enum(['CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW']),

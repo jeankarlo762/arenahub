@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
-import { Pencil, Trash2, Package, BarChart2, Download, Medal } from 'lucide-react'
+import { Pencil, Trash2, Package, BarChart2, Download, Medal, Tag, Plus, X } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -9,10 +9,11 @@ import { Button } from '../../components/ui/Button'
 import { Spinner } from '../../components/ui/Spinner'
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { Card } from '../../components/ui/Card'
+import { Modal } from '../../components/ui/Modal'
 import { DatePicker } from '../../components/ui/DatePicker'
 import { ProductForm } from './ProductForm'
 import type { BarProduct } from '../../types/bar'
-import type { BarStats } from '../../api/bar.api'
+import type { BarStats, BarCategory } from '../../api/bar.api'
 import * as barApi from '../../api/bar.api'
 import { formatCurrency } from '../../utils/format'
 import { formatDate } from '../../utils/date'
@@ -60,6 +61,13 @@ export default function BarPage() {
   const today = new Date().toISOString().slice(0, 10)
   const [tab, setTab] = useState<Tab>('products')
 
+  // Categories state
+  const [categories, setCategories] = useState<BarCategory[]>([])
+  const [categoriesModalOpen, setCategoriesModalOpen] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [addingCategory, setAddingCategory] = useState(false)
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null)
+
   // Products state
   const [products, setProducts] = useState<BarProduct[]>([])
   const [productsLoading, setProductsLoading] = useState(true)
@@ -79,6 +87,10 @@ export default function BarPage() {
   const [stats, setStats] = useState<BarStats | null>(null)
   const [statsLoading, setStatsLoading] = useState(false)
 
+  const loadCategories = useCallback(async () => {
+    try { setCategories(await barApi.listCategories()) } catch { /* ignore */ }
+  }, [])
+
   const loadProducts = useCallback(async () => {
     setProductsLoading(true)
     try { setProducts(await barApi.listProducts()) }
@@ -91,6 +103,7 @@ export default function BarPage() {
     finally { setStatsLoading(false) }
   }, [statsStartDate, statsEndDate])
 
+  useEffect(() => { loadCategories() }, [loadCategories])
   useEffect(() => { loadProducts() }, [loadProducts])
   useEffect(() => { if (tab === 'stats') loadStats() }, [tab, loadStats])
 
@@ -100,6 +113,36 @@ export default function BarPage() {
       const { start, end } = getPeriodDates(p)
       setStatsStartDate(start)
       setStatsEndDate(end)
+    }
+  }
+
+  async function handleAddCategory() {
+    if (!newCategoryName.trim()) return
+    setAddingCategory(true)
+    try {
+      await barApi.createCategory(newCategoryName.trim())
+      setNewCategoryName('')
+      toast.success('Categoria criada')
+      loadCategories()
+      loadProducts()
+    } catch {
+      toast.error('Erro ao criar categoria')
+    } finally {
+      setAddingCategory(false)
+    }
+  }
+
+  async function handleDeleteCategory(id: string) {
+    setDeletingCategoryId(id)
+    try {
+      await barApi.deleteCategory(id)
+      toast.success('Categoria removida')
+      loadCategories()
+      loadProducts()
+    } catch {
+      toast.error('Erro ao remover categoria')
+    } finally {
+      setDeletingCategoryId(null)
     }
   }
 
@@ -148,9 +191,14 @@ export default function BarPage() {
           </div>
 
           {tab === 'products' && (
-            <Button onClick={() => { setEditingProduct(undefined); setProductFormOpen(true) }}>
-              <Package size={16} /> Novo Produto
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setCategoriesModalOpen(true)}>
+                <Tag size={15} /> Categorias
+              </Button>
+              <Button onClick={() => { setEditingProduct(undefined); setProductFormOpen(true) }}>
+                <Package size={16} /> Novo Produto
+              </Button>
+            </div>
           )}
           {tab === 'stats' && stats && (
             <Button variant="secondary" onClick={() => exportCSV(stats, statsStartDate, statsEndDate)}>
@@ -286,7 +334,48 @@ export default function BarPage() {
         )}
       </div>
 
-      <ProductForm open={productFormOpen} onClose={() => setProductFormOpen(false)} onSuccess={loadProducts} product={editingProduct} />
+      <ProductForm open={productFormOpen} onClose={() => setProductFormOpen(false)} onSuccess={loadProducts} product={editingProduct} categories={categories} />
+
+      {/* Categories modal */}
+      <Modal
+        open={categoriesModalOpen}
+        onClose={() => setCategoriesModalOpen(false)}
+        title="Gerenciar Categorias"
+        size="sm"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex gap-2">
+            <input
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+              placeholder="Nome da categoria..."
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+            />
+            <Button onClick={handleAddCategory} loading={addingCategory} disabled={!newCategoryName.trim()}>
+              <Plus size={15} />
+            </Button>
+          </div>
+          {categories.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">Nenhuma categoria cadastrada</p>
+          ) : (
+            <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
+              {categories.map((cat) => (
+                <div key={cat.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-800">{cat.name}</span>
+                  <button
+                    onClick={() => handleDeleteCategory(cat.id)}
+                    disabled={deletingCategoryId === cat.id}
+                    className="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                  >
+                    {deletingCategoryId === cat.id ? <Spinner size="sm" /> : <X size={14} />}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
 
       <ConfirmDialog
         open={!!deleteProductId}

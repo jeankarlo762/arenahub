@@ -8,6 +8,8 @@ import {
   drawSchema,
   setChampionSchema,
   drawTeamGroupsSchema,
+  saveBracketSchema,
+  updateTeamPositionSchema,
 } from '../schemas/tournament.schema'
 
 export async function list(_request: FastifyRequest, reply: FastifyReply) {
@@ -86,4 +88,24 @@ export async function drawTeamGroups(
 ) {
   const { playersPerTeam } = drawTeamGroupsSchema.parse(request.body)
   return reply.send(await tournamentService.drawTeamGroups(request.params.id, playersPerTeam))
+}
+
+export async function saveBracket(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply,
+) {
+  const input = saveBracketSchema.parse(request.body)
+  return reply.send(await tournamentService.saveBracketMatch(request.params.id, input))
+}
+
+export async function updateTeamPosition(
+  request: FastifyRequest<{ Params: { id: string; teamId: string } }>,
+  reply: FastifyReply,
+) {
+  const { finalPosition } = updateTeamPositionSchema.parse(request.body)
+  return reply.send(await tournamentService.updateTeamPosition(request.params.id, request.params.teamId, finalPosition))
+}
+
+export async function getPlayerRanking(_request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await tournamentService.getPlayerRanking())
 }

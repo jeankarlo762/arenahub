@@ -2,15 +2,14 @@ import { useState } from 'react'
 import { Layout } from '../../components/layout/Layout'
 import { UsersTab } from './UsersTab'
 import { CourtsConfigTab } from './CourtsConfigTab'
+import { CourtsManageSection } from './CourtsManageSection'
 import { PaymentFeesTab } from './PaymentFeesTab'
-import { BrandingTab } from './BrandingTab'
 import { useAuthStore } from '../../store/auth.store'
 
 const ALL_TABS = [
   { key: 'courts', label: 'Quadras' },
   { key: 'financial', label: 'Financeiro' },
   { key: 'users', label: 'Usuários', adminOnly: true },
-  { key: 'branding', label: 'Branding', adminOnly: true },
 ] as const
 
 type Tab = (typeof ALL_TABS)[number]['key']
@@ -40,10 +39,14 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {activeTab === 'courts' && <CourtsConfigTab />}
+        {activeTab === 'courts' && (
+          <div className="flex flex-col gap-4">
+            <CourtsManageSection />
+            <CourtsConfigTab />
+          </div>
+        )}
         {activeTab === 'financial' && <PaymentFeesTab />}
         {activeTab === 'users' && user?.role === 'ADMIN' && <UsersTab />}
-        {activeTab === 'branding' && user?.role === 'ADMIN' && <BrandingTab />}
       </div>
     </Layout>
   )

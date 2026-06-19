@@ -13,7 +13,7 @@ import { Spinner } from '../../components/ui/Spinner'
 import type { Court, AvailabilitySlot } from '../../types/court'
 import * as courtsApi from '../../api/courts.api'
 import * as bookingsApi from '../../api/bookings.api'
-import { formatCurrency } from '../../utils/format'
+import { formatCurrency, formatPhone } from '../../utils/format'
 import { toInputDate } from '../../utils/date'
 
 const schema = z.object({
@@ -35,6 +35,7 @@ interface BookingFormProps {
   preSelect?: { courtId: string; date: string; startTime: string }
 }
 
+
 export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: BookingFormProps) {
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null)
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -48,6 +49,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
     handleSubmit,
     watch,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
 
@@ -65,6 +67,14 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
     } else if (preSelect) {
       reset({ courtId: preSelect.courtId, date: preSelect.date })
       setPendingTime(preSelect.startTime)
+    } else {
+      // Fresh booking — ensure no fields are pre-filled from a previous open
+      reset({ courtId: '', date: '', customerName: '', customerPhone: '', customerEmail: '', notes: '' })
+      setSelectedCourt(null)
+      setSlots([])
+      setSelectedTimes([])
+      setSlotsError('')
+      setPendingTime(null)
     }
   }, [open, reset, preSelect])
 
@@ -173,7 +183,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
       <div className="flex flex-col gap-4">
         <Select
           label="Quadra"
-          placeholder="Selecione..."
+          placeholder="Selecione a quadra"
           options={courts.filter((c) => c.active).map((c) => ({ value: c.id, label: c.name }))}
           error={errors.courtId?.message}
           {...register('courtId')}
@@ -262,15 +272,18 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
         <div className="border-t pt-4">
           <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Dados do Cliente</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Nome" error={errors.customerName?.message} {...register('customerName')} />
+            <Input label="Nome" placeholder="Nome do cliente" error={errors.customerName?.message} {...register('customerName')} />
             <Input
               label="Telefone (opcional)"
               placeholder="(11) 99999-9999"
+              inputMode="tel"
               {...register('customerPhone')}
+              onChange={(e) => setValue('customerPhone', formatPhone(e.target.value))}
             />
             <Input
               label="Email (opcional)"
               type="email"
+              placeholder="email@gmail.com"
               className="sm:col-span-2"
               {...register('customerEmail')}
             />

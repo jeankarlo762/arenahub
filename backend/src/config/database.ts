@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma } from '@prisma/client'
-import { getTenantId } from './tenant-context'
+import { getTenantId, getUser } from './tenant-context'
 
 export const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
@@ -17,8 +17,11 @@ const TENANT_MODELS = new Set<string>([
   'BarProduct',
   'BarOrder',
   'BarOrderItem',
+  'BarCategory',
   'Client',
   'Rental',
+  'RentalPayment',
+  'Player',
 ])
 
 function delegateFor(model: string) {
@@ -94,7 +97,7 @@ prisma.$use(async (params, next) => {
     }
 
     case 'upsert':
-      args.where = { ...(args.where ?? {}), tenantId }
+      // where must remain a unique selector — do not inject tenantId into it
       args.create = { ...(args.create ?? {}), tenantId }
       break
 
@@ -103,6 +106,90 @@ prisma.$use(async (params, next) => {
   }
 
   return next(params)
+})
+
+// ─── Audit trail ───────────────────────────────────────────────────────────
+// Records every create/update/delete on business models, capturing who did it
+// (from the request context), what, where (entity) and when. Best-effort: a
+// failure to write the audit log never breaks the original operation.
+
+const AUDITABLE_MODELS = new Set<string>([
+  'Court', 'Schedule', 'Booking', 'Payment', 'Tournament', 'TournamentTeam',
+  'BarProduct', 'BarOrder', 'BarOrderItem', 'BarCategory', 'BarTransaction',
+  'Client', 'Rental', 'RentalPayment', 'Player', 'User', 'Tenant', 'PaymentFee',
+])
+
+const ENTITY_LABELS: Record<string, string> = {
+  Court: 'Quadra', Schedule: 'Horário', Booking: 'Agendamento', Payment: 'Pagamento',
+  Tournament: 'Torneio', TournamentTeam: 'Time de torneio', BarProduct: 'Produto do bar',
+  BarOrder: 'Comanda', BarOrderItem: 'Item de comanda', BarCategory: 'Categoria do bar',
+  BarTransaction: 'Transação do bar', Client: 'Cliente', Rental: 'Locação',
+  RentalPayment: 'Pagamento de locação', Player: 'Jogador', User: 'Usuário',
+  Tenant: 'Arena', PaymentFee: 'Taxa de pagamento',
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  CREATE: 'criou', UPDATE: 'editou', DELETE: 'excluiu',
+  UPDATE_MANY: 'editou em lote', DELETE_MANY: 'excluiu em lote', UPSERT: 'salvou',
+}
+
+function auditActionFor(action: string): string | null {
+  switch (action) {
+    case 'create':
+    case 'createMany': return 'CREATE'
+    case 'update': return 'UPDATE'
+    case 'delete': return 'DELETE'
+    case 'updateMany': return 'UPDATE_MANY'
+    case 'deleteMany': return 'DELETE_MANY'
+    case 'upsert': return 'UPSERT'
+    default: return null
+  }
+}
+
+prisma.$use(async (params, next) => {
+  const result = await next(params)
+
+  const model = params.model
+  const auditAction = model ? auditActionFor(params.action) : null
+  if (!model || model === 'AuditLog' || !auditAction || !AUDITABLE_MODELS.has(model)) {
+    return result
+  }
+
+  try {
+    const user = getUser()
+    const tenantId = getTenantId() ?? null
+    const entityLabel = ENTITY_LABELS[model] ?? model
+
+    // Extract the affected record id when available
+    let entityId: string | null = null
+    const r = result as { id?: string; count?: number } | null
+    if (r && typeof r === 'object' && 'id' in r && typeof r.id === 'string') {
+      entityId = r.id
+    }
+
+    const who = user?.name ?? 'Sistema'
+    const verb = ACTION_LABELS[auditAction] ?? auditAction.toLowerCase()
+    const countSuffix = r && typeof r === 'object' && typeof r.count === 'number' ? ` (${r.count} registro(s))` : ''
+    const summary = `${who} ${verb} ${entityLabel}${countSuffix}`
+
+    await prisma.auditLog.create({
+      data: {
+        tenantId,
+        userId: user?.id ?? null,
+        userName: user?.name ?? null,
+        userEmail: user?.email ?? null,
+        userRole: user?.role ?? null,
+        action: auditAction,
+        entity: model,
+        entityId,
+        summary,
+      },
+    })
+  } catch {
+    // Never let an audit failure break the real operation
+  }
+
+  return result
 })
 
 export { Prisma }

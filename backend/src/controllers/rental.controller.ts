@@ -25,3 +25,20 @@ export async function deleteRental(request: FastifyRequest<{ Params: { id: strin
   await rentalService.deleteRental(request.params.id)
   return reply.status(204).send()
 }
+
+export async function getRentalReport(request: FastifyRequest, reply: FastifyReply) {
+  const { startDate, endDate } = request.query as { startDate?: string; endDate?: string }
+  return reply.send(await rentalService.getRentalReport(startDate, endDate))
+}
+
+export async function listPayments(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+  return reply.send(await rentalService.listRentalPayments(request.params.id))
+}
+
+export async function updatePayment(
+  request: FastifyRequest<{ Params: { id: string; pid: string } }>,
+  reply: FastifyReply
+) {
+  const { paid } = request.body as { paid: boolean }
+  return reply.send(await rentalService.toggleRentalPayment(request.params.pid, paid))
+}

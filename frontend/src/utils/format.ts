@@ -1,19 +1,17 @@
 export function formatCurrency(value: number): string {
+  if (!isFinite(value) || isNaN(value)) return 'R$ 0,00'
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(value)
 }
 
-export function formatPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-  if (digits.length === 11) {
-    return digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-  }
-  if (digits.length === 10) {
-    return digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
-  }
-  return phone
+export function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (digits.length <= 2) return digits.length ? `(${digits}` : ''
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
 }
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -38,13 +36,3 @@ export const TOURNAMENT_STATUS_LABELS: Record<string, string> = {
   FINISHED: 'Finalizado',
   CANCELLED: 'Cancelado',
 }
-
-export const PAYMENT_METHOD_LABELS_SHORT: Record<string, string> = {
-  CASH: 'Dinheiro',
-  CREDIT_CARD: 'Crédito',
-  DEBIT_CARD: 'Débito',
-  PIX: 'PIX',
-  TRANSFER: 'Transf.',
-}
-
-export const CHART_COLORS = ['#f97316', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#3b82f6']

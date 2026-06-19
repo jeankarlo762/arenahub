@@ -96,7 +96,7 @@ export async function getCurrentBooking(courtId: string) {
   return { booking, currentTime }
 }
 
-export async function getCourtAvailability(courtId: string, date: string) {
+export async function getCourtAvailability(courtId: string, date: string, options: { publicMode?: boolean } = {}) {
   const court = await getCourt(courtId)
 
   const dateObj = new Date(date + 'T00:00:00')
@@ -136,8 +136,12 @@ export async function getCourtAvailability(courtId: string, date: string) {
   const dayOfWeek2 = dateObj2.getDay()
   // Filter rentals matching today's weekday
   const todayRentals = activeRentals.filter((r) => {
-    const wds: number[] = JSON.parse(r.weekdays)
-    return wds.includes(dayOfWeek2)
+    try {
+      const wds: number[] = JSON.parse(r.weekdays)
+      return wds.includes(dayOfWeek2)
+    } catch {
+      return false
+    }
   })
 
   const slotsWithStatus = allSlots.map((slotStart) => {
@@ -152,13 +156,17 @@ export async function getCourtAvailability(courtId: string, date: string) {
     if (!occupiedBy) {
       // Check if a rental covers this slot
       const rentedBy = todayRentals.find((r) => {
-        const rSlots: { startTime: string; endTime: string }[] = JSON.parse(r.slots)
-        return rSlots.some(
-          (rs) => slotStartMin < timeToMinutes(rs.endTime) && slotEndMin > timeToMinutes(rs.startTime),
-        )
+        try {
+          const rSlots: { startTime: string; endTime: string }[] = JSON.parse(r.slots)
+          return rSlots.some(
+            (rs) => slotStartMin < timeToMinutes(rs.endTime) && slotEndMin > timeToMinutes(rs.startTime),
+          )
+        } catch {
+          return false
+        }
       })
       if (rentedBy) {
-        return { startTime: slotStart, endTime, available: false, rental: { clientName: rentedBy.clientName } }
+        return { startTime: slotStart, endTime, available: false, price: Number(court.pricePerSlot), rental: { clientName: rentedBy.clientName } }
       }
     }
 
@@ -166,11 +174,12 @@ export async function getCourtAvailability(courtId: string, date: string) {
       startTime: slotStart,
       endTime,
       available: !occupiedBy,
+      price: Number(court.pricePerSlot),
       ...(occupiedBy ? {
         booking: {
           id: occupiedBy.id,
           customerName: occupiedBy.customerName,
-          customerPhone: occupiedBy.customerPhone,
+          ...(options.publicMode ? {} : { customerPhone: occupiedBy.customerPhone }),
         },
       } : {}),
     }

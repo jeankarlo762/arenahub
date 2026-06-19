@@ -3,7 +3,7 @@ import * as financialService from '../services/financial.service'
 import { financialFiltersSchema, dailyRevenueSchema } from '../schemas/financial.schema'
 import { z } from 'zod'
 
-const sourceSchema = z.object({ source: z.enum(['courts', 'bar', 'all']).optional() })
+const sourceSchema = z.object({ source: z.enum(['courts', 'bar', 'rentals', 'all']).optional() })
 
 export async function getSummary(request: FastifyRequest, reply: FastifyReply) {
   const filters = financialFiltersSchema.parse(request.query)
@@ -24,7 +24,8 @@ export async function getByCourt(request: FastifyRequest, reply: FastifyReply) {
 
 export async function getByMethod(request: FastifyRequest, reply: FastifyReply) {
   const filters = financialFiltersSchema.parse(request.query)
-  return reply.send(await financialService.getRevenueByMethod(filters))
+  const { source } = sourceSchema.parse(request.query)
+  return reply.send(await financialService.getRevenueByMethod({ ...filters, source }))
 }
 
 export async function getTransactions(request: FastifyRequest, reply: FastifyReply) {

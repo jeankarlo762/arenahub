@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
+import { z } from 'zod'
 import * as barService from '../services/bar.service'
 import {
   createProductSchema,
@@ -9,6 +10,10 @@ import {
   addItemSchema,
   orderFiltersSchema,
 } from '../schemas/bar.schema'
+
+const createCategorySchema = z.object({
+  name: z.string().min(1, 'Nome obrigatório').max(100),
+})
 
 // Products
 export async function listProducts(request: FastifyRequest, reply: FastifyReply) {
@@ -99,12 +104,30 @@ export async function getOrderByNumber(
   return reply.send(order ?? null)
 }
 
-export async function reopenOrder(
-  request: FastifyRequest<{ Params: { id: string }; Body: { clearItems: boolean; newCustomerName?: string } }>,
+// Categories
+export async function listCategories(_request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await barService.listCategories())
+}
+
+export async function createCategory(request: FastifyRequest, reply: FastifyReply) {
+  const { name } = createCategorySchema.parse(request.body)
+  return reply.status(201).send(await barService.createCategory(name.trim()))
+}
+
+export async function deleteCategory(
+  request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply,
 ) {
-  const { clearItems, newCustomerName } = request.body as { clearItems: boolean; newCustomerName?: string }
-  return reply.send(await barService.reopenOrder(request.params.id, !!clearItems, newCustomerName))
+  await barService.deleteCategory(request.params.id)
+  return reply.status(204).send()
+}
+
+export async function reopenOrder(
+  request: FastifyRequest<{ Params: { id: string }; Body: { clearItems: boolean } }>,
+  reply: FastifyReply,
+) {
+  const { clearItems } = request.body as { clearItems: boolean }
+  return reply.send(await barService.reopenOrder(request.params.id, !!clearItems))
 }
 
 export async function removeItem(

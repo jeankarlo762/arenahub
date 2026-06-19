@@ -7,6 +7,24 @@ import {
   AddItemInput,
 } from '../schemas/bar.schema'
 
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+export async function listCategories() {
+  return prisma.barCategory.findMany({ orderBy: { name: 'asc' } })
+}
+
+export async function createCategory(name: string) {
+  return prisma.barCategory.create({ data: { name } })
+}
+
+export async function deleteCategory(id: string) {
+  const cat = await prisma.barCategory.findUnique({ where: { id } })
+  if (!cat) throw Object.assign(new Error('Categoria não encontrada'), { statusCode: 404 })
+  // Remove category from products that use it
+  await prisma.barProduct.updateMany({ where: { category: cat.name }, data: { category: null } })
+  return prisma.barCategory.delete({ where: { id } })
+}
+
 // ─── Products ────────────────────────────────────────────────────────────────
 
 export async function listProducts(activeOnly?: boolean) {
@@ -79,18 +97,30 @@ export async function createOrder(input: CreateOrderInput) {
   if (exists) {
     throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
   }
-  return prisma.barOrder.create({
-    data: {
-      number: input.number,
-      customerName: input.customerName,
-      notes: input.notes,
-    },
-    include: { items: { include: { product: true } } },
-  })
+  try {
+    return await prisma.barOrder.create({
+      data: {
+        number: input.number,
+        customerName: input.customerName,
+        notes: input.notes,
+      },
+      include: { items: { include: { product: true } } },
+    })
+  } catch (err: unknown) {
+    const e = err as { code?: string }
+    if (e.code === 'P2002') {
+      // Race condition: another request created the same number between our check and insert
+      throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
+    }
+    throw err
+  }
 }
 
 export async function updateOrder(id: string, input: UpdateOrderInput) {
-  await getOrder(id)
+  const order = await getOrder(id)
+  if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+    throw Object.assign(new Error('Comanda encerrada não pode ser alterada'), { statusCode: 409 })
+  }
   return prisma.barOrder.update({
     where: { id },
     data: input,
@@ -138,8 +168,8 @@ export async function updateOrderStatus(id: string, status: string, paymentMetho
 
 export async function addItem(orderId: string, input: AddItemInput) {
   const order = await getOrder(orderId)
-  if (order.status === 'CANCELLED') {
-    throw Object.assign(new Error('Comanda cancelada não pode ser editada'), { statusCode: 409 })
+  if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+    throw Object.assign(new Error('Comanda encerrada não pode ser editada'), { statusCode: 409 })
   }
 
   const product = await getProduct(input.productId)
@@ -302,31 +332,22 @@ export async function getOrderByNumber(number: number) {
   })
 }
 
-export async function reopenOrder(id: string, clearItems: boolean, newCustomerName?: string) {
+export async function reopenOrder(id: string, clearItems: boolean) {
   const order = await getOrder(id)
   if (clearItems) {
     await prisma.$transaction([
       prisma.barOrderItem.deleteMany({ where: { orderId: id } }),
       prisma.barOrder.update({
         where: { id },
-        data: {
-          status: 'OPEN',
-          total: 0,
-          paymentMethod: null,
-          paidAmount: 0,
-          ...(newCustomerName ? { customerName: newCustomerName } : {}),
-        },
+        // paidAmount keeps the previously paid amount so next payment only covers new items
+        data: { status: 'OPEN', total: 0, paymentMethod: null, paidAmount: order.total },
       }),
     ])
   } else {
     await prisma.barOrder.update({
       where: { id },
-      data: {
-        status: 'OPEN',
-        paymentMethod: null,
-        paidAmount: order.total,
-        ...(newCustomerName ? { customerName: newCustomerName } : {}),
-      },
+      // paidAmount = current total (already paid), new items will increase total beyond this
+      data: { status: 'OPEN', paymentMethod: null, paidAmount: order.total },
     })
   }
   return getOrder(id)
@@ -334,8 +355,8 @@ export async function reopenOrder(id: string, clearItems: boolean, newCustomerNa
 
 export async function removeItem(orderId: string, itemId: string) {
   const order = await getOrder(orderId)
-  if (order.status === 'CANCELLED') {
-    throw Object.assign(new Error('Comanda cancelada não pode ser editada'), { statusCode: 409 })
+  if (order.status === 'CLOSED' || order.status === 'CANCELLED') {
+    throw Object.assign(new Error('Comanda encerrada não pode ser editada'), { statusCode: 409 })
   }
 
   const item = await prisma.barOrderItem.findFirst({ where: { id: itemId, orderId } })

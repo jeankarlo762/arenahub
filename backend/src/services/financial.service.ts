@@ -3,7 +3,7 @@ import { prisma } from '../config/database'
 interface DateRange {
   startDate?: string
   endDate?: string
-  source?: string // 'courts' | 'bar' | 'all'
+  source?: string // 'courts' | 'bar' | 'rentals' | 'all'
 }
 
 function buildDateFilter(startDate?: string, endDate?: string) {
@@ -30,6 +30,21 @@ async function getCourtsSummary(startDate?: string, endDate?: string) {
   return { total, received, pending, paymentCount: payments.length }
 }
 
+async function getRentalRevenueSummary(startDate?: string, endDate?: string) {
+  const dateFilter = startDate || endDate ? buildDateFilter(startDate, endDate) : undefined
+  const paidPayments = await prisma.rentalPayment.findMany({
+    where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+    select: { amount: true },
+  })
+  const pendingPayments = await prisma.rentalPayment.findMany({
+    where: { status: 'PENDING', ...(dateFilter ? { dueDate: dateFilter } : {}) },
+    select: { amount: true },
+  })
+  const received = paidPayments.reduce((s, p) => s + Number(p.amount), 0)
+  const pending = pendingPayments.reduce((s, p) => s + Number(p.amount), 0)
+  return { total: received + pending, received, pending, paymentCount: paidPayments.length + pendingPayments.length }
+}
+
 async function getBarRevenueSummary(startDate?: string, endDate?: string) {
   const dateFilter = buildDateFilter(startDate, endDate)
   const orders = await prisma.barOrder.findMany({
@@ -50,16 +65,22 @@ export async function getSummary({ startDate, endDate, source = 'courts' }: Date
     return { ...bar, bookingCount }
   }
 
+  if (source === 'rentals') {
+    const rentals = await getRentalRevenueSummary(startDate, endDate)
+    return { ...rentals, bookingCount }
+  }
+
   if (source === 'all') {
-    const [courts, bar] = await Promise.all([
+    const [courts, bar, rentals] = await Promise.all([
       getCourtsSummary(startDate, endDate),
       getBarRevenueSummary(startDate, endDate),
+      getRentalRevenueSummary(startDate, endDate),
     ])
     return {
-      total: courts.total + bar.total,
-      received: courts.received + bar.received,
+      total: courts.total + bar.total + rentals.total,
+      received: courts.received + bar.received + rentals.received,
       pending: courts.pending,
-      paymentCount: courts.paymentCount + bar.paymentCount,
+      paymentCount: courts.paymentCount + bar.paymentCount + rentals.paymentCount,
       bookingCount,
     }
   }
@@ -96,7 +117,7 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
     }
   }
 
-  if (source !== 'courts') {
+  if (source === 'bar' || source === 'all') {
     const orders = await prisma.barOrder.findMany({
       where: { status: 'CLOSED', createdAt: { gte: start, lt: endExclusive } },
       select: { total: true, createdAt: true },
@@ -104,6 +125,18 @@ export async function getDailyRevenue({ startDate, endDate, days = 30, source = 
     for (const o of orders) {
       const key = o.createdAt.toISOString().slice(0, 10)
       dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(o.total))
+    }
+  }
+
+  if (source === 'rentals' || source === 'all') {
+    const rentalPayments = await prisma.rentalPayment.findMany({
+      where: { status: 'PAID', paidAt: { gte: start, lt: endExclusive } },
+      select: { amount: true, paidAt: true },
+    })
+    for (const p of rentalPayments) {
+      if (!p.paidAt) continue
+      const key = p.paidAt.toISOString().slice(0, 10)
+      dailyMap.set(key, (dailyMap.get(key) ?? 0) + Number(p.amount))
     }
   }
 
@@ -194,18 +227,53 @@ export async function getTransactions({ startDate, endDate }: DateRange) {
   return transactions.sort((a, b) => b.date.localeCompare(a.date))
 }
 
-export async function getRevenueByMethod({ startDate, endDate }: DateRange) {
+export async function getRevenueByMethod({ startDate, endDate, source = 'courts' }: DateRange) {
   const dateFilter = buildDateFilter(startDate, endDate)
-  const payments = await prisma.payment.findMany({
-    where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
-    select: { amount: true, method: true },
-  })
   const methodMap = new Map<string, { revenue: number; count: number }>()
-  for (const p of payments) {
-    const existing = methodMap.get(p.method) ?? { revenue: 0, count: 0 }
-    existing.revenue += Number(p.amount)
-    existing.count += 1
-    methodMap.set(p.method, existing)
+  const add = (method: string, amount: number, count = 1) => {
+    const key = method || 'UNKNOWN'
+    const existing = methodMap.get(key) ?? { revenue: 0, count: 0 }
+    existing.revenue += amount
+    existing.count += count
+    methodMap.set(key, existing)
   }
+
+  // Court payments
+  if (source === 'courts' || source === 'all') {
+    const payments = await prisma.payment.findMany({
+      where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+      select: { amount: true, method: true },
+    })
+    for (const p of payments) add(p.method, Number(p.amount))
+  }
+
+  // Bar payments (per-transaction model, fallback to legacy CLOSED orders)
+  if (source === 'bar' || source === 'all') {
+    try {
+      const barTx = await (prisma as unknown as { barTransaction: { findMany: (args: unknown) => Promise<unknown[]> } }).barTransaction.findMany({
+        where: dateFilter ? { createdAt: dateFilter } : {},
+        select: { amount: true, paymentMethod: true },
+      }) as Array<{ amount: number; paymentMethod: string }>
+      for (const t of barTx) add(t.paymentMethod, Number(t.amount))
+    } catch {
+      const orders = await prisma.barOrder.findMany({
+        where: { status: 'CLOSED', ...(dateFilter ? { createdAt: dateFilter } : {}) },
+        select: { total: true, paymentMethod: true },
+      })
+      for (const o of orders) add(o.paymentMethod ?? 'UNKNOWN', Number(o.total))
+    }
+  }
+
+  // Rentals — only count PAID RentalPayment records, grouped by rental.paymentMethod
+  if (source === 'rentals' || source === 'all') {
+    const rentalPayments = await prisma.rentalPayment.findMany({
+      where: { status: 'PAID', ...(dateFilter ? { paidAt: dateFilter } : {}) },
+      include: { rental: { select: { paymentMethod: true } } },
+    })
+    for (const p of rentalPayments) {
+      add(p.rental.paymentMethod ?? 'UNKNOWN', Number(p.amount))
+    }
+  }
+
   return Array.from(methodMap.entries()).map(([method, data]) => ({ method, ...data }))
 }

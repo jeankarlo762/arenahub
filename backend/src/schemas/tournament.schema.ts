@@ -11,6 +11,23 @@ export const createTournamentSchema = z.object({
   prizeInfo: z.string().optional(),
   imageUrl: z.string().optional(),
   courtId: z.string().optional().nullable(),
+  pointsFirst: z.number().int().min(0).optional(),
+  pointsSecond: z.number().int().min(0).optional(),
+  pointsThird: z.number().int().min(0).optional(),
+})
+
+export const bracketMatchSchema = z.object({
+  round: z.number().int().min(0),
+  matchIndex: z.number().int().min(0),
+  winnerId: z.string().nullable(),
+})
+
+export const saveBracketSchema = z.object({
+  match: bracketMatchSchema,
+})
+
+export const updateTeamPositionSchema = z.object({
+  finalPosition: z.number().int().min(1).nullable(),
 })
 
 export const updateTournamentSchema = createTournamentSchema.partial()
@@ -47,3 +64,5 @@ export type AddTeamInput = z.infer<typeof addTeamSchema>
 export type DrawInput = z.infer<typeof drawSchema>
 export type SetChampionInput = z.infer<typeof setChampionSchema>
 export type DrawTeamGroupsInput = z.infer<typeof drawTeamGroupsSchema>
+export type SaveBracketInput = z.infer<typeof saveBracketSchema>
+export type UpdateTeamPositionInput = z.infer<typeof updateTeamPositionSchema>

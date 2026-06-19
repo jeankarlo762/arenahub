@@ -8,7 +8,6 @@ const createTenantSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
-  tag: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/, 'Tag deve conter apenas letras minúsculas, números e hífens').optional(),
   mrrValue: z.coerce.number().min(0).default(0),
   setupFee: z.coerce.number().min(0).default(0),
   adminName: z.string().min(1, 'Nome do admin obrigatório'),
@@ -49,19 +48,11 @@ export async function superAdminRoutes(app: FastifyInstance) {
       return reply.status(409).send({ error: true, message: 'Email do admin já está em uso', code: 'CONFLICT' })
     }
 
-    if (input.tag) {
-      const existingTag = await prisma.tenant.findUnique({ where: { tag: input.tag } })
-      if (existingTag) {
-        return reply.status(409).send({ error: true, message: 'Tag já está em uso por outra arena', code: 'CONFLICT' })
-      }
-    }
-
     const tenant = await prisma.tenant.create({
       data: {
         name: input.name,
         email: input.email,
         phone: input.phone,
-        tag: input.tag ?? null,
         mrrValue: input.mrrValue,
         setupFee: input.setupFee,
       },
@@ -86,17 +77,9 @@ export async function superAdminRoutes(app: FastifyInstance) {
       active: z.boolean().optional(),
       name: z.string().min(1).optional(),
       phone: z.string().optional(),
-      tag: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/).nullable().optional(),
       mrrValue: z.coerce.number().min(0).optional(),
       setupFee: z.coerce.number().min(0).optional(),
     }).parse(req.body)
-
-    if (data.tag) {
-      const existingTag = await prisma.tenant.findFirst({ where: { tag: data.tag, id: { not: req.params.id } } })
-      if (existingTag) {
-        return reply.status(409).send({ error: true, message: 'Tag já está em uso por outra arena', code: 'CONFLICT' })
-      }
-    }
 
     const tenant = await prisma.tenant.update({
       where: { id: req.params.id },
@@ -105,9 +88,42 @@ export async function superAdminRoutes(app: FastifyInstance) {
     return reply.send(tenant)
   })
 
+  app.post<{ Params: { id: string } }>('/tenants/:id/booking-slug', async (req, reply: FastifyReply) => {
+    const { slug } = req.body as { slug?: string }
+    const finalSlug = (slug ?? '').trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') || null
+    try {
+      const tenant = await prisma.tenant.update({
+        where: { id: req.params.id },
+        data: { bookingSlug: finalSlug },
+      })
+      return reply.send(tenant)
+    } catch {
+      return reply.status(409).send({ message: 'Slug já está em uso por outra arena' })
+    }
+  })
+
   app.delete<{ Params: { id: string } }>('/tenants/:id', async (req, reply: FastifyReply) => {
-    await prisma.user.deleteMany({ where: { tenantId: req.params.id } })
-    await prisma.tenant.delete({ where: { id: req.params.id } })
+    const tenantId = req.params.id
+    await prisma.$transaction([
+      prisma.barOrderItem.deleteMany({ where: { tenantId } }),
+      prisma.barTransaction.deleteMany({ where: { tenantId } }),
+      prisma.barOrder.deleteMany({ where: { tenantId } }),
+      prisma.barProduct.deleteMany({ where: { tenantId } }),
+      prisma.barCategory.deleteMany({ where: { tenantId } }),
+      prisma.payment.deleteMany({ where: { tenantId } }),
+      prisma.booking.deleteMany({ where: { tenantId } }),
+      prisma.tournamentTeam.deleteMany({ where: { tenantId } }),
+      prisma.tournament.deleteMany({ where: { tenantId } }),
+      prisma.rentalPayment.deleteMany({ where: { tenantId } }),
+      prisma.rental.deleteMany({ where: { tenantId } }),
+      prisma.schedule.deleteMany({ where: { tenantId } }),
+      prisma.court.deleteMany({ where: { tenantId } }),
+      prisma.paymentFee.deleteMany({ where: { tenantId } }),
+      prisma.client.deleteMany({ where: { tenantId } }),
+      prisma.player.deleteMany({ where: { tenantId } }),
+      prisma.user.deleteMany({ where: { tenantId } }),
+      prisma.tenant.delete({ where: { id: tenantId } }),
+    ])
     return reply.status(204).send()
   })
 
@@ -242,6 +258,75 @@ export async function superAdminRoutes(app: FastifyInstance) {
       setupRevenue,
       newTenantsInPeriod,
       tenants: tenantsBilling,
+    })
+  })
+
+  // ---------- Master Key ----------
+  // Senha mestra que permite o super admin acessar qualquer conta (suporte).
+  app.get('/master-key', async (_req: FastifyRequest, reply: FastifyReply) => {
+    const mk = await prisma.masterKey.findFirst({ orderBy: { createdAt: 'desc' } })
+    return reply.send({ configured: !!mk, updatedAt: mk?.updatedAt ?? null })
+  })
+
+  app.put('/master-key', async (req: FastifyRequest, reply: FastifyReply) => {
+    const { key } = z.object({ key: z.string().min(8, 'A senha mestra deve ter no mínimo 8 caracteres') }).parse(req.body)
+    const keyHash = await hashPassword(key)
+    await prisma.$transaction([
+      prisma.masterKey.deleteMany({}),
+      prisma.masterKey.create({ data: { keyHash, createdBy: req.user.id } }),
+    ])
+    return reply.send({ configured: true })
+  })
+
+  app.delete('/master-key', async (_req: FastifyRequest, reply: FastifyReply) => {
+    await prisma.masterKey.deleteMany({})
+    return reply.status(204).send()
+  })
+
+  // ---------- Auditoria global (todas as arenas) ----------
+  app.get('/audit', async (req: FastifyRequest<{ Querystring: {
+    page?: string; pageSize?: string; tenantId?: string; entity?: string; action?: string; search?: string; startDate?: string; endDate?: string
+  } }>, reply: FastifyReply) => {
+    const q = req.query
+    const page = Math.max(1, parseInt(q.page ?? '1', 10) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(q.pageSize ?? '50', 10) || 50))
+
+    const where: Record<string, unknown> = {}
+    if (q.tenantId) where.tenantId = q.tenantId
+    if (q.entity) where.entity = q.entity
+    if (q.action) where.action = q.action
+    if (q.search) {
+      where.OR = [
+        { userName: { contains: q.search } },
+        { userEmail: { contains: q.search } },
+        { summary: { contains: q.search } },
+      ]
+    }
+    if (q.startDate || q.endDate) {
+      where.createdAt = {
+        ...(q.startDate ? { gte: new Date(q.startDate + 'T00:00:00') } : {}),
+        ...(q.endDate ? { lte: new Date(q.endDate + 'T23:59:59') } : {}),
+      }
+    }
+
+    const [total, logs] = await Promise.all([
+      prisma.auditLog.count({ where }),
+      prisma.auditLog.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
+    ])
+
+    // Resolve tenant names for display
+    const tenantIds = [...new Set(logs.map((l) => l.tenantId).filter((x): x is string => !!x))]
+    const tenantsList = tenantIds.length
+      ? await prisma.tenant.findMany({ where: { id: { in: tenantIds } }, select: { id: true, name: true } })
+      : []
+    const nameMap = new Map(tenantsList.map((t) => [t.id, t.name]))
+
+    return reply.send({
+      logs: logs.map((l) => ({ ...l, tenantName: l.tenantId ? (nameMap.get(l.tenantId) ?? '—') : '—' })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
     })
   })
 }

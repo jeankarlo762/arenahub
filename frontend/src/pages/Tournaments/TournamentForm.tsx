@@ -30,6 +30,9 @@ const schema = z.object({
   courtId: z.string().optional().nullable(),
   description: z.string().optional(),
   prizeInfo: z.string().optional(),
+  pointsFirst: z.coerce.number().int().min(0).default(3),
+  pointsSecond: z.coerce.number().int().min(0).default(2),
+  pointsThird: z.coerce.number().int().min(0).default(1),
 })
 
 type FormData = z.infer<typeof schema>
@@ -82,8 +85,11 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
               courtId: tournament.courtId ?? null,
               description: tournament.description ?? '',
               prizeInfo: tournament.prizeInfo ?? '',
+              pointsFirst: (tournament as any).pointsFirst ?? 3,
+              pointsSecond: (tournament as any).pointsSecond ?? 2,
+              pointsThird: (tournament as any).pointsThird ?? 1,
             }
-          : { name: '', sport: '', startDate: '', endDate: '', matchType: 'TEAM', maxTeams: 8, courtId: null, description: '', prizeInfo: '' },
+          : { name: '', sport: '', startDate: '', endDate: '', matchType: 'TEAM', maxTeams: 8, courtId: null, description: '', prizeInfo: '', pointsFirst: 3, pointsSecond: 2, pointsThird: 1 },
       )
     }
   }, [open, tournament, reset])
@@ -246,6 +252,25 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
         <Input label={maxTeamsLabel} type="number" error={errors.maxTeams?.message} {...register('maxTeams')} />
         <Textarea label="Descrição (opcional)" {...register('description')} />
         <Textarea label="Premiação (opcional)" {...register('prizeInfo')} />
+
+        {/* Scoring config */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">Pontuação do ranking</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">🥇 1º lugar</label>
+              <Input type="number" min="0" error={errors.pointsFirst?.message} {...register('pointsFirst')} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">🥈 2º lugar</label>
+              <Input type="number" min="0" error={errors.pointsSecond?.message} {...register('pointsSecond')} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-gray-500">🥉 3º lugar</label>
+              <Input type="number" min="0" error={errors.pointsThird?.message} {...register('pointsThird')} />
+            </div>
+          </div>
+        </div>
       </div>
     </Modal>
   )
