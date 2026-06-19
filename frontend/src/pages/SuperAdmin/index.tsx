@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Building2, CheckCircle, XCircle, Plus, Search, Pencil } from 'lucide-react'
+import { Building2, CheckCircle, XCircle, Plus, Search, Pencil, Users, Shield, User as UserIcon, Mail } from 'lucide-react'
 import * as superAdminApi from '../../api/superadmin.api'
-import type { Tenant } from '../../types/tenant'
+import type { Tenant, TenantUser } from '../../types/tenant'
 import { Spinner } from '../../components/ui/Spinner'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
@@ -40,6 +40,11 @@ export default function TenantsPage() {
   const [editTenant, setEditTenant] = useState<Tenant | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  // Users popup (per tenant)
+  const [usersTenant, setUsersTenant] = useState<Tenant | null>(null)
+  const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -111,9 +116,25 @@ export default function TenantsPage() {
     }
   }
 
+  async function openUsers(tenant: Tenant) {
+    setUsersTenant(tenant)
+    setTenantUsers([])
+    setUsersLoading(true)
+    try {
+      setTenantUsers(await superAdminApi.listTenantUsers(tenant.id))
+    } catch {
+      toast.error('Erro ao carregar usuários da arena')
+    } finally {
+      setUsersLoading(false)
+    }
+  }
+
   const total = tenants.length
   const active = tenants.filter((t) => t.active).length
   const inactive = total - active
+
+  const activeTenants = useMemo(() => filtered.filter((t) => t.active), [filtered])
+  const inactiveTenants = useMemo(() => filtered.filter((t) => !t.active), [filtered])
 
   return (
     <SuperAdminLayout
@@ -151,77 +172,71 @@ export default function TenantsPage() {
         />
       </div>
 
-      {/* Tenant list */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-16 gap-3">
-            <Spinner size="md" />
-            <span className="text-sm text-gray-400">Carregando tenants...</span>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400">
-            <Building2 size={40} className="opacity-30" />
-            <p className="text-sm">{search ? 'Nenhuma arena encontrada' : 'Nenhum tenant cadastrado ainda'}</p>
-            {!search && <Button variant="secondary" onClick={() => setOpenModal(true)}>Criar primeiro tenant</Button>}
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                {['Arena', 'Email', 'Usuários', 'MRR', 'Implantação', 'Status', 'Ações'].map((h) => (
-                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((tenant) => (
-                <tr key={tenant.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Building2 size={14} className="text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">{tenant.name}</p>
-                        <p className="text-xs text-gray-400">{new Date(tenant.createdAt).toLocaleDateString('pt-BR')}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-sm text-gray-600">{tenant.email}</td>
-                  <td className="px-5 py-4 text-sm text-gray-600">{tenant._count?.users ?? 0}</td>
-                  <td className="px-5 py-4 text-sm font-medium text-green-600">{formatCurrency(tenant.mrrValue)}</td>
-                  <td className="px-5 py-4 text-sm text-gray-600">{formatCurrency(tenant.setupFee)}</td>
-                  <td className="px-5 py-4">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${tenant.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${tenant.active ? 'bg-green-500' : 'bg-red-400'}`} />
-                      {tenant.active ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openEdit(tenant)}
-                        className="text-xs font-medium px-3 py-1.5 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors inline-flex items-center gap-1"
-                      >
-                        <Pencil size={12} />Editar
-                      </button>
-                      <button
-                        onClick={() => handleToggle(tenant)}
-                        disabled={actionId === tenant.id}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
-                          tenant.active ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-green-600 bg-green-50 hover:bg-green-100'
-                        }`}
-                      >
-                        {actionId === tenant.id ? <Spinner size="sm" /> : tenant.active ? 'Desativar' : 'Ativar'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* Tenant columns: Ativos | Inativos */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16 gap-3 bg-white rounded-xl border border-gray-200">
+          <Spinner size="md" />
+          <span className="text-sm text-gray-400">Carregando tenants...</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-400 bg-white rounded-xl border border-gray-200">
+          <Building2 size={40} className="opacity-30" />
+          <p className="text-sm">{search ? 'Nenhuma arena encontrada' : 'Nenhum tenant cadastrado ainda'}</p>
+          {!search && <Button variant="secondary" onClick={() => setOpenModal(true)}>Criar primeiro tenant</Button>}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Coluna: Ativos */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle size={16} className="text-green-600" />
+              <h2 className="text-sm font-semibold text-gray-700">Ativos</h2>
+              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{activeTenants.length}</span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {activeTenants.length === 0 ? (
+                <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena ativa</p>
+              ) : (
+                activeTenants.map((tenant) => (
+                  <TenantCard
+                    key={tenant.id}
+                    tenant={tenant}
+                    busy={actionId === tenant.id}
+                    onOpenUsers={() => openUsers(tenant)}
+                    onEdit={() => openEdit(tenant)}
+                    onToggle={() => handleToggle(tenant)}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Coluna: Inativos */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <XCircle size={16} className="text-red-500" />
+              <h2 className="text-sm font-semibold text-gray-700">Inativos</h2>
+              <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">{inactiveTenants.length}</span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {inactiveTenants.length === 0 ? (
+                <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena inativa</p>
+              ) : (
+                inactiveTenants.map((tenant) => (
+                  <TenantCard
+                    key={tenant.id}
+                    tenant={tenant}
+                    busy={actionId === tenant.id}
+                    onOpenUsers={() => openUsers(tenant)}
+                    onEdit={() => openEdit(tenant)}
+                    onToggle={() => handleToggle(tenant)}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Create tenant modal */}
       <Modal
@@ -326,6 +341,104 @@ export default function TenantsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Tenant users popup */}
+      <Modal
+        open={!!usersTenant}
+        onClose={() => setUsersTenant(null)}
+        title={`Usuários — ${usersTenant?.name ?? ''}`}
+        size="md"
+        footer={<Button variant="secondary" onClick={() => setUsersTenant(null)}>Fechar</Button>}
+      >
+        {usersLoading ? (
+          <div className="flex items-center justify-center py-10 gap-3">
+            <Spinner size="md" />
+            <span className="text-sm text-gray-400">Carregando usuários...</span>
+          </div>
+        ) : tenantUsers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-3 text-gray-400">
+            <Users size={36} className="opacity-30" />
+            <p className="text-sm">Nenhum usuário cadastrado nesta arena</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {tenantUsers.map((u) => (
+              <div key={u.id} className="flex items-center gap-3 rounded-xl border border-gray-200 px-4 py-3">
+                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  {u.role === 'ADMIN' ? <Shield size={15} className="text-blue-600" /> : <UserIcon size={15} className="text-gray-500" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">{u.name}</p>
+                  <p className="text-xs text-gray-400 flex items-center gap-1 truncate"><Mail size={11} /> {u.email}</p>
+                </div>
+                <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${u.role === 'ADMIN' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                  {u.role === 'ADMIN' ? 'Admin' : 'Operador'}
+                </span>
+                <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${u.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${u.active ? 'bg-green-500' : 'bg-red-400'}`} />
+                  {u.active ? 'Ativo' : 'Inativo'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
     </SuperAdminLayout>
+  )
+}
+
+interface TenantCardProps {
+  tenant: Tenant
+  busy: boolean
+  onOpenUsers: () => void
+  onEdit: () => void
+  onToggle: () => void
+}
+
+function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle }: TenantCardProps) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpenUsers}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenUsers() } }}
+      className="text-left bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-200"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">{tenant.name}</p>
+          <p className="text-xs text-gray-400 truncate">{tenant.email}</p>
+        </div>
+        <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${tenant.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${tenant.active ? 'bg-green-500' : 'bg-red-400'}`} />
+          {tenant.active ? 'Ativo' : 'Inativo'}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+        <span className="inline-flex items-center gap-1"><Users size={12} /> {tenant._count?.users ?? 0} usuário(s)</span>
+        <span className="font-medium text-green-600">{formatCurrency(tenant.mrrValue)}/mês</span>
+        <span>{new Date(tenant.createdAt).toLocaleDateString('pt-BR')}</span>
+      </div>
+
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onEdit}
+          className="text-xs font-medium px-3 py-1.5 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors inline-flex items-center gap-1"
+        >
+          <Pencil size={12} />Editar
+        </button>
+        <button
+          onClick={onToggle}
+          disabled={busy}
+          className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+            tenant.active ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-green-600 bg-green-50 hover:bg-green-100'
+          }`}
+        >
+          {busy ? <Spinner size="sm" /> : tenant.active ? 'Desativar' : 'Ativar'}
+        </button>
+        <span className="ml-auto text-xs text-orange-500 font-medium">Ver usuários →</span>
+      </div>
+    </div>
   )
 }

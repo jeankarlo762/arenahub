@@ -35,6 +35,11 @@ export async function listAllUsers(): Promise<GlobalUser[]> {
   return res.data
 }
 
+export async function listTenantUsers(tenantId: string): Promise<TenantUser[]> {
+  const res = await api.get<TenantUser[]>(`/superadmin/tenants/${tenantId}/users`)
+  return res.data
+}
+
 export async function createTenantUser(tenantId: string, input: CreateTenantUserInput): Promise<TenantUser> {
   const res = await api.post<TenantUser>(`/superadmin/tenants/${tenantId}/users`, input)
   return res.data
