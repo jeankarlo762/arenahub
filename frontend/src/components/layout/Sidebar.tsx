@@ -64,7 +64,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-900 text-white transition-all duration-200',
+          'fixed top-0 left-0 h-screen z-30 flex flex-col bg-gray-900 text-white transition-all duration-200 overflow-hidden',
           sidebarOpen ? 'w-60' : 'w-0 overflow-hidden lg:w-16',
         )}
       >
