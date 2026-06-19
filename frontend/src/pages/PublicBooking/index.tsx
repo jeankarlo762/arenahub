@@ -45,6 +45,8 @@ export default function PublicBookingPage() {
 
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [networkError, setNetworkError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
   const [tenant, setTenant] = useState<TenantInfo | null>(null)
   const [courts, setCourts] = useState<PublicCourt[]>([])
 
@@ -63,14 +65,23 @@ export default function PublicBookingPage() {
 
   useEffect(() => {
     if (!slug) return
+    setLoading(true)
+    setNotFound(false)
+    setNetworkError(false)
     publicApi.get(`/public/booking/${slug}`)
       .then(res => {
         setTenant(res.data.tenant)
         setCourts(res.data.courts)
       })
-      .catch(() => setNotFound(true))
+      .catch((err) => {
+        if (err?.response?.status === 404) {
+          setNotFound(true)
+        } else {
+          setNetworkError(true)
+        }
+      })
       .finally(() => setLoading(false))
-  }, [slug])
+  }, [slug, retryKey])
 
   const loadSlots = useCallback(async () => {
     if (!selectedCourt || !selectedDate || !slug) return
@@ -147,6 +158,22 @@ export default function PublicBookingPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Spinner size="lg" className="text-orange-500" />
+      </div>
+    )
+  }
+
+  if (networkError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 text-gray-500 px-6 text-center">
+        <MapPin size={48} className="text-gray-300" />
+        <p className="text-xl font-semibold">Erro de conexão</p>
+        <p className="text-sm">Não foi possível conectar ao servidor. Tente novamente em instantes.</p>
+        <button
+          onClick={() => setRetryKey(k => k + 1)}
+          className="mt-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition-colors"
+        >
+          Tentar novamente
+        </button>
       </div>
     )
   }

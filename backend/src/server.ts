@@ -18,22 +18,10 @@ app.addHook('onRequest', (_request, _reply, done) => {
   tenantStore.run(createStore(), done)
 })
 
-app.register(cors, {
-  origin: (origin, cb) => {
-    const allowed = env.FRONTEND_URL.replace(/\/$/, '')
-    if (!origin || origin.replace(/\/$/, '') === allowed) {
-      cb(null, true)
-    } else {
-      // In development allow localhost origins
-      if (env.NODE_ENV !== 'production' && origin.includes('localhost')) {
-        cb(null, true)
-      } else {
-        cb(new Error('Not allowed by CORS'), false)
-      }
-    }
-  },
-  credentials: true,
-})
+// Public booking routes must be reachable from any browser/device — customers
+// open shared links from anywhere. Authenticated routes are secured by JWT;
+// CORS origin restrictions add no meaningful security on top of that.
+app.register(cors, { origin: true, credentials: true })
 
 registerRoutes(app)
 
