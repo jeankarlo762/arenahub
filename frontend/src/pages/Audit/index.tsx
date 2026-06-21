@@ -92,26 +92,44 @@ export default function AuditPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="relative lg:col-span-1 md:col-span-2">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Responsável ou descrição..."
-              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
-            />
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="relative lg:col-span-1 md:col-span-2">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Responsável ou descrição..."
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              />
+            </div>
+            <select value={entity} onChange={(e) => setEntity(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none">
+              <option value="">Toda área</option>
+              {entities.map((e) => <option key={e} value={e}>{entityLabel(e)}</option>)}
+            </select>
+            <select value={action} onChange={(e) => setAction(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none">
+              <option value="">Toda ação</option>
+              {ACTIONS.map((a) => <option key={a} value={a}>{actionLabel(a)}</option>)}
+            </select>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-xs text-gray-400">Data início</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <label className="text-xs text-gray-400">Data fim</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+            </div>
           </div>
-          <select value={entity} onChange={(e) => setEntity(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none">
-            <option value="">Toda área</option>
-            {entities.map((e) => <option key={e} value={e}>{entityLabel(e)}</option>)}
-          </select>
-          <select value={action} onChange={(e) => setAction(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none">
-            <option value="">Toda ação</option>
-            {ACTIONS.map((a) => <option key={a} value={a}>{actionLabel(a)}</option>)}
-          </select>
-          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
-          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="text-sm rounded-lg border border-gray-200 px-3 py-2 bg-white focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+          {(search || entity || action || startDate || endDate) && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => { setSearch(''); setEntity(''); setAction(''); setStartDate(''); setEndDate('') }}
+                className="text-xs text-orange-500 hover:text-orange-700 transition-colors"
+              >
+                Limpar filtros
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Table */}
@@ -174,7 +192,9 @@ export default function AuditPage() {
         {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-400">Página {page} de {totalPages}</p>
+            <p className="text-xs text-gray-400">
+              {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total} registros
+            </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}

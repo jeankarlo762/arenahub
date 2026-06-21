@@ -53,6 +53,10 @@ export default function CourtsPage() {
           </div>
         </div>
 
+        {!loading && visibleCourts.length > 0 && (
+          <p className="text-xs text-gray-400">{visibleCourts.length} quadra{visibleCourts.length !== 1 ? 's' : ''}</p>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-16">
             <Spinner size="lg" className="text-orange-500" />

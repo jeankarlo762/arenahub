@@ -168,6 +168,12 @@ export default function BarPage() {
     return acc
   }, {})
 
+  const sortedCategories = Object.entries(productsByCategory).sort(([a], [b]) => {
+    if (a === 'Sem categoria') return 1
+    if (b === 'Sem categoria') return -1
+    return a.localeCompare(b, 'pt-BR')
+  })
+
   const periodLabels: Record<StatsPeriod, string> = { today: 'Hoje', week: 'Semana', month: 'Mês', custom: 'Personalizado' }
 
   return (
@@ -218,7 +224,7 @@ export default function BarPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {Object.entries(productsByCategory).sort().map(([category, items]) => (
+              {sortedCategories.map(([category, items]) => (
                 <div key={category}>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{category}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">

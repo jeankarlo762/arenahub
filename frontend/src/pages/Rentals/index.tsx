@@ -18,8 +18,7 @@ import type { RentalReport } from '../../api/rentals.api'
 import * as rentalsApi from '../../api/rentals.api'
 import * as courtsApi from '../../api/courts.api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-
-const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+import { WEEKDAY_LABELS } from '../../constants/shared'
 
 // Sum of all slot prices for a single occurrence
 function rentalSlotRevenue(r: Rental): number {
@@ -100,7 +99,10 @@ export default function RentalsPage() {
   useEffect(() => { courtsApi.listCourts().then(setCourts) }, [])
 
   const filtered = search.trim()
-    ? rentals.filter(r => r.clientName.toLowerCase().includes(search.toLowerCase()) || r.court?.name.toLowerCase().includes(search.toLowerCase()))
+    ? rentals.filter(r =>
+        r.clientName.toLowerCase().includes(search.toLowerCase()) ||
+        (r.court?.name ?? '').toLowerCase().includes(search.toLowerCase())
+      )
     : rentals
 
   async function handleToggleActive(rental: Rental) {
@@ -178,7 +180,7 @@ export default function RentalsPage() {
                   const exp = expirationLabel(r)
                   const toneClass =
                     exp.tone === 'red' ? 'bg-red-100 text-red-700'
-                    : exp.tone === 'orange' ? 'bg-amber-100 text-amber-700'
+                    : exp.tone === 'orange' ? 'bg-orange-100 text-orange-700'
                     : exp.tone === 'green' ? 'bg-green-100 text-green-700'
                     : 'bg-gray-100 text-gray-500'
                   return (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Card } from '../../components/ui/Card'
 import { DatePicker } from '../../components/ui/DatePicker'
@@ -14,16 +15,9 @@ import type { BarStats } from '../../api/bar.api'
 import type { FinancialSummary, DailyRevenue, RevenueItem } from '../../types/financial'
 import { formatCurrency } from '../../utils/format'
 import { formatDate } from '../../utils/date'
+import { CHART_COLORS, METHOD_LABELS } from '../../constants/shared'
 
-const COLORS = ['#f97316', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
-
-const METHOD_LABELS: Record<string, string> = {
-  CASH: 'Dinheiro',
-  CREDIT_CARD: 'Crédito',
-  DEBIT_CARD: 'Débito',
-  PIX: 'PIX',
-  TRANSFER: 'Transf.',
-}
+const COLORS = CHART_COLORS
 
 type Source = 'courts' | 'bar' | 'rentals' | 'all'
 type QuickPeriod = 'today' | 'week' | 'month' | 'custom'
@@ -73,6 +67,8 @@ export default function FinancialPage() {
       setByCourt(c)
       setByMethod(m)
       setBarStats(bs)
+    } catch {
+      toast.error('Erro ao carregar dados financeiros')
     } finally {
       setLoading(false)
     }
@@ -97,10 +93,10 @@ export default function FinancialPage() {
   }
 
   const summaryCards = [
-    { label: 'Total', value: formatCurrency(summary?.total ?? 0), color: 'text-gray-900' },
-    { label: 'Recebido', value: formatCurrency(summary?.received ?? 0), color: 'text-green-700' },
-    { label: 'Pendente', value: formatCurrency(summary?.pending ?? 0), color: 'text-orange-600' },
-    { label: 'Transações', value: summary?.paymentCount ?? 0, color: 'text-orange-700' },
+    { label: 'Total', value: formatCurrency(summary?.total ?? 0), color: 'text-gray-900', cardClass: '' },
+    { label: 'Recebido', value: formatCurrency(summary?.received ?? 0), color: 'text-green-700', cardClass: 'border-green-200 bg-green-50/30' },
+    { label: 'Pendente', value: formatCurrency(summary?.pending ?? 0), color: 'text-red-600', cardClass: (summary?.pending ?? 0) > 0 ? 'border-red-200 bg-red-50/30' : '' },
+    { label: 'Transações', value: summary?.paymentCount ?? 0, color: 'text-orange-700', cardClass: '' },
   ]
 
   return (
@@ -146,7 +142,7 @@ export default function FinancialPage() {
                     onClick={() => setSource(val)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       source === val
-                        ? 'bg-gray-900 text-white'
+                        ? 'bg-orange-500 text-white'
                         : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -164,7 +160,7 @@ export default function FinancialPage() {
           <>
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
               {summaryCards.map((c) => (
-                <Card key={c.label}>
+                <Card key={c.label} className={c.cardClass}>
                   <p className="text-xs text-gray-500 mb-1">{c.label}</p>
                   <p className={`text-xl sm:text-2xl font-bold ${c.color}`}>{c.value}</p>
                 </Card>
@@ -173,15 +169,19 @@ export default function FinancialPage() {
 
             <Card>
               <h2 className="text-base font-semibold text-gray-900 mb-4">Receita Diária</h2>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={daily}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} width={55} />
-                  <Tooltip formatter={(v) => [formatCurrency(Number(v)), 'Receita']} labelFormatter={(l) => formatDate(l as string)} />
-                  <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+              {daily.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-10">Sem dados no período selecionado</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={daily}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11 }} />
+                    <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} width={55} />
+                    <Tooltip formatter={(v) => [formatCurrency(Number(v)), 'Receita']} labelFormatter={(l) => formatDate(l as string)} />
+                    <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </Card>
 
             {/* Receita por Quadra (courts/all) + Métodos de Pagamento (sempre) */}

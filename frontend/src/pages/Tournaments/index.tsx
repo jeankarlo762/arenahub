@@ -44,11 +44,15 @@ export default function TournamentsPage() {
 
   useEffect(() => { load() }, [load])
 
+  function normalize(s: string) {
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  }
+
   const filtered = search.trim()
-    ? tournaments.filter(t =>
-        t.name.toLowerCase().includes(search.toLowerCase()) ||
-        t.sport.toLowerCase().includes(search.toLowerCase())
-      )
+    ? tournaments.filter(t => {
+        const q = normalize(search)
+        return normalize(t.name).includes(q) || normalize(t.sport).includes(q)
+      })
     : tournaments
 
   return (

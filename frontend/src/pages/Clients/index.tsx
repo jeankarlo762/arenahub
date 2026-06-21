@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, Search, Pencil, Trash2, Users } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,6 +15,22 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import type { Client } from '../../types/client'
 import * as clientsApi from '../../api/clients.api'
 import { ClientDetailModal } from './ClientDetailModal'
+
+const AVATAR_COLORS = [
+  'bg-orange-100 text-orange-700',
+  'bg-sky-100 text-sky-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-violet-100 text-violet-700',
+  'bg-rose-100 text-rose-700',
+  'bg-amber-100 text-amber-700',
+  'bg-teal-100 text-teal-700',
+]
+
+function avatarColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) & 0xffff
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length]
+}
 
 const schema = z.object({
   firstName: z.string().min(1, 'Nome obrigatório'),
@@ -33,14 +49,22 @@ export default function ClientsPage() {
   const [deleting, setDeleting] = useState(false)
   const [detailClient, setDetailClient] = useState<Client | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({ resolver: zodResolver(schema) })
 
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [search])
+
   const load = useCallback(async () => {
     setLoading(true)
-    try { setClients(await clientsApi.listClients(search || undefined)) }
+    try { setClients(await clientsApi.listClients(debouncedSearch || undefined)) }
     finally { setLoading(false) }
-  }, [search])
+  }, [debouncedSearch])
 
   useEffect(() => { load() }, [load])
 
@@ -104,8 +128,8 @@ export default function ClientsPage() {
                   className="flex items-center gap-4 flex-1 min-w-0 text-left"
                   onClick={() => openDetail(c)}
                 >
-                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-orange-700">{c.firstName[0]}{c.lastName[0]}</span>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${avatarColor(c.firstName + c.lastName)}`}>
+                    <span className="text-sm font-bold">{c.firstName[0]}{c.lastName[0]}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{c.firstName} {c.lastName}</p>

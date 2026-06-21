@@ -1,27 +1,28 @@
 import { cn } from '../../utils/cn'
 
-type Variant = 'green' | 'red' | 'blue' | 'yellow' | 'gray' | 'purple' | 'orange'
+type Variant = 'green' | 'red' | 'sky' | 'yellow' | 'gray' | 'purple' | 'orange' | 'teal'
 
 const variants: Record<Variant, string> = {
   green: 'bg-green-100 text-green-800',
   red: 'bg-red-100 text-red-800',
-  blue: 'bg-orange-100 text-orange-800',
+  sky: 'bg-sky-100 text-sky-800',
   yellow: 'bg-yellow-100 text-yellow-800',
   gray: 'bg-gray-100 text-gray-700',
   purple: 'bg-purple-100 text-purple-800',
   orange: 'bg-orange-100 text-orange-800',
+  teal: 'bg-teal-100 text-teal-800',
 }
 
 const STATUS_VARIANTS: Record<string, Variant> = {
   CONFIRMED: 'green',
   CANCELLED: 'red',
-  COMPLETED: 'blue',
+  COMPLETED: 'sky',
   NO_SHOW: 'gray',
   PENDING: 'yellow',
   PAID: 'green',
   REFUNDED: 'purple',
   DRAFT: 'gray',
-  OPEN: 'blue',
+  OPEN: 'sky',
   IN_PROGRESS: 'orange',
   FINISHED: 'green',
   active: 'green',

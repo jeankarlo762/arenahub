@@ -9,17 +9,10 @@ import * as barApi from '../../api/bar.api'
 import { formatCurrency } from '../../utils/format'
 import { formatDate } from '../../utils/date'
 import toast from 'react-hot-toast'
+import { METHOD_LABELS } from '../../constants/shared'
 
 import { OrderDetail } from '../Bar/OrderDetail'
 import { OrderForm } from '../Bar/OrderForm'
-
-const PAYMENT_LABELS: Record<string, string> = {
-  CASH: 'Dinheiro',
-  PIX: 'PIX',
-  CREDIT_CARD: 'Crédito',
-  DEBIT_CARD: 'Débito',
-  TRANSFER: 'Transferência',
-}
 
 // Minimum number of comanda cells shown (SAIPOS-style grid)
 const MIN_CELLS = 20
@@ -203,7 +196,7 @@ export default function ComandasPage() {
                         <p className="text-sm font-semibold text-gray-900 truncate">{order.customerName}</p>
                         <p className="text-xs text-gray-400">
                           {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
-                          {order.paymentMethod && ` · ${PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}`}
+                          {order.paymentMethod && ` · ${METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}`}
                           {' · '}{formatDate(order.createdAt)}
                         </p>
                       </div>

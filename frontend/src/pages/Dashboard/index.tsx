@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { Spinner } from '../../components/ui/Spinner'
-import { CalendarDays, DollarSign, MapPin, Trophy, AlertTriangle, ReceiptText, Crown } from 'lucide-react'
+import { CalendarDays, DollarSign, MapPin, Trophy, AlertTriangle, ReceiptText, Crown, RefreshCw } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import * as bookingsApi from '../../api/bookings.api'
 import * as financialApi from '../../api/financial.api'
@@ -28,13 +29,17 @@ export default function DashboardPage() {
   const [activeCourts, setActiveCourts] = useState(0)
   const [upcomingTournaments, setUpcomingTournaments] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([])
   const [openOrders, setOpenOrders] = useState<BarOrder[]>([])
   const [topClients, setTopClients] = useState<{ customerName: string; total: number; orderCount: number }[]>([])
 
-  const monthStart = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01`
+  const monthStart = useMemo(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  }, [])
 
-  useEffect(() => {
+  function load() {
     setLoading(true)
     Promise.allSettled([
       bookingsApi.listBookings({ date: today }),
@@ -42,12 +47,13 @@ export default function DashboardPage() {
       financialApi.getDailyRevenue({ days: 7 }),
       courtsApi.listCourts({ active: true }),
       tournamentsApi.listTournaments(),
-      bookingsApi.listBookings({ status: 'CONFIRMED' }),
+      bookingsApi.listBookings({ status: 'CONFIRMED', startDate: today }),
       barApi.listOrders('OPEN'),
       barApi.getTopClients(),
     ])
       .then(([bookings, fin, daily, courts, tournaments, confirmed, orders, top]) => {
         if (bookings.status === 'fulfilled') setTodayBookings(bookings.value)
+        else toast.error('Não foi possível carregar agendamentos do dia')
         if (fin.status === 'fulfilled') setSummary(fin.value)
         if (daily.status === 'fulfilled') setDailyRevenue(daily.value)
         if (courts.status === 'fulfilled') setActiveCourts(courts.value.length)
@@ -61,9 +67,12 @@ export default function DashboardPage() {
         }
         if (orders.status === 'fulfilled') setOpenOrders(orders.value)
         if (top.status === 'fulfilled') setTopClients(top.value as { customerName: string; total: number; orderCount: number }[])
+        setLastUpdated(new Date())
       })
       .finally(() => setLoading(false))
-  }, [today, monthStart])
+  }
+
+  useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -79,36 +88,55 @@ export default function DashboardPage() {
     { label: 'Agendamentos Hoje', value: todayBookings.length, icon: CalendarDays, color: 'text-orange-600', bg: 'bg-orange-50', to: '/bookings' },
     { label: 'Receita do Mês', value: formatCurrency(summary?.received ?? 0), icon: DollarSign, color: 'text-green-600', bg: 'bg-green-50', to: '/financial' },
     { label: 'Quadras Ativas', value: activeCourts, icon: MapPin, color: 'text-purple-600', bg: 'bg-purple-50', to: '/courts' },
-    { label: 'Torneios em Aberto', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50', to: '/tournaments' },
+    { label: 'Torneios Ativos', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50', to: '/tournaments' },
   ]
 
   return (
-    <Layout title="Dashboard">
+    <Layout
+      title="Dashboard"
+      action={
+        <div className="flex items-center gap-3">
+          {lastUpdated && (
+            <span className="text-xs text-gray-400 hidden sm:block">
+              Atualizado às {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+          <button
+            onClick={load}
+            disabled={loading}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-orange-500 transition-colors disabled:opacity-40"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Atualizar
+          </button>
+        </div>
+      }
+    >
       <div className="flex flex-col gap-6">
-        {/* Comandas alerts — compact queue */}
+        {/* Comandas alerts */}
         {openOrders.length > 0 && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl flex-wrap">
+          <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-xl flex-wrap">
             <div className="flex items-center gap-1.5 shrink-0">
-              <AlertTriangle size={14} className="text-amber-500" />
-              <span className="text-xs font-semibold text-amber-700">Comandas em aberto:</span>
+              <AlertTriangle size={14} className="text-orange-500" />
+              <span className="text-xs font-semibold text-orange-700">Comandas em aberto:</span>
             </div>
             <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
-              {openOrders.slice(0, 6).map((o) => (
+              {openOrders.slice(0, 4).map((o) => (
                 <button
                   key={o.id}
                   onClick={() => navigate('/comandas')}
-                  className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-full text-xs font-medium text-amber-800 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 px-2 py-0.5 bg-orange-100 hover:bg-orange-200 border border-orange-300 rounded-full text-xs font-medium text-orange-800 transition-colors whitespace-nowrap"
                 >
                   <ReceiptText size={11} />
                   #{o.number} {o.customerName}
                 </button>
               ))}
-              {openOrders.length > 6 && (
+              {openOrders.length > 4 && (
                 <button
                   onClick={() => navigate('/comandas')}
-                  className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-full text-xs text-amber-700 transition-colors"
+                  className="px-2 py-0.5 bg-orange-100 hover:bg-orange-200 border border-orange-300 rounded-full text-xs text-orange-700 transition-colors"
                 >
-                  +{openOrders.length - 6} mais
+                  +{openOrders.length - 4} mais →
                 </button>
               )}
             </div>

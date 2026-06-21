@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, CalendarDays, List, Search, History } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
@@ -52,6 +53,8 @@ export default function BookingsPage() {
       if (filterStatus) params.status = filterStatus
       if (filterCustomer) params.customerName = filterCustomer
       setBookings(await bookingsApi.listBookings(params))
+    } catch {
+      toast.error('Erro ao carregar agendamentos')
     } finally {
       setLoading(false)
     }
@@ -176,6 +179,21 @@ export default function BookingsPage() {
                   onChange={(e) => setFilterCustomer(e.target.value)}
                   className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
                 />
+              </div>
+              <div className="flex gap-1 shrink-0">
+                {[
+                  { label: 'Hoje', value: toInputDate(new Date()) },
+                  { label: 'Amanhã', value: toInputDate(new Date(Date.now() + 86400000)) },
+                  { label: 'Todos', value: '' },
+                ].map(({ label, value }) => (
+                  <button
+                    key={label}
+                    onClick={() => setFilterDate(value)}
+                    className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${filterDate === value ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               <DatePicker label="Data" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-36" />
               <Select
