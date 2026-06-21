@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, CalendarDays, List, Search, History } from 'lucide-react'
+import { Plus, CalendarDays, List, Search, History, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
@@ -20,6 +20,30 @@ import { formatCurrency, BOOKING_STATUS_LABELS } from '../../utils/format'
 import { formatDate, toInputDate } from '../../utils/date'
 
 type ViewMode = 'list' | 'calendar' | 'history'
+
+function exportHistoryCSV(bookings: Booking[]) {
+  const rows = [
+    ['Data', 'Quadra', 'Cliente', 'Telefone', 'Início', 'Fim', 'Valor', 'Pagamento'],
+    ...bookings.map((b) => [
+      b.date,
+      b.court?.name ?? '',
+      b.customerName,
+      b.customerPhone ?? '',
+      b.startTime,
+      b.endTime,
+      Number(b.totalPrice).toFixed(2),
+      b.payment?.status === 'PAID' ? 'Pago' : 'Pendente',
+    ]),
+  ]
+  const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `historico-agendamentos.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 export default function BookingsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
@@ -302,9 +326,14 @@ export default function BookingsPage() {
             )}
 
             {!historyLoading && historyBookings.length > 0 && (
-              <p className="text-xs text-gray-400 text-right">
-                {historyBookings.length} agendamento{historyBookings.length !== 1 ? 's' : ''} encontrado{historyBookings.length !== 1 ? 's' : ''}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  {historyBookings.length} agendamento{historyBookings.length !== 1 ? 's' : ''} encontrado{historyBookings.length !== 1 ? 's' : ''}
+                </p>
+                <Button variant="secondary" onClick={() => exportHistoryCSV(historyBookings)}>
+                  <Download size={14} /> Exportar CSV
+                </Button>
+              </div>
             )}
           </div>
         )}

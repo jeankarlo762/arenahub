@@ -44,25 +44,41 @@ export default function FinancialPage() {
   const [source, setSource] = useState<Source>('courts')
 
   const [summary, setSummary] = useState<FinancialSummary | null>(null)
+  const [prevSummary, setPrevSummary] = useState<FinancialSummary | null>(null)
   const [daily, setDaily] = useState<DailyRevenue[]>([])
   const [byCourt, setByCourt] = useState<RevenueItem[]>([])
   const [byMethod, setByMethod] = useState<RevenueItem[]>([])
   const [barStats, setBarStats] = useState<BarStats | null>(null)
   const [loading, setLoading] = useState(true)
 
+  function getPrevPeriod(start: string, end: string): { prevStart: string; prevEnd: string } {
+    const s = new Date(start + 'T00:00:00')
+    const e = new Date(end + 'T00:00:00')
+    const days = Math.round((e.getTime() - s.getTime()) / 86400000) + 1
+    const prevEnd = new Date(s.getTime() - 86400000)
+    const prevStart = new Date(prevEnd.getTime() - (days - 1) * 86400000)
+    return {
+      prevStart: prevStart.toISOString().slice(0, 10),
+      prevEnd: prevEnd.toISOString().slice(0, 10),
+    }
+  }
+
   const load = useCallback(async () => {
     setLoading(true)
     try {
       const params = { startDate, endDate, source }
       const showCourts = source === 'courts' || source === 'all'
-      const [s, d, c, m, bs] = await Promise.all([
+      const { prevStart, prevEnd } = getPrevPeriod(startDate, endDate)
+      const [s, d, c, m, bs, prev] = await Promise.all([
         financialApi.getSummary(params),
         financialApi.getDailyRevenue(params),
         showCourts ? financialApi.getRevenueByCourt({ startDate, endDate }) : Promise.resolve([]),
         financialApi.getRevenueByMethod({ startDate, endDate, source }),
         source === 'bar' ? barApi.getBarStats(startDate, endDate) : Promise.resolve(null),
+        financialApi.getSummary({ startDate: prevStart, endDate: prevEnd, source }),
       ])
       setSummary(s)
+      setPrevSummary(prev)
       setDaily(d)
       setByCourt(c)
       setByMethod(m)
@@ -92,11 +108,38 @@ export default function FinancialPage() {
     }
   }
 
+  function pctChange(curr: number, prev: number): string | null {
+    if (!prev) return null
+    const pct = ((curr - prev) / prev) * 100
+    return `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`
+  }
+
+  function deltaColor(curr: number, prev: number, invertSign = false): string {
+    const up = curr >= prev
+    return (up !== invertSign) ? 'text-green-600' : 'text-red-500'
+  }
+
   const summaryCards = [
-    { label: 'Total', value: formatCurrency(summary?.total ?? 0), color: 'text-gray-900', cardClass: '' },
-    { label: 'Recebido', value: formatCurrency(summary?.received ?? 0), color: 'text-green-700', cardClass: 'border-green-200 bg-green-50/30' },
-    { label: 'Pendente', value: formatCurrency(summary?.pending ?? 0), color: 'text-red-600', cardClass: (summary?.pending ?? 0) > 0 ? 'border-red-200 bg-red-50/30' : '' },
-    { label: 'Transações', value: summary?.paymentCount ?? 0, color: 'text-orange-700', cardClass: '' },
+    {
+      label: 'Total', value: formatCurrency(summary?.total ?? 0), color: 'text-gray-900', cardClass: '',
+      delta: pctChange(summary?.total ?? 0, prevSummary?.total ?? 0),
+      deltaColor: deltaColor(summary?.total ?? 0, prevSummary?.total ?? 0),
+    },
+    {
+      label: 'Recebido', value: formatCurrency(summary?.received ?? 0), color: 'text-green-700', cardClass: 'border-green-200 bg-green-50/30',
+      delta: pctChange(summary?.received ?? 0, prevSummary?.received ?? 0),
+      deltaColor: deltaColor(summary?.received ?? 0, prevSummary?.received ?? 0),
+    },
+    {
+      label: 'Pendente', value: formatCurrency(summary?.pending ?? 0), color: 'text-red-600', cardClass: (summary?.pending ?? 0) > 0 ? 'border-red-200 bg-red-50/30' : '',
+      delta: pctChange(summary?.pending ?? 0, prevSummary?.pending ?? 0),
+      deltaColor: deltaColor(summary?.pending ?? 0, prevSummary?.pending ?? 0, true),
+    },
+    {
+      label: 'Transações', value: summary?.paymentCount ?? 0, color: 'text-orange-700', cardClass: '',
+      delta: pctChange(summary?.paymentCount ?? 0, prevSummary?.paymentCount ?? 0),
+      deltaColor: deltaColor(summary?.paymentCount ?? 0, prevSummary?.paymentCount ?? 0),
+    },
   ]
 
   return (
@@ -163,6 +206,11 @@ export default function FinancialPage() {
                 <Card key={c.label} className={c.cardClass}>
                   <p className="text-xs text-gray-500 mb-1">{c.label}</p>
                   <p className={`text-xl sm:text-2xl font-bold ${c.color}`}>{c.value}</p>
+                  {c.delta && (
+                    <p className={`text-xs mt-1 font-medium ${c.deltaColor}`}>
+                      {c.delta} vs. período anterior
+                    </p>
+                  )}
                 </Card>
               ))}
             </div>
