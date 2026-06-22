@@ -11,4 +11,7 @@ export async function settingsRoutes(app: FastifyInstance) {
   app.put('/booking-slug', admin, settingsController.setBookingSlug as RouteHandlerMethod)
   app.get('/payment-fees', settingsController.getPaymentFees)
   app.put('/payment-fees/:method', admin, settingsController.upsertPaymentFee as RouteHandlerMethod)
+
+  app.get('/branding', settingsController.getBranding)
+  app.put('/branding', admin, settingsController.upsertBranding)
 }

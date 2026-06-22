@@ -70,7 +70,6 @@ export default function ForgotPasswordPage() {
   }
 
   const stepNumber = step === 'phone' ? 1 : step === 'code' ? 2 : step === 'password' ? 3 : 3
-  const stepTotal = 3
 
   return (
     <div className="min-h-screen flex">

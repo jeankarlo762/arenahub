@@ -21,6 +21,15 @@ model Tenant {
   updatedAt    DateTime @updatedAt
 }
 
+// Branding por tenant — cor primária, logo (base64) e nome de exibição.
+model TenantBranding {
+  tenantId     String   @id
+  primaryColor String   @default("#f97316")
+  logoUrl      String?
+  companyName  String?
+  updatedAt    DateTime @updatedAt
+}
+
 // Role: ADMIN | OPERATOR | SUPERADMIN
 model User {
   id           String   @id @default(cuid())

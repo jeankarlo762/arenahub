@@ -7,6 +7,20 @@ import {
   UpdatePaymentInput,
 } from '../schemas/booking.schema'
 
+export async function getRecentBookings(tenantId: string | null) {
+  const since = new Date()
+  since.setHours(since.getHours() - 24)
+  return prisma.booking.findMany({
+    where: {
+      ...(tenantId ? { tenantId } : {}),
+      createdAt: { gte: since },
+    },
+    include: { court: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  })
+}
+
 export async function listBookings(filters: {
   date?: string
   startDate?: string

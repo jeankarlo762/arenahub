@@ -66,11 +66,11 @@ export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBac
     finally { setCheckingNumber(false) }
   }
 
-  async function handleReopen(clearItems: boolean) {
+  async function handleReopen(clearItems: boolean, newCustomerName?: string) {
     if (!conflictOrder) return
     setReopening(true)
     try {
-      const result = await barApi.reopenOrder(conflictOrder.id, clearItems)
+      const result = await barApi.reopenOrder(conflictOrder.id, clearItems, newCustomerName)
       toast.success(`Comanda #${result.number} reaberta`)
       setConflictOrder(null)
       onSuccess(result)
@@ -179,16 +179,31 @@ export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBac
                 </div>
               </>
             ) : (
-              <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
-                <div className="text-sm">
-                  <p className="font-semibold text-amber-800">Número já utilizado</p>
-                  <p className="text-amber-700 mt-0.5">
-                    A comanda <strong>#{conflictOrder.number}</strong> pertence a <strong>{conflictOrder.customerName}</strong>.
-                    Por favor, use um número diferente.
-                  </p>
+              <>
+                <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-amber-800">Número já utilizado</p>
+                    <p className="text-amber-700 mt-0.5">
+                      A comanda <strong>#{conflictOrder.number}</strong> está no histórico de <strong>{conflictOrder.customerName}</strong>.
+                      O histórico é apenas visual — você pode reabri-la para um novo cliente.
+                    </p>
+                  </div>
                 </div>
-              </div>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => handleReopen(true, currentName || undefined)}
+                    loading={reopening}
+                    disabled={!currentName}
+                    className="w-full justify-center"
+                  >
+                    <RefreshCw size={15} /> Reabrir vazia para {currentName || 'novo cliente'}
+                  </Button>
+                  {!currentName && (
+                    <p className="text-xs text-gray-400 text-center">Informe o nome do cliente para reabrir</p>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </Modal>

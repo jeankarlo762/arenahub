@@ -19,6 +19,7 @@ import {
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
 import { useUIStore } from '../../store/ui.store'
+import { useBrandingStore } from '../../store/branding.store'
 import * as authApi from '../../api/auth.api'
 import toast from 'react-hot-toast'
 
@@ -46,6 +47,7 @@ const adminItems = [
 export function Sidebar() {
   const { user, refreshToken, clearAuth } = useAuthStore()
   const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { logoUrl, companyName } = useBrandingStore()
   const navigate = useNavigate()
 
   const isAdmin = user?.role === 'ADMIN'
@@ -72,7 +74,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-900 text-white transition-all duration-200',
+          'fixed top-0 left-0 h-screen z-30 flex flex-col bg-gray-900 text-white transition-all duration-200 overflow-hidden',
           sidebarOpen ? 'w-60' : 'w-0 overflow-hidden lg:w-16',
         )}
       >
@@ -84,11 +86,13 @@ export function Sidebar() {
             <Menu size={20} />
           </button>
           {sidebarOpen && (
-            <span className="font-bold text-lg tracking-tight">ArenaHub</span>
+            logoUrl
+              ? <img src={logoUrl} alt="Logo" className="h-8 max-w-[140px] object-contain" />
+              : <span className="font-bold text-lg tracking-tight">{companyName || 'ArenaHub'}</span>
           )}
         </div>
 
-        <nav className="flex-1 py-4 overflow-y-auto">
+        <nav className="flex-1 py-4 flex flex-col gap-0.5 overflow-hidden">
           {commonItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}

@@ -123,11 +123,11 @@ export async function deleteCategory(
 }
 
 export async function reopenOrder(
-  request: FastifyRequest<{ Params: { id: string }; Body: { clearItems: boolean } }>,
+  request: FastifyRequest<{ Params: { id: string }; Body: { clearItems: boolean; newCustomerName?: string } }>,
   reply: FastifyReply,
 ) {
-  const { clearItems } = request.body as { clearItems: boolean }
-  return reply.send(await barService.reopenOrder(request.params.id, !!clearItems))
+  const { clearItems, newCustomerName } = request.body as { clearItems: boolean; newCustomerName?: string }
+  return reply.send(await barService.reopenOrder(request.params.id, !!clearItems, newCustomerName))
 }
 
 export async function removeItem(

@@ -4,6 +4,23 @@ import { randomBytes } from 'crypto'
 
 const PAYMENT_METHODS = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'TRANSFER']
 
+export async function getBranding() {
+  const tenantId = getTenantId()
+  if (!tenantId) return { primaryColor: '#f97316', logoUrl: null, companyName: null }
+  const b = await prisma.tenantBranding.findUnique({ where: { tenantId } })
+  return b ?? { primaryColor: '#f97316', logoUrl: null, companyName: null }
+}
+
+export async function upsertBranding(data: { primaryColor?: string; logoUrl?: string | null; companyName?: string | null }) {
+  const tenantId = getTenantId()
+  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  return prisma.tenantBranding.upsert({
+    where: { tenantId },
+    create: { tenantId, ...data },
+    update: data,
+  })
+}
+
 export async function getPaymentFees() {
   const tenantId = getTenantId()
   const fees = tenantId ? await prisma.paymentFee.findMany({ where: { tenantId } }) : []
