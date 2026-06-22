@@ -78,17 +78,17 @@ export function Sidebar() {
           sidebarOpen ? 'w-60' : 'w-0 overflow-hidden lg:w-16',
         )}
       >
-        <div className="flex items-center gap-3 px-4 h-16 border-b border-gray-700 shrink-0">
+        <div className="flex items-center gap-3 px-4 h-20 border-b border-gray-700 shrink-0">
           <button
             onClick={toggleSidebar}
-            className="p-1 rounded-lg hover:bg-gray-700 transition-colors lg:flex hidden"
+            className="p-1 rounded-lg hover:bg-gray-700 transition-colors lg:flex hidden shrink-0"
           >
             <Menu size={20} />
           </button>
           {sidebarOpen && (
             logoUrl
-              ? <img src={logoUrl} alt="Logo" className="h-8 max-w-[140px] object-contain" />
-              : <span className="font-bold text-lg tracking-tight">{companyName || 'ArenaHub'}</span>
+              ? <img src={logoUrl} alt="Logo" className="h-12 max-w-[148px] object-contain" />
+              : <span className="font-bold text-xl tracking-tight">{companyName || 'ArenaHub'}</span>
           )}
         </div>
 
