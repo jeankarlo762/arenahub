@@ -15,16 +15,3 @@ export async function getMe(): Promise<User> {
   return res.data
 }
 
-export async function forgotPassword(phone: string): Promise<{ sent: boolean }> {
-  const res = await api.post<{ sent: boolean }>('/auth/forgot-password', { phone })
-  return res.data
-}
-
-export async function verifyResetCode(phone: string, code: string): Promise<{ resetToken: string }> {
-  const res = await api.post<{ resetToken: string }>('/auth/verify-reset-code', { phone, code })
-  return res.data
-}
-
-export async function resetPassword(resetToken: string, password: string): Promise<void> {
-  await api.post('/auth/reset-password', { resetToken, password })
-}
