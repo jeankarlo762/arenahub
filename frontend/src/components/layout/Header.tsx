@@ -18,9 +18,9 @@ export function Header({ title, breadcrumb }: HeaderProps) {
       >
         <Menu size={20} />
       </button>
-      <div>
-        {breadcrumb && <p className="text-xs text-gray-400">{breadcrumb}</p>}
-        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+      <div className="min-w-0 flex-1 overflow-hidden">
+        {breadcrumb && <p className="text-xs text-gray-400 truncate">{breadcrumb}</p>}
+        <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
       </div>
       <div className="ml-auto">
         <NotificationBell />

@@ -275,9 +275,12 @@ function PlayersTab() {
             const medal = rank <= 3 && player.points > 0 ? '🥇🥈🥉'[rank - 1] : null
             return (
               <div key={player.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <div className="w-full flex items-center gap-4 px-5 py-4">
+                <div
+                  className="w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 cursor-pointer"
+                  onClick={() => setExpanded(isExpanded ? null : player.id)}
+                >
                   {/* Rank */}
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
                     medal && rank === 1 ? 'bg-yellow-100 text-yellow-700' :
                     medal && rank === 2 ? 'bg-gray-100 text-gray-600' :
                     medal && rank === 3 ? 'bg-orange-100 text-orange-700' :
@@ -288,41 +291,37 @@ function PlayersTab() {
 
                   {/* Avatar */}
                   {player.photo ? (
-                    <img src={player.photo} alt={player.name} className="w-11 h-11 rounded-full object-cover border-2 border-orange-200 shrink-0" />
+                    <img src={player.photo} alt={player.name} className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-orange-200 shrink-0" />
                   ) : (
-                    <div className="w-11 h-11 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 border-2 border-orange-200 shrink-0">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 border-2 border-orange-200 shrink-0">
                       {player.name.charAt(0).toUpperCase()}
                     </div>
                   )}
 
                   {/* Name + meta */}
-                  <button
-                    type="button"
-                    className="flex-1 min-w-0 text-left"
-                    onClick={() => setExpanded(isExpanded ? null : player.id)}
-                  >
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-gray-900 truncate">{player.name}</p>
                       {!player.registered && (
-                        <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">não cadastrado</span>
+                        <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0 hidden sm:inline">não cadastrado</span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500">
                       {player.age != null ? `${player.age} anos · ` : ''}
                       {player.tournamentCount} torneio{player.tournamentCount !== 1 ? 's' : ''}
                     </p>
-                  </button>
+                  </div>
 
                   {/* Points */}
-                  <span className={`px-3 py-1 rounded-full text-sm font-bold shrink-0 ${
+                  <span className={`px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold shrink-0 ${
                     player.points > 0 ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-400'
                   }`}>
                     {player.points} pts
                   </span>
 
-                  {/* Actions */}
+                  {/* Actions (desktop only — mobile actions appear inside expanded section) */}
                   {player.registered && (
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="hidden sm:flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => { setEditing(player); setFormOpen(true) }}
                         className="p-1.5 text-gray-400 hover:text-orange-500 transition-colors"
@@ -340,17 +339,30 @@ function PlayersTab() {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isExpanded ? null : player.id)}
-                    className="p-1 text-gray-400 shrink-0"
-                  >
+                  <span className="p-1 text-gray-400 shrink-0 pointer-events-none">
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </button>
+                  </span>
                 </div>
 
                 {isExpanded && (
-                  <div className="border-t border-gray-100 px-5 pb-4 pt-3">
+                  <div className="border-t border-gray-100 px-4 sm:px-5 pb-4 pt-3">
+                    {/* Mobile actions */}
+                    {player.registered && (
+                      <div className="sm:hidden flex gap-2 mb-3">
+                        <button
+                          onClick={() => { setEditing(player); setFormOpen(true) }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-600 border border-gray-200 hover:border-orange-400 hover:text-orange-500 transition-colors"
+                        >
+                          <Pencil size={13} /> Editar
+                        </button>
+                        <button
+                          onClick={() => setRemoving(player)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-600 border border-gray-200 hover:border-red-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={13} /> Remover
+                        </button>
+                      </div>
+                    )}
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Histórico de torneios</p>
                     {player.tournaments.length === 0 ? (
                       <p className="text-sm text-gray-400">Ainda não participou de torneios encerrados.</p>
