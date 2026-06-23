@@ -13,8 +13,6 @@ const envSchema = z.object({
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_FROM_NUMBER: z.string().optional(),
-  // AI — optional; tournament concept generation will fail gracefully if not set
-  ANTHROPIC_API_KEY: z.string().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

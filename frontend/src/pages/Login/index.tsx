@@ -90,28 +90,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <span className="bg-white/20 border border-white/30 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-              v2.0.0
-            </span>
-            <span className="text-orange-100 text-xs font-semibold tracking-wide uppercase">
-              Pacote de Atualização
-            </span>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {[
-              'Arte automática para torneios com branding',
-              'Post para Instagram gerado na hora',
-              'Gestão de leads e pipeline de vendas',
-              'Integração com WhatsApp',
-            ].map((item) => (
-              <div key={item} className="flex items-start gap-2">
-                <div className="w-1 h-1 rounded-full bg-orange-300 mt-1.5 shrink-0" />
-                <span className="text-orange-200 text-xs leading-relaxed">{item}</span>
-              </div>
-            ))}
-          </div>
+        <div className="relative z-10">
+          <p className="text-orange-200 text-xs">
+            Sistema de gestão profissional
+          </p>
         </div>
       </div>
 
