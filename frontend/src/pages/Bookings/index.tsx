@@ -168,81 +168,75 @@ export default function BookingsPage() {
   return (
     <Layout title="Agendamentos">
       <div className="flex flex-col gap-6">
-        {/* Toolbar */}
-        <div className="flex items-end gap-3 flex-wrap">
-          {/* View toggle */}
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-            >
-              <List size={15} /> Lista
-            </button>
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-l border-gray-200 transition-colors ${viewMode === 'calendar' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-            >
-              <CalendarDays size={15} /> Calendário
-            </button>
-            <button
-              onClick={() => setViewMode('history')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-l border-gray-200 transition-colors ${viewMode === 'history' ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-            >
-              <History size={15} /> Histórico
-            </button>
+        {/* Tabs + Action */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex gap-1 border-b border-gray-200">
+            {([
+              { mode: 'list' as ViewMode, icon: List, label: 'Lista' },
+              { mode: 'calendar' as ViewMode, icon: CalendarDays, label: 'Calendário' },
+              { mode: 'history' as ViewMode, icon: History, label: 'Histórico' },
+            ] as const).map(({ mode, icon: Icon, label }) => (
+              <button
+                key={mode}
+                onClick={() => setViewMode(mode)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  viewMode === mode ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Icon size={15} /> {label}
+              </button>
+            ))}
           </div>
-
-          {viewMode === 'list' && (
-            <>
-              <div className="relative flex-1 min-w-36">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Buscar cliente..."
-                  value={filterCustomer}
-                  onChange={(e) => setFilterCustomer(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
-                />
-              </div>
-              <div className="flex gap-1 shrink-0">
-                {[
-                  { label: 'Hoje', value: toInputDate(new Date()) },
-                  { label: 'Amanhã', value: toInputDate(new Date(Date.now() + 86400000)) },
-                  { label: 'Todos', value: '' },
-                ].map(({ label, value }) => (
-                  <button
-                    key={label}
-                    onClick={() => setFilterDate(value)}
-                    className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${filterDate === value ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <DatePicker label="Data" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-36" />
-              <Select
-                label="Quadra"
-                options={[{ value: '', label: 'Todas' }, ...courts.map((c) => ({ value: c.id, label: c.name }))]}
-                value={filterCourt}
-                onChange={(e) => setFilterCourt(e.target.value)}
-                className="w-40"
-              />
-              <Select
-                label="Status"
-                options={statusOptions}
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-40"
-              />
-            </>
-          )}
-
-          <div className={viewMode === 'calendar' ? '' : 'ml-auto shrink-0'}>
-            <Button onClick={() => setFormOpen(true)}>
-              <Plus size={16} /> Novo Agendamento
-            </Button>
-          </div>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus size={16} /> Novo Agendamento
+          </Button>
         </div>
+
+        {/* List filters card */}
+        {viewMode === 'list' && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-36">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Buscar cliente..."
+                value={filterCustomer}
+                onChange={(e) => setFilterCustomer(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              />
+            </div>
+            <div className="flex gap-1 shrink-0">
+              {[
+                { label: 'Hoje', value: toInputDate(new Date()) },
+                { label: 'Amanhã', value: toInputDate(new Date(Date.now() + 86400000)) },
+                { label: 'Todos', value: '' },
+              ].map(({ label, value }) => (
+                <button
+                  key={label}
+                  onClick={() => setFilterDate(value)}
+                  className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${filterDate === value ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <DatePicker label="Data" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-36" />
+            <Select
+              label="Quadra"
+              options={[{ value: '', label: 'Todas' }, ...courts.map((c) => ({ value: c.id, label: c.name }))]}
+              value={filterCourt}
+              onChange={(e) => setFilterCourt(e.target.value)}
+              className="w-40"
+            />
+            <Select
+              label="Status"
+              options={statusOptions}
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-40"
+            />
+          </div>
+        )}
 
         {/* ── Lista ── */}
         {viewMode === 'list' && (
@@ -254,7 +248,7 @@ export default function BookingsPage() {
               action={{ label: 'Novo Agendamento', onClick: () => setFormOpen(true) }}
             />
           ) : (
-            <div className="overflow-x-auto">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
               <Table
                 columns={columns}
                 data={bookings}
@@ -274,29 +268,26 @@ export default function BookingsPage() {
         {/* ── Histórico ── */}
         {viewMode === 'history' && (
           <div className="flex flex-col gap-4">
-            {/* History filters */}
-            <div className="flex flex-col gap-3">
-              <div className="flex gap-3 flex-wrap items-end">
-                <div className="relative flex-1 min-w-48">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Buscar por nome, telefone..."
-                    value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
-                  />
-                </div>
-                <Select
-                  label="Quadra"
-                  options={[{ value: '', label: 'Todas' }, ...courts.map((c) => ({ value: c.id, label: c.name }))]}
-                  value={historyCourt}
-                  onChange={(e) => setHistoryCourt(e.target.value)}
-                  className="w-40"
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3 flex-wrap">
+              <div className="relative flex-1 min-w-48">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Buscar por nome, telefone..."
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
                 />
-                <DatePicker label="De" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-36" />
-                <DatePicker label="Até" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="w-36" />
               </div>
+              <Select
+                label="Quadra"
+                options={[{ value: '', label: 'Todas' }, ...courts.map((c) => ({ value: c.id, label: c.name }))]}
+                value={historyCourt}
+                onChange={(e) => setHistoryCourt(e.target.value)}
+                className="w-40"
+              />
+              <DatePicker label="De" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-36" />
+              <DatePicker label="Até" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="w-36" />
             </div>
 
             {historyLoading ? (
@@ -308,7 +299,7 @@ export default function BookingsPage() {
                 description="Tente ajustar os filtros de busca"
               />
             ) : (
-              <div className="overflow-x-auto">
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
                 <Table
                   columns={[
                     ...columns,

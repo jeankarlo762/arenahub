@@ -3,9 +3,29 @@ import { ChevronDown, ChevronRight, Pencil, Save, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Spinner } from '../../components/ui/Spinner'
 import { Button } from '../../components/ui/Button'
-import type { Court } from '../../types/court'
+import type { Court, Schedule } from '../../types/court'
 import * as courtsApi from '../../api/courts.api'
 import { formatCurrency } from '../../utils/format'
+
+const DAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+
+function ScheduleSummary({ schedules }: { schedules: Schedule[] }) {
+  const active = schedules.filter((s) => s.active).sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+  if (active.length === 0) return <p className="text-xs text-gray-400">Sem horários configurados</p>
+
+  const groups = new Map<string, number[]>()
+  for (const s of active) {
+    const key = `${s.openTime}–${s.closeTime}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(s.dayOfWeek)
+  }
+
+  const parts = Array.from(groups.entries()).map(
+    ([time, days]) => `${days.map((d) => DAY_SHORT[d]).join(', ')} · ${time}`,
+  )
+
+  return <p className="text-xs text-gray-400">{parts.join('  |  ')}</p>
+}
 
 interface CourtPriceEdit {
   pricePerSlot: string
@@ -132,9 +152,9 @@ export function CourtsConfigTab() {
               onClick={() => !isNameEditing && setExpanded(isExpanded ? null : court.id)}
               className="w-full flex items-center gap-3 px-5 py-4 text-left"
             >
-              <div className="flex-1 min-w-0 flex items-center gap-2">
+              <div className="flex-1 min-w-0">
                 {isNameEditing ? (
-                  <div className="flex-1 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <input
                       ref={nameInputRef}
                       type="text"
@@ -162,10 +182,13 @@ export function CourtsConfigTab() {
                   </div>
                 ) : (
                   <>
-                    <span className="font-semibold text-gray-900 truncate">{court.name}</span>
-                    {!court.active && (
-                      <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full shrink-0">Inativa</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900 truncate">{court.name}</span>
+                      {!court.active && (
+                        <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full shrink-0">Inativa</span>
+                      )}
+                    </div>
+                    <ScheduleSummary schedules={court.schedules ?? []} />
                   </>
                 )}
               </div>

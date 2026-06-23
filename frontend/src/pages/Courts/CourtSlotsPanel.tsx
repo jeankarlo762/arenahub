@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { ChevronDown, ChevronUp, RefreshCw, X, Phone, User } from 'lucide-react'
+import { ChevronDown, ChevronUp, X, Phone, User } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { DatePicker } from '../../components/ui/DatePicker'
 import type { Court, AvailabilitySlot, SlotBookingInfo } from '../../types/court'
@@ -10,9 +10,10 @@ import { formatCurrency } from '../../utils/format'
 interface CourtSlotsPanelProps {
   court: Court
   onBookSlot?: (court: Court, date: string, slot: AvailabilitySlot) => void
+  refreshKey?: number
 }
 
-export function CourtSlotsPanel({ court, onBookSlot }: CourtSlotsPanelProps) {
+export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPanelProps) {
   const [open, setOpen] = useState(true)
   const [date, setDate] = useState(toInputDate(new Date()))
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -66,7 +67,7 @@ export function CourtSlotsPanel({ court, onBookSlot }: CourtSlotsPanelProps) {
     if (!open || !date) return
     loadSlots()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, date])
+  }, [open, date, refreshKey])
 
   async function loadSlots() {
     setLoading(true)
@@ -155,13 +156,6 @@ export function CourtSlotsPanel({ court, onBookSlot }: CourtSlotsPanelProps) {
               min={toInputDate(new Date())}
               className="flex-1 text-xs py-1.5"
             />
-            <button
-              onClick={loadSlots}
-              className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-orange-500 hover:border-orange-300 transition-colors"
-              title="Atualizar"
-            >
-              <RefreshCw size={14} />
-            </button>
           </div>
 
           <p className="text-xs text-gray-400">
