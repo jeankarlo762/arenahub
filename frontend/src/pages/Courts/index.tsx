@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { MapPin, Search } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { Badge } from '../../components/ui/Badge'
