@@ -3,12 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { ImagePlus, X } from 'lucide-react'
+import { Download, RefreshCw } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Textarea } from '../../components/ui/Textarea'
 import { DatePicker } from '../../components/ui/DatePicker'
+import { useBrandingStore } from '../../store/branding.store'
+import { generateTournamentImage } from '../../utils/generateTournamentImage'
 import type { Tournament } from '../../types/tournament'
 import type { Court } from '../../types/court'
 import * as tournamentsApi from '../../api/tournaments.api'
@@ -47,9 +49,10 @@ interface TournamentFormProps {
 export function TournamentForm({ open, onClose, onSuccess, tournament }: TournamentFormProps) {
   const isEdit = !!tournament
   const [courts, setCourts] = useState<Court[]>([])
-  const [imagePreview, setImagePreview] = useState<string>('')
-  const [dragging, setDragging] = useState(false)
-  const dropRef = useRef<HTMLDivElement>(null)
+  const [generatedImage, setGeneratedImage] = useState<string>('')
+  const [generatingImage, setGeneratingImage] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const branding = useBrandingStore()
 
   const {
     register,
@@ -66,13 +69,21 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
   const matchType = watch('matchType')
   const selectedCourtId = watch('courtId')
 
+  // Watch fields that affect the generated art
+  const watchedName = watch('name')
+  const watchedSport = watch('sport')
+  const watchedStartDate = watch('startDate')
+  const watchedEndDate = watch('endDate')
+  const watchedMaxTeams = watch('maxTeams')
+  const watchedPrizeInfo = watch('prizeInfo')
+
   useEffect(() => {
     courtsApi.listCourts({ active: true }).then(setCourts).catch(() => {})
   }, [])
 
   useEffect(() => {
     if (open) {
-      setImagePreview(tournament?.imageUrl ?? '')
+      setGeneratedImage('')
       reset(
         tournament
           ? {
@@ -94,23 +105,57 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
     }
   }, [open, tournament, reset])
 
-  function loadImageFile(file: File) {
-    if (!file.type.startsWith('image/')) { toast.error('Apenas imagens são aceitas'); return }
-    const reader = new FileReader()
-    reader.onload = (e) => setImagePreview(e.target?.result as string)
-    reader.readAsDataURL(file)
+  // Auto-generate image with debounce when key fields change
+  useEffect(() => {
+    if (!open) return
+    if (!watchedName || !watchedSport) return
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      triggerGenerate()
+    }, 800)
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedName, watchedSport, watchedStartDate, watchedEndDate, watchedMaxTeams, watchedPrizeInfo, matchType, branding.primaryColor])
+
+  async function triggerGenerate() {
+    const values = {
+      name: watchedName,
+      sport: watchedSport,
+      startDate: watchedStartDate || '',
+      endDate: watchedEndDate || '',
+      maxTeams: watchedMaxTeams || 8,
+      matchType: matchType || 'TEAM',
+      prizeInfo: watchedPrizeInfo || '',
+    }
+    if (!values.name || !values.sport) return
+    setGeneratingImage(true)
+    try {
+      const dataUrl = await generateTournamentImage(values, {
+        primaryColor: branding.primaryColor,
+        logoUrl: branding.logoUrl,
+        companyName: branding.companyName,
+      })
+      setGeneratedImage(dataUrl)
+    } catch {
+      // silently fail — image is optional
+    } finally {
+      setGeneratingImage(false)
+    }
   }
 
-  function handleDrop(e: React.DragEvent) {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) loadImageFile(file)
+  function downloadImage() {
+    if (!generatedImage) return
+    const a = document.createElement('a')
+    a.href = generatedImage
+    a.download = `torneio-${(watchedName || 'post').toLowerCase().replace(/\s+/g, '-')}.jpg`
+    a.click()
   }
 
   async function onSubmit(data: FormData) {
     try {
-      const payload = { ...data, imageUrl: imagePreview || undefined }
+      const payload = { ...data, imageUrl: generatedImage || undefined }
       if (isEdit) {
         await tournamentsApi.updateTournament(tournament.id, payload)
         toast.success('Torneio atualizado')
@@ -145,51 +190,66 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
       }
     >
       <div className="flex flex-col gap-4">
-        {/* Image upload */}
+        {/* Auto-generated art preview */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Imagem do torneio</p>
-          {imagePreview ? (
-            <div className="relative">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-40 object-contain rounded-xl border border-gray-200 bg-gray-50"
-              />
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-medium text-gray-700">Arte do torneio</p>
+            <div className="flex items-center gap-2">
+              {generatedImage && (
+                <button
+                  type="button"
+                  onClick={downloadImage}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-orange-600 transition-colors"
+                >
+                  <Download size={13} />
+                  Baixar post Instagram
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setImagePreview('')}
-                className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow border border-gray-200 text-gray-500 hover:text-red-500 transition-colors"
+                onClick={triggerGenerate}
+                disabled={!watchedName || !watchedSport || generatingImage}
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <X size={14} />
+                <RefreshCw size={13} className={generatingImage ? 'animate-spin' : ''} />
+                Regenerar
               </button>
             </div>
-          ) : (
-            <div
-              ref={dropRef}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
-              onClick={() => {
-                const input = document.createElement('input')
-                input.type = 'file'
-                input.accept = 'image/*'
-                input.onchange = (e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0]
-                  if (file) loadImageFile(file)
-                }
-                input.click()
-              }}
-              className={`w-full h-32 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
-                dragging
-                  ? 'border-orange-400 bg-orange-50'
-                  : 'border-gray-200 bg-gray-50 hover:border-orange-300 hover:bg-orange-50'
-              }`}
-            >
-              <ImagePlus size={24} className="text-gray-400" />
-              <p className="text-sm text-gray-500">Arraste uma imagem ou clique para selecionar</p>
-              <p className="text-xs text-gray-400">PNG, JPG, GIF, WEBP, etc.</p>
-            </div>
-          )}
+          </div>
+
+          <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 h-48">
+            {generatedImage ? (
+              <img
+                src={generatedImage}
+                alt="Arte do torneio"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
+                {generatingImage ? (
+                  <>
+                    <RefreshCw size={20} className="animate-spin" />
+                    <p className="text-xs">Gerando arte...</p>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-2xl">🎨</span>
+                    <p className="text-xs text-center px-4">
+                      Preencha o nome e o esporte para gerar<br />a arte automaticamente com seu branding
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+            {generatingImage && generatedImage && (
+              <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                <RefreshCw size={20} className="animate-spin text-gray-500" />
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">
+            Arte 1080×1080 gerada com o branding das configurações — pronta para Instagram
+          </p>
         </div>
 
         <Input label="Nome" error={errors.name?.message} {...register('name')} />
