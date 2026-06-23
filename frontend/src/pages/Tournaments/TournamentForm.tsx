@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Download, RefreshCw } from 'lucide-react'
+import { Download, RefreshCw, Sparkles, Copy, Check } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -11,6 +11,7 @@ import { Textarea } from '../../components/ui/Textarea'
 import { DatePicker } from '../../components/ui/DatePicker'
 import { useBrandingStore } from '../../store/branding.store'
 import { generateTournamentImage } from '../../utils/generateTournamentImage'
+import { generateTournamentConcept, type TournamentConcept } from '../../api/ai.api'
 import type { Tournament } from '../../types/tournament'
 import type { Court } from '../../types/court'
 import * as tournamentsApi from '../../api/tournaments.api'
@@ -51,6 +52,9 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
   const [courts, setCourts] = useState<Court[]>([])
   const [generatedImage, setGeneratedImage] = useState<string>('')
   const [generatingImage, setGeneratingImage] = useState(false)
+  const [concept, setConcept] = useState<TournamentConcept | null>(null)
+  const [generatingConcept, setGeneratingConcept] = useState(false)
+  const [captionCopied, setCaptionCopied] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const branding = useBrandingStore()
 
@@ -68,14 +72,13 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
 
   const matchType = watch('matchType')
   const selectedCourtId = watch('courtId')
-
-  // Watch fields that affect the generated art
   const watchedName = watch('name')
   const watchedSport = watch('sport')
   const watchedStartDate = watch('startDate')
   const watchedEndDate = watch('endDate')
   const watchedMaxTeams = watch('maxTeams')
   const watchedPrizeInfo = watch('prizeInfo')
+  const watchedDescription = watch('description')
 
   useEffect(() => {
     courtsApi.listCourts({ active: true }).then(setCourts).catch(() => {})
@@ -84,6 +87,7 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
   useEffect(() => {
     if (open) {
       setGeneratedImage('')
+      setConcept(null)
       reset(
         tournament
           ? {
@@ -105,21 +109,16 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
     }
   }, [open, tournament, reset])
 
-  // Auto-generate image with debounce when key fields change
+  // Debounce auto-generation when key fields change
   useEffect(() => {
-    if (!open) return
-    if (!watchedName || !watchedSport) return
-
+    if (!open || !watchedName || !watchedSport) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      triggerGenerate()
-    }, 800)
-
+    debounceRef.current = setTimeout(() => { triggerAll() }, 1000)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchedName, watchedSport, watchedStartDate, watchedEndDate, watchedMaxTeams, watchedPrizeInfo, matchType, branding.primaryColor])
+  }, [watchedName, watchedSport, watchedStartDate, watchedEndDate, watchedMaxTeams, watchedPrizeInfo, matchType])
 
-  async function triggerGenerate() {
+  async function triggerAll() {
     const values = {
       name: watchedName,
       sport: watchedSport,
@@ -128,18 +127,44 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
       maxTeams: watchedMaxTeams || 8,
       matchType: matchType || 'TEAM',
       prizeInfo: watchedPrizeInfo || '',
+      description: watchedDescription || '',
     }
     if (!values.name || !values.sport) return
+
+    // Run AI concept + image generation in parallel
+    setGeneratingConcept(true)
     setGeneratingImage(true)
+
+    let freshConcept: TournamentConcept | null = null
+
+    const [conceptResult] = await Promise.allSettled([
+      generateTournamentConcept({ ...values, companyName: branding.companyName ?? undefined }),
+    ])
+
+    if (conceptResult.status === 'fulfilled') {
+      freshConcept = conceptResult.value
+      setConcept(freshConcept)
+    }
+    setGeneratingConcept(false)
+
+    // Now generate image — with AI data if we got it
     try {
-      const dataUrl = await generateTournamentImage(values, {
-        primaryColor: branding.primaryColor,
-        logoUrl: branding.logoUrl,
-        companyName: branding.companyName,
-      })
+      const dataUrl = await generateTournamentImage(
+        {
+          ...values,
+          headline: freshConcept?.headline,
+          subtitle: freshConcept?.subtitle,
+          accentColor: freshConcept?.accentColor,
+        },
+        {
+          primaryColor: branding.primaryColor,
+          logoUrl: branding.logoUrl,
+          companyName: branding.companyName,
+        },
+      )
       setGeneratedImage(dataUrl)
     } catch {
-      // silently fail — image is optional
+      // silently ignore
     } finally {
       setGeneratingImage(false)
     }
@@ -151,6 +176,14 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
     a.href = generatedImage
     a.download = `torneio-${(watchedName || 'post').toLowerCase().replace(/\s+/g, '-')}.jpg`
     a.click()
+  }
+
+  async function copyCaption() {
+    if (!concept?.instagramCaption) return
+    const full = concept.instagramCaption + '\n\n' + (concept.hashtags?.join(' ') ?? '')
+    await navigator.clipboard.writeText(full)
+    setCaptionCopied(true)
+    setTimeout(() => setCaptionCopied(false), 2000)
   }
 
   async function onSubmit(data: FormData) {
@@ -176,6 +209,8 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
     ? 'Máximo de duplas'
     : 'Máximo de equipes'
 
+  const isGenerating = generatingImage || generatingConcept
+
   return (
     <Modal
       open={open}
@@ -190,11 +225,19 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
       }
     >
       <div className="flex flex-col gap-4">
-        {/* Auto-generated art preview */}
+        {/* ── Arte gerada por IA ── */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-gray-700">Arte do torneio</p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <Sparkles size={14} className="text-orange-500" />
+              <p className="text-sm font-medium text-gray-700">Arte gerada por IA</p>
+              {concept && (
+                <span className="text-xs bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded-full font-medium">
+                  {concept.style}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
               {generatedImage && (
                 <button
                   type="button"
@@ -202,55 +245,98 @@ export function TournamentForm({ open, onClose, onSuccess, tournament }: Tournam
                   className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-orange-600 transition-colors"
                 >
                   <Download size={13} />
-                  Baixar post Instagram
+                  Baixar 1080×1080
                 </button>
               )}
               <button
                 type="button"
-                onClick={triggerGenerate}
-                disabled={!watchedName || !watchedSport || generatingImage}
+                onClick={triggerAll}
+                disabled={!watchedName || !watchedSport || isGenerating}
                 className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                <RefreshCw size={13} className={generatingImage ? 'animate-spin' : ''} />
+                <RefreshCw size={13} className={isGenerating ? 'animate-spin' : ''} />
                 Regenerar
               </button>
             </div>
           </div>
 
-          <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 h-48">
+          {/* Image preview */}
+          <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 h-52">
             {generatedImage ? (
-              <img
-                src={generatedImage}
-                alt="Arte do torneio"
-                className="w-full h-full object-contain"
-              />
+              <img src={generatedImage} alt="Arte do torneio" className="w-full h-full object-contain" />
             ) : (
               <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-400">
-                {generatingImage ? (
+                {isGenerating ? (
                   <>
                     <RefreshCw size={20} className="animate-spin" />
-                    <p className="text-xs">Gerando arte...</p>
+                    <p className="text-xs">
+                      {generatingConcept ? 'Criando conceito com IA...' : 'Gerando arte...'}
+                    </p>
                   </>
                 ) : (
                   <>
-                    <span className="text-2xl">🎨</span>
-                    <p className="text-xs text-center px-4">
-                      Preencha o nome e o esporte para gerar<br />a arte automaticamente com seu branding
+                    <Sparkles size={20} className="text-orange-300" />
+                    <p className="text-xs text-center px-6 leading-relaxed">
+                      Preencha o nome e o esporte — a IA cria o conceito<br />visual e gera a arte automaticamente
                     </p>
                   </>
                 )}
               </div>
             )}
-            {generatingImage && generatedImage && (
-              <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-                <RefreshCw size={20} className="animate-spin text-gray-500" />
+            {isGenerating && generatedImage && (
+              <div className="absolute inset-0 bg-white/50 flex flex-col items-center justify-center gap-1.5">
+                <RefreshCw size={18} className="animate-spin text-orange-500" />
+                <p className="text-xs text-gray-600">
+                  {generatingConcept ? 'Criando conceito...' : 'Gerando arte...'}
+                </p>
               </div>
             )}
           </div>
           <p className="text-xs text-gray-400 mt-1.5">
-            Arte 1080×1080 gerada com o branding das configurações — pronta para Instagram
+            Arte 1080×1080 • Diretor de Arte IA + branding da arena • Pronta para Instagram
           </p>
         </div>
+
+        {/* ── Instagram Caption (shown when AI concept is ready) ── */}
+        {concept && (
+          <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm">📸</span>
+                <p className="text-sm font-semibold text-gray-800">Legenda para Instagram</p>
+              </div>
+              <button
+                type="button"
+                onClick={copyCaption}
+                className="flex items-center gap-1.5 text-xs font-medium text-orange-600 hover:text-orange-700 bg-white border border-orange-200 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {captionCopied ? <Check size={12} /> : <Copy size={12} />}
+                {captionCopied ? 'Copiado!' : 'Copiar tudo'}
+              </button>
+            </div>
+
+            {/* Caption text */}
+            <div className="bg-white rounded-lg border border-gray-100 p-3 max-h-40 overflow-y-auto">
+              <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                {concept.instagramCaption}
+              </p>
+            </div>
+
+            {/* Hashtags */}
+            {concept.hashtags?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {concept.hashtags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs bg-white border border-orange-200 text-orange-600 px-2 py-0.5 rounded-full font-medium"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <Input label="Nome" error={errors.name?.message} {...register('name')} />
         <Input label="Esporte" placeholder="ex: Beach Tennis, Futebol" error={errors.sport?.message} {...register('sport')} />

@@ -6,6 +6,10 @@ interface TournamentImageData {
   maxTeams: number
   matchType: string
   prizeInfo?: string
+  // AI-generated enhancements (optional)
+  headline?: string
+  subtitle?: string
+  accentColor?: string
 }
 
 interface BrandingData {
@@ -24,6 +28,11 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 function darkenHex(hex: string, amount: number): string {
   const { r, g, b } = hexToRgb(hex)
   return `rgb(${Math.max(0, r - amount)}, ${Math.max(0, g - amount)}, ${Math.max(0, b - amount)})`
+}
+
+function toRgba(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -74,12 +83,15 @@ export function generateTournamentImage(data: TournamentImageData, branding: Bra
     const ctx: CanvasRenderingContext2D = rawCtx
 
     const color = branding.primaryColor || '#f97316'
+    const accent = data.accentColor || '#ffffff'
+    const hasAI = !!(data.headline)
 
     function drawCanvas(logoImg?: HTMLImageElement) {
-      // Background gradient
+      // ── Background ──────────────────────────────────────────────────────
       const grad = ctx.createLinearGradient(0, 0, SIZE, SIZE)
       grad.addColorStop(0, color)
-      grad.addColorStop(1, darkenHex(color, 80))
+      grad.addColorStop(0.6, darkenHex(color, 55))
+      grad.addColorStop(1, darkenHex(color, 95))
       ctx.fillStyle = grad
       ctx.fillRect(0, 0, SIZE, SIZE)
 
@@ -87,92 +99,165 @@ export function generateTournamentImage(data: TournamentImageData, branding: Bra
       ctx.save()
       ctx.globalAlpha = 0.1
       ctx.fillStyle = '#ffffff'
-      ctx.beginPath(); ctx.arc(-60, -60, 380, 0, Math.PI * 2); ctx.fill()
-      ctx.beginPath(); ctx.arc(SIZE + 60, SIZE + 60, 320, 0, Math.PI * 2); ctx.fill()
-      ctx.beginPath(); ctx.arc(SIZE * 0.88, SIZE * 0.14, 200, 0, Math.PI * 2); ctx.fill()
-      ctx.beginPath(); ctx.arc(SIZE * 0.08, SIZE * 0.72, 130, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(-80, -80, 420, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(SIZE + 80, SIZE + 80, 340, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(SIZE * 0.88, SIZE * 0.12, 220, 0, Math.PI * 2); ctx.fill()
+      ctx.beginPath(); ctx.arc(SIZE * 0.06, SIZE * 0.7, 150, 0, Math.PI * 2); ctx.fill()
       ctx.restore()
 
-      // Bottom dark overlay for readability
-      const overlayGrad = ctx.createLinearGradient(0, SIZE * 0.55, 0, SIZE)
+      // AI accent diagonal stripe (only when AI data is available)
+      if (hasAI) {
+        ctx.save()
+        ctx.globalAlpha = 0.07
+        ctx.fillStyle = accent
+        ctx.beginPath()
+        ctx.moveTo(SIZE * 0.6, 0)
+        ctx.lineTo(SIZE, 0)
+        ctx.lineTo(SIZE * 0.3, SIZE)
+        ctx.lineTo(0, SIZE)
+        ctx.closePath()
+        ctx.fill()
+        ctx.restore()
+      }
+
+      // Bottom dark overlay
+      const overlayGrad = ctx.createLinearGradient(0, SIZE * 0.5, 0, SIZE)
       overlayGrad.addColorStop(0, 'rgba(0,0,0,0)')
-      overlayGrad.addColorStop(1, 'rgba(0,0,0,0.5)')
+      overlayGrad.addColorStop(1, 'rgba(0,0,0,0.6)')
       ctx.fillStyle = overlayGrad
       ctx.fillRect(0, 0, SIZE, SIZE)
 
-      let y = 80
+      let y = 76
 
-      // Logo or company name pill at top
+      // ── Logo / Company Name ──────────────────────────────────────────────
       if (logoImg) {
-        const logoSize = 120
+        const logoSize = 108
         ctx.save()
         ctx.fillStyle = 'rgba(255,255,255,0.92)'
         ctx.beginPath()
-        ctx.arc(SIZE / 2, y + logoSize / 2, logoSize / 2 + 18, 0, Math.PI * 2)
+        ctx.arc(SIZE / 2, y + logoSize / 2, logoSize / 2 + 16, 0, Math.PI * 2)
         ctx.fill()
         ctx.restore()
         ctx.drawImage(logoImg, SIZE / 2 - logoSize / 2, y, logoSize, logoSize)
-        y += logoSize + 48
+        y += logoSize + 44
       } else {
-        const name = (branding.companyName || 'ArenaHub').toUpperCase()
-        ctx.font = 'bold 30px Arial, sans-serif'
-        const pillW = ctx.measureText(name).width + 52
+        const compName = (branding.companyName || 'ArenaHub').toUpperCase()
+        ctx.font = 'bold 28px Arial, sans-serif'
+        const pillW = ctx.measureText(compName).width + 52
         ctx.save()
-        ctx.fillStyle = 'rgba(255,255,255,0.18)'
-        roundRectPath(ctx, SIZE / 2 - pillW / 2, y, pillW, 52, 26)
+        ctx.fillStyle = 'rgba(255,255,255,0.15)'
+        roundRectPath(ctx, SIZE / 2 - pillW / 2, y, pillW, 50, 25)
         ctx.fill()
         ctx.fillStyle = '#ffffff'
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText(name, SIZE / 2, y + 26)
+        ctx.fillText(compName, SIZE / 2, y + 25)
         ctx.restore()
-        y += 80
+        y += 74
       }
 
-      // Trophy
-      ctx.font = '74px Arial, sans-serif'
+      // ── Trophy ──────────────────────────────────────────────────────────
+      ctx.font = '70px Arial, sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'alphabetic'
       ctx.fillStyle = 'rgba(255,255,255,0.95)'
-      ctx.fillText('🏆', SIZE / 2, y + 68)
-      y += 90
+      ctx.fillText('🏆', SIZE / 2, y + 64)
+      y += 84
 
-      // "TORNEIO" spaced label
-      ctx.font = 'bold 28px Arial, sans-serif'
-      ctx.fillStyle = 'rgba(255,255,255,0.6)'
-      ctx.textAlign = 'center'
-      ctx.fillText('T  O  R  N  E  I  O', SIZE / 2, y)
-      y += 52
+      if (hasAI) {
+        // ── AI MODE: Headline + name as subtitle ──────────────────────────
 
-      // Tournament name — dynamic font size
-      const nameUpper = data.name.toUpperCase()
-      ctx.font = 'bold 88px Arial, sans-serif'
-      const nameLines = wrapText(ctx, nameUpper, SIZE - 100)
-      const nameFontSize = nameLines.length > 2 ? 62 : 86
-      ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
-      const nameLineH = nameFontSize + 16
-      ctx.fillStyle = '#ffffff'
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'alphabetic'
-      nameLines.forEach((line, i) => ctx.fillText(line, SIZE / 2, y + i * nameLineH))
-      y += nameLines.length * nameLineH + 36
+        // "TORNEIO" label
+        ctx.font = 'bold 24px Arial, sans-serif'
+        ctx.fillStyle = toRgba(accent, 0.85)
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'alphabetic'
+        ctx.fillText('T  O  R  N  E  I  O', SIZE / 2, y)
+        y += 46
 
-      // Sport badge
+        // AI Headline — main impactful text
+        const headlineUpper = (data.headline || data.name).toUpperCase()
+        ctx.font = 'bold 88px Arial, sans-serif'
+        const headlineLines = wrapText(ctx, headlineUpper, SIZE - 80)
+        const headlineFontSize = headlineLines.length > 2 ? 66 : 88
+        ctx.font = `bold ${headlineFontSize}px Arial, sans-serif`
+        const headlineLineH = headlineFontSize + 14
+
+        // Text shadow for depth
+        ctx.save()
+        ctx.shadowColor = 'rgba(0,0,0,0.4)'
+        ctx.shadowBlur = 12
+        ctx.shadowOffsetY = 4
+        ctx.fillStyle = '#ffffff'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'alphabetic'
+        headlineLines.forEach((line, i) => ctx.fillText(line, SIZE / 2, y + i * headlineLineH))
+        ctx.restore()
+        y += headlineLines.length * headlineLineH + 16
+
+        // Tournament name as subtitle (smaller, accent color)
+        ctx.font = `italic 30px Arial, sans-serif`
+        ctx.fillStyle = toRgba(accent, 0.9)
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'alphabetic'
+        const nameLines = wrapText(ctx, data.name, SIZE - 160)
+        nameLines.forEach((line, i) => ctx.fillText(line, SIZE / 2, y + i * 38))
+        y += nameLines.length * 38 + 30
+
+        // AI Subtitle
+        if (data.subtitle) {
+          ctx.font = '26px Arial, sans-serif'
+          ctx.fillStyle = 'rgba(255,255,255,0.75)'
+          ctx.textAlign = 'center'
+          const subLines = wrapText(ctx, data.subtitle, SIZE - 120)
+          subLines.slice(0, 2).forEach((line, i) => ctx.fillText(line, SIZE / 2, y + i * 34))
+          y += Math.min(subLines.length, 2) * 34 + 22
+        }
+      } else {
+        // ── BASIC MODE: Tournament name as main text ──────────────────────
+
+        ctx.font = 'bold 26px Arial, sans-serif'
+        ctx.fillStyle = 'rgba(255,255,255,0.6)'
+        ctx.textAlign = 'center'
+        ctx.fillText('T  O  R  N  E  I  O', SIZE / 2, y)
+        y += 50
+
+        const nameUpper = data.name.toUpperCase()
+        ctx.font = 'bold 88px Arial, sans-serif'
+        const nameLines = wrapText(ctx, nameUpper, SIZE - 100)
+        const nameFontSize = nameLines.length > 2 ? 62 : 86
+        ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
+        const nameLineH = nameFontSize + 16
+        ctx.fillStyle = '#ffffff'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'alphabetic'
+        nameLines.forEach((line, i) => ctx.fillText(line, SIZE / 2, y + i * nameLineH))
+        y += nameLines.length * nameLineH + 36
+      }
+
+      // ── Sport badge ──────────────────────────────────────────────────────
       const sportText = data.sport.toUpperCase()
       ctx.font = 'bold 30px Arial, sans-serif'
-      const sportPillW = ctx.measureText(sportText).width + 56
+      const sportPillW = ctx.measureText(sportText).width + 60
       ctx.save()
-      ctx.fillStyle = 'rgba(255,255,255,0.22)'
-      roundRectPath(ctx, SIZE / 2 - sportPillW / 2, y, sportPillW, 56, 28)
+      // Use accent color for badge when AI-enhanced
+      ctx.fillStyle = hasAI ? toRgba(accent, 0.25) : 'rgba(255,255,255,0.2)'
+      roundRectPath(ctx, SIZE / 2 - sportPillW / 2, y, sportPillW, 58, 29)
       ctx.fill()
-      ctx.fillStyle = '#ffffff'
+      if (hasAI) {
+        ctx.strokeStyle = toRgba(accent, 0.6)
+        ctx.lineWidth = 2
+        roundRectPath(ctx, SIZE / 2 - sportPillW / 2, y, sportPillW, 58, 29)
+        ctx.stroke()
+      }
+      ctx.fillStyle = hasAI ? accent : '#ffffff'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(sportText, SIZE / 2, y + 28)
+      ctx.fillText(sportText, SIZE / 2, y + 29)
       ctx.restore()
-      y += 78
+      y += 80
 
-      // Dates
+      // ── Dates ────────────────────────────────────────────────────────────
       ctx.textBaseline = 'alphabetic'
       ctx.font = '34px Arial, sans-serif'
       ctx.fillStyle = 'rgba(255,255,255,0.9)'
@@ -183,16 +268,16 @@ export function generateTournamentImage(data: TournamentImageData, branding: Bra
       ctx.fillText(`📅  ${datesStr}`, SIZE / 2, y)
       y += 50
 
-      // Match type + vacancies
+      // ── Match type + vacancies ───────────────────────────────────────────
       const matchLabel = data.matchType === 'INDIVIDUAL' ? 'Individual'
         : data.matchType === 'DOUBLES' ? 'Duplas' : 'Equipes'
       ctx.font = '28px Arial, sans-serif'
       ctx.fillStyle = 'rgba(255,255,255,0.7)'
       ctx.textAlign = 'center'
       ctx.fillText(`${matchLabel}  ·  ${data.maxTeams} vagas`, SIZE / 2, y)
-      y += 48
+      y += 50
 
-      // Prize (optional)
+      // ── Prize ────────────────────────────────────────────────────────────
       if (data.prizeInfo) {
         const prize = data.prizeInfo.length > 55 ? data.prizeInfo.slice(0, 55) + '...' : data.prizeInfo
         ctx.font = 'bold 28px Arial, sans-serif'
@@ -201,17 +286,17 @@ export function generateTournamentImage(data: TournamentImageData, branding: Bra
         ctx.fillText(`🏅  ${prize}`, SIZE / 2, y)
       }
 
-      // Footer bar
+      // ── Footer ───────────────────────────────────────────────────────────
       ctx.save()
-      ctx.fillStyle = 'rgba(0,0,0,0.28)'
-      ctx.fillRect(0, SIZE - 86, SIZE, 86)
+      ctx.fillStyle = 'rgba(0,0,0,0.3)'
+      ctx.fillRect(0, SIZE - 88, SIZE, 88)
       ctx.restore()
 
       ctx.font = 'bold 28px Arial, sans-serif'
-      ctx.fillStyle = 'rgba(255,255,255,0.82)'
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(branding.companyName || 'ArenaHub', SIZE / 2, SIZE - 43)
+      ctx.fillText(branding.companyName || 'ArenaHub', SIZE / 2, SIZE - 44)
 
       resolve(canvas.toDataURL('image/jpeg', 0.92))
     }
