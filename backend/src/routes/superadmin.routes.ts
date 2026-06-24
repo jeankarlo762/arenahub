@@ -124,7 +124,9 @@ export async function superAdminRoutes(app: FastifyInstance) {
       prisma.paymentFee.deleteMany({ where: { tenantId } }),
       prisma.client.deleteMany({ where: { tenantId } }),
       prisma.player.deleteMany({ where: { tenantId } }),
+      prisma.auditLog.deleteMany({ where: { tenantId } }),
       prisma.user.deleteMany({ where: { tenantId } }),
+      prisma.tenantBranding.deleteMany({ where: { tenantId } }),
       prisma.tenant.delete({ where: { id: tenantId } }),
     ])
     return reply.status(204).send()

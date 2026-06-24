@@ -244,7 +244,7 @@ export default function TenantsPage() {
       action={<Button onClick={() => setOpenModal(true)}><Plus size={16} />Novo Tenant</Button>}
     >
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
         {[
           { label: 'Total de Tenants', value: total,    icon: Building2,    color: 'text-blue-600 bg-blue-50' },
           { label: 'Tenants Ativos',   value: active,   icon: CheckCircle,  color: 'text-green-600 bg-green-50' },
@@ -546,7 +546,7 @@ function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle, onDelete }: T
         </span>
       </div>
 
-      <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-500">
         <span className="inline-flex items-center gap-1"><Users size={12} /> {tenant._count?.users ?? 0} usuário(s)</span>
         <span className="font-medium text-green-600">{formatCurrency(tenant.mrrValue)}/mês</span>
         <span>{new Date(tenant.createdAt).toLocaleDateString('pt-BR')}</span>
@@ -562,7 +562,7 @@ function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle, onDelete }: T
         </span>
       </div>
 
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+      <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onEdit}
           className="text-xs font-medium px-3 py-1.5 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors inline-flex items-center gap-1"
@@ -587,7 +587,7 @@ function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle, onDelete }: T
             <Trash2 size={12} />Excluir
           </button>
         )}
-        <span className="ml-auto text-xs text-orange-500 font-medium">Ver usuários →</span>
+        <span className="ml-auto text-xs text-orange-500 font-medium whitespace-nowrap">Ver usuários →</span>
       </div>
     </div>
   )
