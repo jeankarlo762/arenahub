@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Building2, CheckCircle, XCircle, Plus, Search, Pencil, Users, Shield, User as UserIcon, Mail } from 'lucide-react'
+import { Building2, CheckCircle, XCircle, Plus, Search, Pencil, Users, Shield, User as UserIcon, Mail, Trash2 } from 'lucide-react'
 import * as superAdminApi from '../../api/superadmin.api'
 import type { Tenant, TenantUser } from '../../types/tenant'
 import { Spinner } from '../../components/ui/Spinner'
@@ -191,6 +191,19 @@ export default function TenantsPage() {
     }
   }
 
+  async function handleDelete(tenant: Tenant) {
+    setActionId(tenant.id)
+    try {
+      await superAdminApi.deleteTenant(tenant.id)
+      toast.success(`${tenant.name} excluída permanentemente`)
+      load()
+    } catch {
+      toast.error('Erro ao excluir tenant')
+    } finally {
+      setActionId(null)
+    }
+  }
+
   async function handleToggle(tenant: Tenant) {
     setActionId(tenant.id)
     try {
@@ -301,7 +314,7 @@ export default function TenantsPage() {
                 ? <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena inativa</p>
                 : inactiveTenants.map((tenant) => (
                     <TenantCard key={tenant.id} tenant={tenant} busy={actionId === tenant.id}
-                      onOpenUsers={() => openUsers(tenant)} onEdit={() => openEdit(tenant)} onToggle={() => handleToggle(tenant)} />
+                      onOpenUsers={() => openUsers(tenant)} onEdit={() => openEdit(tenant)} onToggle={() => handleToggle(tenant)} onDelete={() => handleDelete(tenant)} />
                   ))
               }
             </div>
@@ -478,9 +491,11 @@ interface TenantCardProps {
   onOpenUsers: () => void
   onEdit: () => void
   onToggle: () => void
+  onDelete?: () => void
 }
 
-function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle }: TenantCardProps) {
+function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle, onDelete }: TenantCardProps) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const modules = parseModulesConfig(tenant.modulesConfig)
   const adminCount    = modules.admin.length
   const operatorCount = modules.operator.length
@@ -491,8 +506,35 @@ function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle }: TenantCardP
       tabIndex={0}
       onClick={onOpenUsers}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenUsers() } }}
-      className="text-left bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-200"
+      className="relative text-left bg-white rounded-xl border border-gray-200 p-4 hover:border-orange-300 hover:shadow-sm transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-200"
     >
+      {/* Confirm delete overlay */}
+      {confirmDelete && (
+        <div
+          className="absolute inset-0 z-10 bg-white/95 rounded-xl flex flex-col items-center justify-center gap-3 px-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Trash2 size={20} className="text-red-500" />
+          <p className="text-sm font-semibold text-gray-800 text-center">Excluir "{tenant.name}"?</p>
+          <p className="text-xs text-gray-400 text-center">Todos os dados da arena serão removidos permanentemente.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirmDelete(false)}
+              className="text-xs font-medium px-4 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => { setConfirmDelete(false); onDelete?.() }}
+              disabled={busy}
+              className="text-xs font-medium px-4 py-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+            >
+              {busy ? <Spinner size="sm" /> : <><Trash2 size={12} />Confirmar exclusão</>}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 truncate">{tenant.name}</p>
@@ -536,6 +578,15 @@ function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle }: TenantCardP
         >
           {busy ? <Spinner size="sm" /> : tenant.active ? 'Desativar' : 'Ativar'}
         </button>
+        {onDelete && (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            disabled={busy}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg text-red-500 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+          >
+            <Trash2 size={12} />Excluir
+          </button>
+        )}
         <span className="ml-auto text-xs text-orange-500 font-medium">Ver usuários →</span>
       </div>
     </div>
