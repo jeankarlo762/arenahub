@@ -36,6 +36,8 @@ export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBac
   })
 
   const [conflictOrder, setConflictOrder] = useState<BarOrder | null>(null)
+  // For grid-click (presetNumber): closed order found silently — reopen on submit, no dialog
+  const [silentConflict, setSilentConflict] = useState<BarOrder | null>(null)
   const [checkingNumber, setCheckingNumber] = useState(false)
   const [reopening, setReopening] = useState(false)
 
@@ -47,6 +49,17 @@ export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBac
         ? { number: order.number, customerName: order.customerName, notes: order.notes ?? '' }
         : { number: presetNumber, customerName: '', notes: '' })
       setConflictOrder(null)
+      setSilentConflict(null)
+      // For preset numbers from the grid, detect closed order silently
+      if (!order && presetNumber) {
+        barApi.getOrderByNumber(presetNumber)
+          .then((existing) => {
+            if (existing && (existing.status === 'CLOSED' || existing.status === 'CANCELLED')) {
+              setSilentConflict(existing)
+            }
+          })
+          .catch(() => {})
+      }
     }
   }, [open, order, presetNumber, reset])
 
@@ -54,6 +67,8 @@ export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBac
     if (isEdit) return
     const num = Number(getValues('number'))
     if (!num || num <= 0) return
+    // Preset number: conflict handled silently on submit, skip the dialog
+    if (num === presetNumber) return
     setCheckingNumber(true)
     try {
       const existing = await barApi.getOrderByNumber(num)
@@ -85,6 +100,10 @@ export function OrderForm({ open, onClose, onSuccess, order, presetNumber, onBac
       if (isEdit) {
         result = await barApi.updateOrder(order.id, { customerName: data.customerName, notes: data.notes })
         toast.success('Comanda atualizada')
+      } else if (silentConflict) {
+        // Grid-click on a number in history: reopen empty with new customer, no dialog
+        result = await barApi.reopenOrder(silentConflict.id, true, data.customerName)
+        toast.success(`Comanda #${result.number} aberta`)
       } else {
         result = await barApi.createOrder({ number: data.number, customerName: data.customerName, notes: data.notes })
         toast.success(`Comanda #${result.number} aberta`)

@@ -181,16 +181,16 @@ export default function BarPage() {
       <div className="flex flex-col gap-6">
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex gap-2">
+          <div className="flex gap-1 border-b border-gray-200">
             <button
               onClick={() => setTab('products')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'products' ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'products' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               <Package size={15} /> Cardápio
             </button>
             <button
               onClick={() => setTab('stats')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === 'stats' ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'stats' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
             >
               <BarChart2 size={15} /> Relatório
             </button>

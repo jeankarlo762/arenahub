@@ -149,16 +149,18 @@ export default function AuditPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {['Data / Hora', 'Responsável', 'Ação', 'Onde', 'O que foi feito'].map((h) => (
-                      <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                    ))}
+                    <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Data / Hora</th>
+                    <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Responsável</th>
+                    <th className="text-left px-4 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Ação</th>
+                    <th className="hidden sm:table-cell text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">Onde</th>
+                    <th className="hidden md:table-cell text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">O que foi feito</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logs.map((log) => (
                     <tr key={log.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors align-top">
-                      <td className="px-5 py-3 text-sm text-gray-600 whitespace-nowrap">{fmtDateTime(log.createdAt)}</td>
-                      <td className="px-5 py-3">
+                      <td className="px-4 sm:px-5 py-3 text-xs sm:text-sm text-gray-600 whitespace-nowrap">{fmtDateTime(log.createdAt)}</td>
+                      <td className="px-4 sm:px-5 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                             {log.userRole === 'ADMIN' || log.userRole === 'SUPERADMIN'
@@ -167,20 +169,21 @@ export default function AuditPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{log.userName ?? 'Sistema'}</p>
-                            {log.userEmail && <p className="text-xs text-gray-400 truncate">{log.userEmail}</p>}
+                            {log.userEmail && <p className="text-xs text-gray-400 truncate hidden sm:block">{log.userEmail}</p>}
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3">
-                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${ACTION_STYLES[log.action] ?? 'bg-gray-100 text-gray-600'}`}>
+                      <td className="px-4 sm:px-5 py-3">
+                        <span className={`inline-flex px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium ${ACTION_STYLES[log.action] ?? 'bg-gray-100 text-gray-600'}`}>
                           {actionLabel(log.action)}
                         </span>
+                        <p className="sm:hidden text-xs text-gray-500 mt-0.5">{entityLabel(log.entity)}</p>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="hidden sm:table-cell px-5 py-3">
                         <span className="text-sm text-gray-700">{entityLabel(log.entity)}</span>
                         {log.entityId && <p className="text-[11px] text-gray-300 font-mono truncate max-w-[140px]">{log.entityId}</p>}
                       </td>
-                      <td className="px-5 py-3 text-sm text-gray-600">{log.summary ?? '—'}</td>
+                      <td className="hidden md:table-cell px-5 py-3 text-sm text-gray-600">{log.summary ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

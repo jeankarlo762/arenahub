@@ -16,6 +16,7 @@ export default function CourtsPage() {
   const [search, setSearch] = useState('')
   const [bookingFormOpen, setBookingFormOpen] = useState(false)
   const [bookingPreSelect, setBookingPreSelect] = useState<{ courtId: string; date: string; startTime: string } | undefined>()
+  const [slotsRefreshKey, setSlotsRefreshKey] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -80,7 +81,7 @@ export default function CourtsPage() {
                 </div>
 
                 <CourtOccupancyBanner courtId={court.id} />
-                <CourtSlotsPanel court={court} onBookSlot={handleBookSlot} />
+                <CourtSlotsPanel court={court} onBookSlot={handleBookSlot} refreshKey={slotsRefreshKey} />
               </div>
             ))}
           </div>
@@ -89,8 +90,8 @@ export default function CourtsPage() {
 
       <BookingForm
         open={bookingFormOpen}
-        onClose={() => setBookingFormOpen(false)}
-        onSuccess={() => { setBookingFormOpen(false); load() }}
+        onClose={() => { setBookingFormOpen(false); setSlotsRefreshKey((k) => k + 1) }}
+        onSuccess={() => { setBookingFormOpen(false); setSlotsRefreshKey((k) => k + 1) }}
         courts={courts}
         preSelect={bookingPreSelect}
       />

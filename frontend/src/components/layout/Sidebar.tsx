@@ -92,7 +92,7 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className="flex-1 py-4 flex flex-col gap-0.5 overflow-hidden">
+        <nav className="flex-1 py-4 flex flex-col gap-0.5 overflow-y-auto [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
           {/* Dashboard — sempre visível */}
           <NavLink
             to="/"

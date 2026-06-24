@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import {
   CalendarDays, MapPin, Trophy, AlertTriangle, ReceiptText,
-  Crown, DollarSign, RefreshCw, Clock, TrendingUp, TrendingDown,
+  Crown, DollarSign, Clock, TrendingUp, TrendingDown,
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import * as bookingsApi from '../../api/bookings.api'
@@ -69,20 +69,12 @@ function MoMBadge({ current, previous }: { current: number; previous: number }) 
   )
 }
 
-function RefreshBar({ loading, lastUpdated, onRefresh }: { loading: boolean; lastUpdated: Date | null; onRefresh: () => void }) {
+function RefreshBar({ loading, lastUpdated }: { loading: boolean; lastUpdated: Date | null }) {
   return (
     <div className="flex items-center justify-end gap-2 text-xs text-gray-400">
       {lastUpdated && !loading && (
         <span>Atualizado às {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
       )}
-      <button
-        onClick={onRefresh}
-        disabled={loading}
-        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
-        title="Atualizar dados"
-      >
-        <RefreshCw size={14} className={`text-gray-400 ${loading ? 'animate-spin' : ''}`} />
-      </button>
     </div>
   )
 }
@@ -142,7 +134,7 @@ function OperatorDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <RefreshBar loading={loading} lastUpdated={lastUpdated} onRefresh={load} />
+      <RefreshBar loading={loading} lastUpdated={lastUpdated} />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {loading
@@ -256,7 +248,7 @@ function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <RefreshBar loading={loading} lastUpdated={lastUpdated} onRefresh={load} />
+      <RefreshBar loading={loading} lastUpdated={lastUpdated} />
 
       {/* Alerts strip */}
       {!loading && openOrders.length > 0 && (

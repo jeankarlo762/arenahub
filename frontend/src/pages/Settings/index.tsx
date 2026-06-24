@@ -26,15 +26,15 @@ export default function SettingsPage() {
   return (
     <Layout title="Configurações">
       <div className="flex flex-col gap-6">
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-1 border-b border-gray-200">
           {visibleTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setActiveTab(t.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 activeTab === t.key
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'border-orange-500 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
               <t.icon size={14} /> {t.label}

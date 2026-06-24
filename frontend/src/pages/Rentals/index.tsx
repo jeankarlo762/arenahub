@@ -187,10 +187,10 @@ export default function RentalsPage() {
                   <div
                     key={r.id}
                     onClick={() => setDetailRental(r)}
-                    className={`bg-white rounded-xl border px-5 py-3.5 cursor-pointer hover:border-orange-300 hover:shadow-sm transition-all ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}
+                    className={`bg-white rounded-xl border px-4 sm:px-5 py-3.5 cursor-pointer hover:border-orange-300 hover:shadow-sm transition-all ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}
                   >
-                    <div className="flex items-center gap-6">
-
+                    {/* ── Desktop layout (sm+) ── */}
+                    <div className="hidden sm:flex items-center gap-6">
                       {/* Col 1 — Cliente + Quadra */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -203,7 +203,6 @@ export default function RentalsPage() {
                         </div>
                         {r.notes && <p className="text-xs text-gray-400 mt-0.5 truncate">{r.notes}</p>}
                       </div>
-
                       {/* Col 2 — Dias */}
                       <div className="shrink-0">
                         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Dias</p>
@@ -213,7 +212,6 @@ export default function RentalsPage() {
                           ))}
                         </div>
                       </div>
-
                       {/* Col 3 — Horários */}
                       <div className="shrink-0 min-w-[130px]">
                         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Horários</p>
@@ -226,7 +224,6 @@ export default function RentalsPage() {
                           ))}
                         </div>
                       </div>
-
                       {/* Col 4 — Valor / Expiração */}
                       <div className="shrink-0 min-w-[130px]">
                         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Valor total</p>
@@ -239,7 +236,6 @@ export default function RentalsPage() {
                           {exp.text}
                         </span>
                       </div>
-
                       {/* Col 5 — Ações */}
                       <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                         <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={r.active ? 'Desativar' : 'Ativar'}>
@@ -253,7 +249,62 @@ export default function RentalsPage() {
                         </button>
                         <ChevronRight size={15} className="text-gray-300 ml-1" />
                       </div>
+                    </div>
 
+                    {/* ── Mobile layout (< sm) ── */}
+                    <div className="sm:hidden flex flex-col gap-2.5">
+                      {/* Linha 1 — Nome + badge + ações */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-gray-900">{r.clientName}</p>
+                            <Badge label={r.active ? 'Ativo' : 'Inativo'} status={r.active ? 'active' : 'inactive'} />
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                            <MapPin size={11} className="shrink-0" />
+                            <span className="truncate">{r.court?.name ?? 'Sem quadra definida'}</span>
+                          </div>
+                          {r.notes && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{r.notes}</p>}
+                        </div>
+                        <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                          <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={r.active ? 'Desativar' : 'Ativar'}>
+                            {r.active ? <PowerOff size={14} /> : <Power size={14} />}
+                          </button>
+                          <button onClick={() => { setSelected(r); setFormOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors">
+                            <Pencil size={14} />
+                          </button>
+                          <button onClick={() => { setSelected(r); setDeleteOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Linha 2 — Dias */}
+                      <div className="flex gap-1 flex-wrap">
+                        {r.weekdays.map(d => (
+                          <span key={d} className="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-md">{WEEKDAY_LABELS[d]}</span>
+                        ))}
+                      </div>
+                      {/* Linha 3 — Horários + valor */}
+                      <div className="flex items-end justify-between gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          {r.slots.map((s, i) => (
+                            <div key={i} className="flex items-center gap-1.5 text-xs">
+                              <span className="font-medium text-gray-700">{s.startTime}–{s.endTime}</span>
+                              {s.price > 0 && <span className="text-green-700 font-semibold">{formatCurrency(s.price)}</span>}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-right shrink-0">
+                          {total !== null ? (
+                            <p className="text-sm font-bold text-green-700">{formatCurrency(total)}</p>
+                          ) : (
+                            <p className="text-sm font-bold text-green-700">{formatCurrency(rentalMonthlyValue(r))}<span className="text-xs font-normal text-gray-400">/mês</span></p>
+                          )}
+                          <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${toneClass}`}>
+                            {exp.text}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )})}

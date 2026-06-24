@@ -125,21 +125,19 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
       .filter((s): s is AvailabilitySlot => !!s)
 
     try {
-      await Promise.all(
-        slotsToBook.map((slot) =>
-          bookingsApi.createBooking({
-            courtId: data.courtId,
-            customerName: data.customerName,
-            customerPhone: data.customerPhone || '',
-            customerEmail: data.customerEmail || undefined,
-            date: data.date,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            totalPrice: pricePerSlot,
-            notes: data.notes,
-          }),
-        ),
-      )
+      for (const slot of slotsToBook) {
+        await bookingsApi.createBooking({
+          courtId: data.courtId,
+          customerName: data.customerName,
+          customerPhone: data.customerPhone || '',
+          customerEmail: data.customerEmail || undefined,
+          date: data.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          totalPrice: pricePerSlot,
+          notes: data.notes,
+        })
+      }
       toast.success(
         selectedTimes.length > 1
           ? `${selectedTimes.length} agendamentos criados`
