@@ -11,7 +11,82 @@ import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { formatCurrency } from '../../utils/format'
 import { SuperAdminLayout } from './SuperAdminLayout'
+import { ALL_MODULES, DEFAULT_MODULES_CONFIG, parseModulesConfig, type ModulesConfig } from '../../config/modules'
 
+// ── Module picker ─────────────────────────────────────────────────────────────
+interface ModulePickerProps {
+  value: ModulesConfig
+  onChange: (v: ModulesConfig) => void
+}
+
+function ModulePicker({ value, onChange }: ModulePickerProps) {
+  function toggleAdmin(key: string, checked: boolean) {
+    const newAdmin = checked
+      ? [...new Set([...value.admin, key])]
+      : value.admin.filter((k) => k !== key)
+    // If admin loses a module, operator also loses it
+    const newOperator = checked
+      ? value.operator
+      : value.operator.filter((k) => k !== key)
+    onChange({ admin: newAdmin, operator: newOperator })
+  }
+
+  function toggleOperator(key: string, checked: boolean) {
+    const newOp = checked
+      ? [...new Set([...value.operator, key])]
+      : value.operator.filter((k) => k !== key)
+    onChange({ ...value, operator: newOp })
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Módulos disponíveis</p>
+      <div className="border border-gray-200 rounded-xl overflow-hidden">
+        {/* Header */}
+        <div className="grid grid-cols-[1fr_90px_90px] bg-gray-50 border-b border-gray-200 px-4 py-2">
+          <p className="text-xs font-semibold text-gray-500">Sessão</p>
+          <p className="text-xs font-semibold text-gray-500 text-center">Admin</p>
+          <p className="text-xs font-semibold text-gray-500 text-center">Operador</p>
+        </div>
+        {/* Rows */}
+        {ALL_MODULES.map((mod) => {
+          const adminEnabled = value.admin.includes(mod.key)
+          const opEnabled   = value.operator.includes(mod.key)
+          return (
+            <div
+              key={mod.key}
+              className="grid grid-cols-[1fr_90px_90px] items-center px-4 py-2.5 border-b last:border-0 border-gray-100 hover:bg-gray-50/60 transition-colors"
+            >
+              <p className="text-sm text-gray-700">{mod.label}</p>
+              <div className="flex justify-center">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-orange-500 cursor-pointer"
+                  checked={adminEnabled}
+                  onChange={(e) => toggleAdmin(mod.key, e.target.checked)}
+                />
+              </div>
+              <div className="flex justify-center">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-orange-500 cursor-pointer disabled:opacity-40"
+                  checked={opEnabled}
+                  disabled={!adminEnabled}
+                  onChange={(e) => toggleOperator(mod.key, e.target.checked)}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <p className="text-xs text-gray-400 mt-1.5">
+        O operador só pode ter acesso a módulos também habilitados para o admin.
+      </p>
+    </div>
+  )
+}
+
+// ── Zod schemas ───────────────────────────────────────────────────────────────
 const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   email: z.string().email('Email inválido'),
@@ -22,7 +97,6 @@ const schema = z.object({
   adminEmail: z.string().email('Email do admin inválido'),
   adminPassword: z.string().min(6, 'Mínimo 6 caracteres'),
 })
-
 type FormData = z.infer<typeof schema>
 
 const editSchema = z.object({
@@ -33,6 +107,7 @@ const editSchema = z.object({
 })
 type EditForm = z.infer<typeof editSchema>
 
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loading, setLoading] = useState(true)
@@ -40,6 +115,11 @@ export default function TenantsPage() {
   const [editTenant, setEditTenant] = useState<Tenant | null>(null)
   const [actionId, setActionId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  // Modules state for create form
+  const [createModules, setCreateModules] = useState<ModulesConfig>(DEFAULT_MODULES_CONFIG)
+  // Modules state for edit form
+  const [editModules, setEditModules] = useState<ModulesConfig>(DEFAULT_MODULES_CONFIG)
 
   // Users popup (per tenant)
   const [usersTenant, setUsersTenant] = useState<Tenant | null>(null)
@@ -55,13 +135,17 @@ export default function TenantsPage() {
 
   function openEdit(tenant: Tenant) {
     setEditTenant(tenant)
+    setEditModules(parseModulesConfig(tenant.modulesConfig))
     editForm.reset({ name: tenant.name, phone: tenant.phone ?? '', mrrValue: tenant.mrrValue, setupFee: tenant.setupFee })
   }
 
   async function onEdit(data: EditForm) {
     if (!editTenant) return
     try {
-      await superAdminApi.updateTenant(editTenant.id, data)
+      await superAdminApi.updateTenant(editTenant.id, {
+        ...data,
+        modulesConfig: JSON.stringify(editModules),
+      })
       toast.success('Tenant atualizado')
       setEditTenant(null)
       load()
@@ -90,9 +174,13 @@ export default function TenantsPage() {
 
   async function onSubmit(data: FormData) {
     try {
-      await superAdminApi.createTenant(data)
+      await superAdminApi.createTenant({
+        ...data,
+        modulesConfig: JSON.stringify(createModules),
+      })
       toast.success('Tenant criado — login do admin já está ativo')
       setOpenModal(false)
+      setCreateModules(DEFAULT_MODULES_CONFIG)
       reset()
       load()
     } catch (err: unknown) {
@@ -133,7 +221,7 @@ export default function TenantsPage() {
   const active = tenants.filter((t) => t.active).length
   const inactive = total - active
 
-  const activeTenants = useMemo(() => filtered.filter((t) => t.active), [filtered])
+  const activeTenants   = useMemo(() => filtered.filter((t) => t.active), [filtered])
   const inactiveTenants = useMemo(() => filtered.filter((t) => !t.active), [filtered])
 
   return (
@@ -145,9 +233,9 @@ export default function TenantsPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
-          { label: 'Total de Tenants', value: total, icon: Building2, color: 'text-blue-600 bg-blue-50' },
-          { label: 'Tenants Ativos', value: active, icon: CheckCircle, color: 'text-green-600 bg-green-50' },
-          { label: 'Tenants Inativos', value: inactive, icon: XCircle, color: 'text-red-500 bg-red-50' },
+          { label: 'Total de Tenants', value: total,    icon: Building2,    color: 'text-blue-600 bg-blue-50' },
+          { label: 'Tenants Ativos',   value: active,   icon: CheckCircle,  color: 'text-green-600 bg-green-50' },
+          { label: 'Tenants Inativos', value: inactive, icon: XCircle,      color: 'text-red-500 bg-red-50' },
         ].map((stat) => (
           <div key={stat.label} className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-4">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
@@ -172,7 +260,6 @@ export default function TenantsPage() {
         />
       </div>
 
-      {/* Tenant columns: Ativos | Inativos */}
       {loading ? (
         <div className="flex items-center justify-center py-16 gap-3 bg-white rounded-xl border border-gray-200">
           <Spinner size="md" />
@@ -186,7 +273,6 @@ export default function TenantsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* Coluna: Ativos */}
           <section>
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle size={16} className="text-green-600" />
@@ -194,24 +280,16 @@ export default function TenantsPage() {
               <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{activeTenants.length}</span>
             </div>
             <div className="flex flex-col gap-3">
-              {activeTenants.length === 0 ? (
-                <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena ativa</p>
-              ) : (
-                activeTenants.map((tenant) => (
-                  <TenantCard
-                    key={tenant.id}
-                    tenant={tenant}
-                    busy={actionId === tenant.id}
-                    onOpenUsers={() => openUsers(tenant)}
-                    onEdit={() => openEdit(tenant)}
-                    onToggle={() => handleToggle(tenant)}
-                  />
-                ))
-              )}
+              {activeTenants.length === 0
+                ? <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena ativa</p>
+                : activeTenants.map((tenant) => (
+                    <TenantCard key={tenant.id} tenant={tenant} busy={actionId === tenant.id}
+                      onOpenUsers={() => openUsers(tenant)} onEdit={() => openEdit(tenant)} onToggle={() => handleToggle(tenant)} />
+                  ))
+              }
             </div>
           </section>
 
-          {/* Coluna: Inativos */}
           <section>
             <div className="flex items-center gap-2 mb-3">
               <XCircle size={16} className="text-red-500" />
@@ -219,39 +297,33 @@ export default function TenantsPage() {
               <span className="text-xs font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-full">{inactiveTenants.length}</span>
             </div>
             <div className="flex flex-col gap-3">
-              {inactiveTenants.length === 0 ? (
-                <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena inativa</p>
-              ) : (
-                inactiveTenants.map((tenant) => (
-                  <TenantCard
-                    key={tenant.id}
-                    tenant={tenant}
-                    busy={actionId === tenant.id}
-                    onOpenUsers={() => openUsers(tenant)}
-                    onEdit={() => openEdit(tenant)}
-                    onToggle={() => handleToggle(tenant)}
-                  />
-                ))
-              )}
+              {inactiveTenants.length === 0
+                ? <p className="text-sm text-gray-400 bg-white border border-gray-200 rounded-xl px-4 py-6 text-center">Nenhuma arena inativa</p>
+                : inactiveTenants.map((tenant) => (
+                    <TenantCard key={tenant.id} tenant={tenant} busy={actionId === tenant.id}
+                      onOpenUsers={() => openUsers(tenant)} onEdit={() => openEdit(tenant)} onToggle={() => handleToggle(tenant)} />
+                  ))
+              }
             </div>
           </section>
         </div>
       )}
 
-      {/* Create tenant modal */}
+      {/* ── Create modal ── */}
       <Modal
         open={openModal}
-        onClose={() => { setOpenModal(false); reset() }}
+        onClose={() => { setOpenModal(false); reset(); setCreateModules(DEFAULT_MODULES_CONFIG) }}
         title="Novo Tenant"
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setOpenModal(false); reset() }}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => { setOpenModal(false); reset(); setCreateModules(DEFAULT_MODULES_CONFIG) }}>Cancelar</Button>
             <Button onClick={handleSubmit(onSubmit)} loading={isSubmitting}>Criar Tenant</Button>
           </>
         }
       >
         <div className="flex flex-col gap-5">
+          {/* Arena data */}
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Dados da Arena</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -282,6 +354,12 @@ export default function TenantsPage() {
             </div>
           </div>
 
+          {/* Modules */}
+          <div className="border-t pt-4">
+            <ModulePicker value={createModules} onChange={setCreateModules} />
+          </div>
+
+          {/* Admin user */}
           <div className="border-t pt-4">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Admin da Arena</p>
             <p className="text-xs text-gray-400 mb-3">Este será o login de acesso da arena ao sistema</p>
@@ -306,12 +384,12 @@ export default function TenantsPage() {
         </div>
       </Modal>
 
-      {/* Edit tenant modal */}
+      {/* ── Edit modal ── */}
       <Modal
         open={!!editTenant}
         onClose={() => setEditTenant(null)}
         title={`Editar — ${editTenant?.name ?? ''}`}
-        size="md"
+        size="lg"
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditTenant(null)}>Cancelar</Button>
@@ -319,30 +397,36 @@ export default function TenantsPage() {
           </>
         }
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1 sm:col-span-2">
-            <label className="text-sm font-medium text-gray-700">Nome da Arena</label>
-            <input {...editForm.register('name')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
-            {editForm.formState.errors.name && <p className="text-xs text-red-500">{editForm.formState.errors.name.message}</p>}
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label className="text-sm font-medium text-gray-700">Nome da Arena</label>
+              <input {...editForm.register('name')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+              {editForm.formState.errors.name && <p className="text-xs text-red-500">{editForm.formState.errors.name.message}</p>}
+            </div>
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label className="text-sm font-medium text-gray-700">Telefone</label>
+              <input {...editForm.register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
+              <input {...editForm.register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+              {editForm.formState.errors.mrrValue && <p className="text-xs text-red-500">{editForm.formState.errors.mrrValue.message}</p>}
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">Valor de Implantação (R$)</label>
+              <input {...editForm.register('setupFee')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+              {editForm.formState.errors.setupFee && <p className="text-xs text-red-500">{editForm.formState.errors.setupFee.message}</p>}
+            </div>
           </div>
-          <div className="flex flex-col gap-1 sm:col-span-2">
-            <label className="text-sm font-medium text-gray-700">Telefone</label>
-            <input {...editForm.register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
-            <input {...editForm.register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
-            {editForm.formState.errors.mrrValue && <p className="text-xs text-red-500">{editForm.formState.errors.mrrValue.message}</p>}
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">Valor de Implantação (R$)</label>
-            <input {...editForm.register('setupFee')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
-            {editForm.formState.errors.setupFee && <p className="text-xs text-red-500">{editForm.formState.errors.setupFee.message}</p>}
+
+          <div className="border-t pt-4">
+            <ModulePicker value={editModules} onChange={setEditModules} />
           </div>
         </div>
       </Modal>
 
-      {/* Tenant users popup */}
+      {/* ── Tenant users popup ── */}
       <Modal
         open={!!usersTenant}
         onClose={() => setUsersTenant(null)}
@@ -387,6 +471,7 @@ export default function TenantsPage() {
   )
 }
 
+// ── TenantCard ────────────────────────────────────────────────────────────────
 interface TenantCardProps {
   tenant: Tenant
   busy: boolean
@@ -396,6 +481,10 @@ interface TenantCardProps {
 }
 
 function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle }: TenantCardProps) {
+  const modules = parseModulesConfig(tenant.modulesConfig)
+  const adminCount    = modules.admin.length
+  const operatorCount = modules.operator.length
+
   return (
     <div
       role="button"
@@ -419,6 +508,16 @@ function TenantCard({ tenant, busy, onOpenUsers, onEdit, onToggle }: TenantCardP
         <span className="inline-flex items-center gap-1"><Users size={12} /> {tenant._count?.users ?? 0} usuário(s)</span>
         <span className="font-medium text-green-600">{formatCurrency(tenant.mrrValue)}/mês</span>
         <span>{new Date(tenant.createdAt).toLocaleDateString('pt-BR')}</span>
+      </div>
+
+      {/* Módulos summary */}
+      <div className="flex items-center gap-2 mt-2">
+        <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-md px-2 py-0.5">
+          Admin: {adminCount} módulo{adminCount !== 1 ? 's' : ''}
+        </span>
+        <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-md px-2 py-0.5">
+          Operador: {operatorCount} módulo{operatorCount !== 1 ? 's' : ''}
+        </span>
       </div>
 
       <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>

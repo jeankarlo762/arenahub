@@ -10,6 +10,7 @@ const createTenantSchema = z.object({
   phone: z.string().optional(),
   mrrValue: z.coerce.number().min(0).default(0),
   setupFee: z.coerce.number().min(0).default(0),
+  modulesConfig: z.string().optional().nullable(),
   adminName: z.string().min(1, 'Nome do admin obrigatório'),
   adminEmail: z.string().email('Email do admin inválido'),
   adminPassword: z.string().min(6, 'Senha mínima 6 caracteres'),
@@ -55,6 +56,7 @@ export async function superAdminRoutes(app: FastifyInstance) {
         phone: input.phone,
         mrrValue: input.mrrValue,
         setupFee: input.setupFee,
+        modulesConfig: input.modulesConfig ?? null,
       },
     })
 
@@ -79,6 +81,7 @@ export async function superAdminRoutes(app: FastifyInstance) {
       phone: z.string().optional(),
       mrrValue: z.coerce.number().min(0).optional(),
       setupFee: z.coerce.number().min(0).optional(),
+      modulesConfig: z.string().nullable().optional(),
     }).parse(req.body)
 
     const tenant = await prisma.tenant.update({

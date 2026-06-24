@@ -15,7 +15,7 @@ export async function createTenant(input: CreateTenantInput): Promise<Tenant> {
   return res.data
 }
 
-export async function updateTenant(id: string, data: Partial<Pick<Tenant, 'name' | 'phone' | 'mrrValue' | 'setupFee' | 'active'>>): Promise<Tenant> {
+export async function updateTenant(id: string, data: Partial<Pick<Tenant, 'name' | 'phone' | 'mrrValue' | 'setupFee' | 'active' | 'modulesConfig'>>): Promise<Tenant> {
   const res = await api.patch<Tenant>(`/superadmin/tenants/${id}`, data)
   return res.data
 }

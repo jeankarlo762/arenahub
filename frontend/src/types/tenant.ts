@@ -6,6 +6,7 @@ export interface Tenant {
   mrrValue: number
   setupFee: number
   active: boolean
+  modulesConfig?: string | null
   createdAt: string
   updatedAt: string
   _count?: { users: number }
@@ -17,6 +18,7 @@ export interface CreateTenantInput {
   phone?: string
   mrrValue: number
   setupFee: number
+  modulesConfig?: string | null
   adminName: string
   adminEmail: string
   adminPassword: string

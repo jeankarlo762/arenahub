@@ -8,17 +8,18 @@ datasource db {
 }
 
 model Tenant {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  phone        String?
-  mrrValue     Decimal  @default(0)
-  setupFee     Decimal  @default(0)
-  active       Boolean  @default(true)
-  bookingSlug  String?  @unique
-  users        User[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  phone         String?
+  mrrValue      Decimal  @default(0)
+  setupFee      Decimal  @default(0)
+  active        Boolean  @default(true)
+  bookingSlug   String?  @unique
+  modulesConfig String?  // JSON: { "admin": [...], "operator": [...] }
+  users         User[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // Branding por tenant — cor primária, logo (base64) e nome de exibição.

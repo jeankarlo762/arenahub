@@ -118,14 +118,25 @@ export function logout(token: string): void {
 export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
+    select: {
+      id: true, name: true, email: true, role: true, active: true, createdAt: true,
+      tenant: { select: { modulesConfig: true } },
+    },
   })
 
   if (!user) {
     throw Object.assign(new Error('Usuário não encontrado'), { statusCode: 404 })
   }
 
-  return user
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt,
+    modulesConfig: user.tenant?.modulesConfig ?? null,
+  }
 }
 
 export async function forgotPassword(phone: string): Promise<{ sent: boolean }> {

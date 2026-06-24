@@ -23,34 +23,34 @@ import { useBrandingStore } from '../../store/branding.store'
 import * as authApi from '../../api/auth.api'
 import toast from 'react-hot-toast'
 
-// Funções comuns — disponíveis para todos os usuários (operadores e admins)
 const commonItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/courts', icon: MapPin, label: 'Quadras' },
-  { to: '/bookings', icon: CalendarDays, label: 'Agendamentos' },
-  { to: '/tournaments', icon: Trophy, label: 'Torneios' },
-  { to: '/clients', icon: Users, label: 'Clientes' },
-  { to: '/rentals', icon: CalendarRange, label: 'Locação' },
+  { to: '/courts',      icon: MapPin,          label: 'Quadras',         module: 'courts' },
+  { to: '/bookings',    icon: CalendarDays,    label: 'Agendamentos',    module: 'bookings' },
+  { to: '/tournaments', icon: Trophy,          label: 'Torneios',        module: 'tournaments' },
+  { to: '/clients',     icon: Users,           label: 'Clientes',        module: 'clients' },
+  { to: '/rentals',     icon: CalendarRange,   label: 'Locação',         module: 'rentals' },
 ]
 
-// Funções administrativas — visíveis apenas para administradores
 const adminItems = [
-  { to: '/bar', icon: Beer, label: 'Bar' },
-  { to: '/comandas', icon: ClipboardList, label: 'Comandas' },
-  { to: '/financial', icon: DollarSign, label: 'Financeiro' },
-  { to: '/reports', icon: BarChart2, label: 'Relatórios' },
-  { to: '/auto-booking', icon: Link, label: 'Agendamento Auto.' },
-  { to: '/audit', icon: ScrollText, label: 'Auditoria' },
-  { to: '/settings', icon: Settings, label: 'Configurações' },
+  { to: '/bar',          icon: Beer,           label: 'Bar',             module: 'bar' },
+  { to: '/comandas',     icon: ClipboardList,  label: 'Comandas',        module: 'comandas' },
+  { to: '/financial',    icon: DollarSign,     label: 'Financeiro',      module: 'financial' },
+  { to: '/reports',      icon: BarChart2,      label: 'Relatórios',      module: 'reports' },
+  { to: '/auto-booking', icon: Link,           label: 'Agendamento Auto.', module: 'auto_booking' },
+  { to: '/audit',        icon: ScrollText,     label: 'Auditoria',       module: 'audit' },
+  { to: '/settings',     icon: Settings,       label: 'Configurações',   module: 'settings' },
 ]
 
 export function Sidebar() {
-  const { user, refreshToken, clearAuth } = useAuthStore()
+  const { user, refreshToken, clearAuth, hasModule } = useAuthStore()
   const { sidebarOpen, toggleSidebar } = useUIStore()
   const { logoUrl, companyName } = useBrandingStore()
   const navigate = useNavigate()
 
   const isAdmin = user?.role === 'ADMIN'
+
+  const visibleCommon = commonItems.filter((item) => hasModule(item.module))
+  const visibleAdmin  = isAdmin ? adminItems.filter((item) => hasModule(item.module)) : []
 
   async function handleLogout() {
     try {
@@ -93,11 +93,27 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 py-4 flex flex-col gap-0.5 overflow-hidden">
-          {commonItems.map(({ to, icon: Icon, label }) => (
+          {/* Dashboard — sempre visível */}
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+              )
+            }
+          >
+            <LayoutDashboard size={18} className="shrink-0" />
+            {sidebarOpen && <span>Dashboard</span>}
+          </NavLink>
+
+          {visibleCommon.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
-              end={to === '/'}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors',
@@ -112,8 +128,7 @@ export function Sidebar() {
             </NavLink>
           ))}
 
-          {/* Divisória — funções administrativas */}
-          {isAdmin && (
+          {visibleAdmin.length > 0 && (
             <>
               <div className="my-3 mx-4 border-t border-gray-700/70" />
               {sidebarOpen && (
@@ -121,7 +136,7 @@ export function Sidebar() {
                   Administração
                 </p>
               )}
-              {adminItems.map(({ to, icon: Icon, label }) => (
+              {visibleAdmin.map(({ to, icon: Icon, label }) => (
                 <NavLink
                   key={to}
                   to={to}
