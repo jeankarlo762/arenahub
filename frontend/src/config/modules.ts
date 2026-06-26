@@ -20,7 +20,7 @@ export const ALL_MODULES = [
 
 export const DEFAULT_MODULES_CONFIG: ModulesConfig = {
   admin:    ALL_MODULES.map((m) => m.key),
-  operator: ['courts', 'bookings', 'tournaments', 'clients', 'rentals'],
+  operator: ['courts', 'bookings', 'tournaments', 'clients', 'rentals', 'comandas'],
 }
 
 export function parseModulesConfig(raw: string | null | undefined): ModulesConfig {

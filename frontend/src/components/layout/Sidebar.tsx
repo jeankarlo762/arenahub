@@ -29,11 +29,11 @@ const commonItems = [
   { to: '/tournaments', icon: Trophy,          label: 'Torneios',        module: 'tournaments' },
   { to: '/clients',     icon: Users,           label: 'Clientes',        module: 'clients' },
   { to: '/rentals',     icon: CalendarRange,   label: 'Locação',         module: 'rentals' },
+  { to: '/comandas',    icon: ClipboardList,   label: 'Comandas',        module: 'comandas' },
 ]
 
 const adminItems = [
   { to: '/bar',          icon: Beer,           label: 'Bar',             module: 'bar' },
-  { to: '/comandas',     icon: ClipboardList,  label: 'Comandas',        module: 'comandas' },
   { to: '/financial',    icon: DollarSign,     label: 'Financeiro',      module: 'financial' },
   { to: '/reports',      icon: BarChart2,      label: 'Relatórios',      module: 'reports' },
   { to: '/auto-booking', icon: Link,           label: 'Agendamento Auto.', module: 'auto_booking' },

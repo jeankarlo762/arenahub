@@ -116,7 +116,7 @@ export default function App() {
         <Route path="/rentals" element={<RequireAuth><RentalsPage /></RequireAuth>} />
         {/* Admin-only routes */}
         <Route path="/bar" element={<RequireAdmin><BarPage /></RequireAdmin>} />
-        <Route path="/comandas" element={<RequireAdmin><ComandasPage /></RequireAdmin>} />
+        <Route path="/comandas" element={<RequireAuth><ComandasPage /></RequireAuth>} />
         <Route path="/financial" element={<RequireAdmin><FinancialPage /></RequireAdmin>} />
         <Route path="/settings" element={<RequireAdmin><SettingsPage /></RequireAdmin>} />
         <Route path="/reports" element={<RequireAdmin><ReportsPage /></RequireAdmin>} />
