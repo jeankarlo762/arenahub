@@ -56,10 +56,9 @@ function RequireSuperAdmin({ children }: { children: React.ReactNode }) {
 
 function AppInit() {
   const accessToken = useAuthStore((s) => s.accessToken)
-  const user = useAuthStore((s) => s.user)
 
   useEffect(() => {
-    if (!accessToken || user) return
+    if (!accessToken) return
     authApi.getMe()
       .then((u) => useAuthStore.getState().setUser(u))
       .catch((err) => {
