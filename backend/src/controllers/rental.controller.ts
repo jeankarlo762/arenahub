@@ -26,6 +26,10 @@ export async function deleteRental(request: FastifyRequest<{ Params: { id: strin
   return reply.status(204).send()
 }
 
+export async function getOverduePayments(_request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await rentalService.getOverdueRentalPayments())
+}
+
 export async function getRentalReport(request: FastifyRequest, reply: FastifyReply) {
   const { startDate, endDate } = request.query as { startDate?: string; endDate?: string }
   return reply.send(await rentalService.getRentalReport(startDate, endDate))

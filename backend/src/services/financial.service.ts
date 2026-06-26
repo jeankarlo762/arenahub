@@ -79,7 +79,7 @@ export async function getSummary({ startDate, endDate, source = 'courts' }: Date
     return {
       total: courts.total + bar.total + rentals.total,
       received: courts.received + bar.received + rentals.received,
-      pending: courts.pending,
+      pending: courts.pending + rentals.pending,
       paymentCount: courts.paymentCount + bar.paymentCount + rentals.paymentCount,
       bookingCount,
     }

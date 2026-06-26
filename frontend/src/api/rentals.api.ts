@@ -121,3 +121,17 @@ export async function getRentalReport(params?: { startDate?: string; endDate?: s
   const res = await api.get<RentalReport>('/rentals/report', { params })
   return res.data
 }
+
+export interface OverduePayment {
+  id: string
+  rentalId: string
+  dueDate: string
+  amount: number
+  status: string
+  rental: { id: string; clientName: string; active: boolean }
+}
+
+export async function getOverduePayments(): Promise<OverduePayment[]> {
+  const res = await api.get<OverduePayment[]>('/rentals/overdue')
+  return res.data
+}

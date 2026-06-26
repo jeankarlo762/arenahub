@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,6 +34,7 @@ export function PaymentForm({ open, onClose, onSuccess, booking }: PaymentFormPr
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -42,6 +44,12 @@ export function PaymentForm({ open, onClose, onSuccess, booking }: PaymentFormPr
       paidAt: toInputDate(new Date()),
     },
   })
+
+  useEffect(() => {
+    if (open) {
+      reset({ amount: Number(booking.totalPrice), method: 'PIX', paidAt: toInputDate(new Date()) })
+    }
+  }, [booking.id, open, reset])
 
   async function onSubmit(data: FormData) {
     try {

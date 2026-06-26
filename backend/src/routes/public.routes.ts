@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../config/database'
 import * as courtsApi from '../services/court.service'
-import { timesOverlap } from '../utils/date'
+import { timesOverlap, timeToMinutes } from '../utils/date'
 
 const publicBookingBodySchema = z.object({
   courtId: z.string().min(1),
@@ -79,7 +79,10 @@ export async function publicRoutes(app: FastifyInstance) {
     const court = await prisma.court.findFirst({ where: { id: body.courtId, tenantId: tenant.id, active: true } })
     if (!court) return reply.status(404).send({ message: 'Quadra não encontrada' })
 
-    const totalPrice = Number(court.pricePerSlot)
+    const slotCount = Math.ceil(
+      (timeToMinutes(body.endTime) - timeToMinutes(body.startTime)) / Number(court.slotMinutes),
+    )
+    const totalPrice = Number(court.pricePerSlot) * Math.max(1, slotCount)
     const bookingDate = new Date(body.date + 'T00:00:00')
     const dayOfWeek = bookingDate.getDay()
 

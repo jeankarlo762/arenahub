@@ -5,6 +5,7 @@ import { authenticate } from '../middlewares/auth'
 export async function rentalRoutes(app: FastifyInstance) {
   app.addHook('preHandler', authenticate)
   app.get('/rentals', rentalController.listRentals)
+  app.get('/rentals/overdue', rentalController.getOverduePayments)
   app.get('/rentals/report', rentalController.getRentalReport)
   app.get('/rentals/:id', rentalController.getRental)
   app.post('/rentals', rentalController.createRental)

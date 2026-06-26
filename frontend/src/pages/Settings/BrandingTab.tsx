@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { resizeImageToDataUrl } from '../../utils/image'
 import { Upload, RotateCcw, Save, Palette, ImageIcon, Eye, Type } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '../../components/ui/Button'
@@ -30,16 +31,15 @@ export function BrandingTab() {
     applyBrandingCss(val)
   }
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 500 * 1024) {
-      toast.error('Imagem muito grande. Máximo 500 KB.')
-      return
+    try {
+      const resized = await resizeImageToDataUrl(file, 256, 0.85)
+      setLogo(resized)
+    } catch {
+      toast.error('Erro ao processar imagem. Use PNG ou JPG.')
     }
-    const reader = new FileReader()
-    reader.onload = (ev) => setLogo(ev.target?.result as string)
-    reader.readAsDataURL(file)
   }
 
   function handleRemoveLogo() {

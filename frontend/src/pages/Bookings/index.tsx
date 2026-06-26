@@ -94,7 +94,7 @@ export default function BookingsPage() {
       if (historyEndDate) params.endDate = historyEndDate
       const data = await bookingsApi.listBookings(params)
       // History shows only completed bookings that were paid
-      setHistoryBookings(data.filter((b) => b.status === 'COMPLETED' && b.payment?.status === 'PAID'))
+      setHistoryBookings(data.filter((b) => b.status === 'COMPLETED'))
     } finally {
       setHistoryLoading(false)
     }

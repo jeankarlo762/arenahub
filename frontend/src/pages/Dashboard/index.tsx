@@ -13,6 +13,8 @@ import * as financialApi from '../../api/financial.api'
 import * as courtsApi from '../../api/courts.api'
 import * as tournamentsApi from '../../api/tournaments.api'
 import * as barApi from '../../api/bar.api'
+import * as rentalsApi from '../../api/rentals.api'
+import type { OverduePayment } from '../../api/rentals.api'
 import type { Booking } from '../../types/booking'
 import type { BarOrder } from '../../types/bar'
 import type { FinancialSummary, DailyRevenue } from '../../types/financial'
@@ -210,38 +212,51 @@ function AdminDashboard() {
   const [openOrders, setOpenOrders] = useState<BarOrder[]>([])
   const [topClients, setTopClients] = useState<{ customerName: string; total: number; orderCount: number }[]>([])
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [overduePayments, setOverduePayments] = useState<OverduePayment[]>([])
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true)
-    Promise.all([
-      bookingsApi.listBookings({ date: today }),
-      financialApi.getSummary({ startDate: monthStart }),
-      financialApi.getDailyRevenue({ days: 7 }),
-      courtsApi.listCourts({ active: true }),
-      tournamentsApi.listTournaments(),
-      bookingsApi.listBookings({ status: 'CONFIRMED' }),
-      barApi.listOrders('OPEN'),
-      barApi.getTopClients(),
-      financialApi.getSummary({ startDate: prevMonthStart, endDate: prevMonthEnd }),
-      bookingsApi.listBookings({ date: tomorrow }),
-    ])
-      .then(([bookings, fin, daily, courts, tournaments, confirmed, orders, top, prevFin, tomorrowB]) => {
-        setTodayBookings(bookings)
-        setSummary(fin)
-        setDailyRevenue(daily)
-        setActiveCourts(courts.length)
-        setUpcomingTournaments(
-          tournaments.filter((t) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length,
-        )
-        setPendingBookings(confirmed.filter((b) => !b.payment || b.payment.status === 'PENDING').slice(0, 5))
-        setOpenOrders(orders)
-        setTopClients(top as { customerName: string; total: number; orderCount: number }[])
-        setPrevSummary(prevFin)
-        setTomorrowBookings(tomorrowB)
-        setLastUpdated(new Date())
-      })
-      .catch(() => toast.error('Erro ao carregar dados do dashboard'))
-      .finally(() => setLoading(false))
+    try {
+      const [
+        bookingsRes, finRes, dailyRes, courtsRes, tournamentsRes,
+        confirmedRes, ordersRes, topRes, prevFinRes, tomorrowRes, overdueRes,
+      ] = await Promise.allSettled([
+        bookingsApi.listBookings({ date: today }),
+        financialApi.getSummary({ startDate: monthStart }),
+        financialApi.getDailyRevenue({ days: 7 }),
+        courtsApi.listCourts({ active: true }),
+        tournamentsApi.listTournaments(),
+        bookingsApi.listBookings({ status: 'CONFIRMED' }),
+        barApi.listOrders('OPEN'),
+        barApi.getTopClients(),
+        financialApi.getSummary({ startDate: prevMonthStart, endDate: prevMonthEnd }),
+        bookingsApi.listBookings({ date: tomorrow }),
+        rentalsApi.getOverduePayments(),
+      ])
+
+      const get = <T,>(r: PromiseSettledResult<T>, fallback: T): T =>
+        r.status === 'fulfilled' ? r.value : fallback
+
+      setTodayBookings(get(bookingsRes, []))
+      setSummary(get(finRes, null))
+      setDailyRevenue(get(dailyRes, []))
+      setActiveCourts(get(courtsRes, []).length)
+      setUpcomingTournaments(
+        get(tournamentsRes, []).filter((t) => t.status === 'OPEN' || t.status === 'IN_PROGRESS').length,
+      )
+      const confirmed = get(confirmedRes, [])
+      setPendingBookings(confirmed.filter((b) => !b.payment || b.payment.status === 'PENDING').slice(0, 5))
+      setOpenOrders(get(ordersRes, []))
+      setTopClients(get(topRes, []) as { customerName: string; total: number; orderCount: number }[])
+      setPrevSummary(get(prevFinRes, null))
+      setTomorrowBookings(get(tomorrowRes, []))
+      setOverduePayments(get(overdueRes, []))
+      setLastUpdated(new Date())
+    } catch {
+      toast.error('Erro ao carregar dados do dashboard')
+    } finally {
+      setLoading(false)
+    }
   }, [today, tomorrow, monthStart, prevMonthStart, prevMonthEnd])
 
   useEffect(() => { load() }, [load])
@@ -274,6 +289,37 @@ function AdminDashboard() {
                 className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-full text-xs text-amber-700 transition-colors"
               >
                 +{openOrders.length - 6} mais
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Overdue rental payments alert */}
+      {!loading && overduePayments.length > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl flex-wrap">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <AlertTriangle size={14} className="text-red-500" />
+            <span className="text-xs font-semibold text-red-700">
+              {overduePayments.length} pagamento{overduePayments.length > 1 ? 's' : ''} de locação em atraso:
+            </span>
+          </div>
+          <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
+            {overduePayments.slice(0, 5).map((p) => (
+              <button
+                key={p.id}
+                onClick={() => navigate('/rentals')}
+                className="flex items-center gap-1 px-2 py-0.5 bg-red-100 hover:bg-red-200 border border-red-300 rounded-full text-xs font-medium text-red-800 transition-colors whitespace-nowrap"
+              >
+                {p.rental.clientName} — {new Date(p.dueDate).toLocaleDateString('pt-BR')}
+              </button>
+            ))}
+            {overduePayments.length > 5 && (
+              <button
+                onClick={() => navigate('/rentals')}
+                className="px-2 py-0.5 bg-red-100 hover:bg-red-200 border border-red-300 rounded-full text-xs text-red-700 transition-colors"
+              >
+                +{overduePayments.length - 5} mais
               </button>
             )}
           </div>

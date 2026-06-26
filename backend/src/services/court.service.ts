@@ -57,11 +57,10 @@ export async function getCourtSchedule(courtId: string) {
 export async function updateCourtSchedule(courtId: string, input: UpdateScheduleInput) {
   await getCourt(courtId)
 
-  await prisma.schedule.deleteMany({ where: { courtId } })
-
-  return prisma.schedule.createMany({
-    data: input.schedules.map((s) => ({ ...s, courtId })),
-  })
+  return prisma.$transaction([
+    prisma.schedule.deleteMany({ where: { courtId } }),
+    prisma.schedule.createMany({ data: input.schedules.map((s) => ({ ...s, courtId })) }),
+  ])
 }
 
 export async function getCurrentBooking(courtId: string) {

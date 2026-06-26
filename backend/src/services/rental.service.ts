@@ -197,6 +197,12 @@ export async function updateRental(id: string, input: UpdateRentalInput) {
 
 export async function deleteRental(id: string) {
   await getRental(id)
+  const paidCount = await prisma.rentalPayment.count({ where: { rentalId: id, status: 'PAID' } })
+  if (paidCount > 0)
+    throw Object.assign(
+      new Error('Locação com pagamentos registrados não pode ser excluída. Desative-a.'),
+      { statusCode: 409 },
+    )
   return prisma.rental.delete({ where: { id } })
 }
 
@@ -246,6 +252,19 @@ export async function toggleRentalPayment(paymentId: string, paid: boolean) {
   }
 
   return updated
+}
+
+export async function getOverdueRentalPayments() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return prisma.rentalPayment.findMany({
+    where: { status: 'PENDING', dueDate: { lt: today } },
+    include: {
+      rental: { select: { id: true, clientName: true, active: true } },
+    },
+    orderBy: { dueDate: 'asc' },
+    take: 20,
+  })
 }
 
 export async function getRentalReport(startDate?: string, endDate?: string) {

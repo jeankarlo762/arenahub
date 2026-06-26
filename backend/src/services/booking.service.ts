@@ -173,6 +173,27 @@ export async function updateBooking(id: string, input: UpdateBookingInput) {
     const startTime = input.startTime ?? existing.startTime
     const endTime = input.endTime ?? existing.endTime
     const bookingDate = new Date(dateStr + 'T00:00:00')
+    const dayOfWeek = bookingDate.getDay()
+
+    // Check conflict with active fixed rentals (same as createBooking)
+    const rentals = await prisma.rental.findMany({
+      where: {
+        courtId,
+        active: true,
+        startDate: { lte: bookingDate },
+        OR: [{ endDate: null }, { endDate: { gte: bookingDate } }],
+      },
+      select: { weekdays: true, slots: true },
+    })
+    const rentalConflict = rentals.some((r) => {
+      try {
+        const wds: number[] = JSON.parse(r.weekdays)
+        const rSlots: { startTime: string; endTime: string }[] = JSON.parse(r.slots)
+        return wds.includes(dayOfWeek) && rSlots.some((rs) => timesOverlap(startTime, endTime, rs.startTime, rs.endTime))
+      } catch { return false }
+    })
+    if (rentalConflict)
+      throw Object.assign(new Error('Horário reservado para locação fixa'), { statusCode: 409 })
 
     const conflicts = await prisma.booking.findMany({
       where: {
@@ -184,13 +205,8 @@ export async function updateBooking(id: string, input: UpdateBookingInput) {
       select: { startTime: true, endTime: true },
     })
 
-    const hasConflict = conflicts.some((b) =>
-      timesOverlap(startTime, endTime, b.startTime, b.endTime),
-    )
-
-    if (hasConflict) {
+    if (conflicts.some((b) => timesOverlap(startTime, endTime, b.startTime, b.endTime)))
       throw Object.assign(new Error('Horário já está ocupado'), { statusCode: 409 })
-    }
   }
 
   return prisma.booking.update({ where: { id }, data: input })

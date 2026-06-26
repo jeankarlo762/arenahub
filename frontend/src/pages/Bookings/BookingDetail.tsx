@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { OrderForm } from '../Bar/OrderForm'
 import { OrderDetail } from '../Bar/OrderDetail'
+import { PaymentForm } from './PaymentForm'
 import type { Booking } from '../../types/booking'
 import type { BarOrder } from '../../types/bar'
 import * as bookingsApi from '../../api/bookings.api'
@@ -23,6 +24,7 @@ interface BookingDetailProps {
 export function BookingDetail({ open, onClose, booking, onSuccess }: BookingDetailProps) {
   const navigate = useNavigate()
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false)
   const [comandaFormOpen, setComandaFormOpen] = useState(false)
   const [comandaDetailOpen, setComandaDetailOpen] = useState(false)
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null)
@@ -140,8 +142,8 @@ export function BookingDetail({ open, onClose, booking, onSuccess }: BookingDeta
           {booking.status === 'CONFIRMED' && (
             <div className="border-t pt-4 flex gap-2 flex-wrap">
               {canComplete && (
-                <Button variant="secondary" size="sm" loading={updatingStatus} onClick={() => changeStatus('COMPLETED')}>
-                  Confirmar Pagamento
+                <Button size="sm" onClick={() => setPaymentFormOpen(true)}>
+                  Registrar Pagamento
                 </Button>
               )}
               {canNoShow && (
@@ -158,6 +160,13 @@ export function BookingDetail({ open, onClose, booking, onSuccess }: BookingDeta
           )}
         </div>
       </Modal>
+
+      <PaymentForm
+        open={paymentFormOpen}
+        onClose={() => setPaymentFormOpen(false)}
+        onSuccess={() => { setPaymentFormOpen(false); onSuccess() }}
+        booking={booking}
+      />
 
       {/* Step 1: Define número e cliente da comanda */}
       <OrderForm

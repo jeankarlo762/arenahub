@@ -19,6 +19,9 @@ export const scheduleItemSchema = z.object({
   openTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
   closeTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),
   active: z.boolean().default(true),
+}).refine((d) => d.openTime < d.closeTime, {
+  message: 'Horário de abertura deve ser anterior ao fechamento',
+  path: ['closeTime'],
 })
 
 export const updateScheduleSchema = z.object({

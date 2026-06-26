@@ -40,7 +40,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   hasModule: (key: string) => {
     const { modules, user } = get()
-    if (!modules) return true  // not loaded yet or superadmin — show all
+    if (user?.role === 'SUPERADMIN') return true
+    if (!modules) return false  // still loading — hide until confirmed
     if (user?.role === 'ADMIN') return modules.admin.includes(key)
     if (user?.role === 'OPERATOR') return modules.operator.includes(key)
     return false

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import type { Booking } from '../../types/booking'
@@ -89,8 +89,9 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(false)
 
-  const courtColorMap = new Map(
-    courts.map((c, i) => [c.id, COURT_COLORS[i % COURT_COLORS.length]]),
+  const courtColorMap = useMemo(
+    () => new Map(courts.map((c, i) => [c.id, COURT_COLORS[i % COURT_COLORS.length]])),
+    [courts],
   )
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i))

@@ -124,9 +124,9 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
       .map((t) => slots.find((s) => s.startTime === t))
       .filter((s): s is AvailabilitySlot => !!s)
 
-    try {
-      for (const slot of slotsToBook) {
-        await bookingsApi.createBooking({
+    const results = await Promise.allSettled(
+      slotsToBook.map((slot) =>
+        bookingsApi.createBooking({
           courtId: data.courtId,
           customerName: data.customerName,
           customerPhone: data.customerPhone || '',
@@ -136,22 +136,26 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
           endTime: slot.endTime,
           totalPrice: pricePerSlot,
           notes: data.notes,
-        })
-      }
-      toast.success(
-        selectedTimes.length > 1
-          ? `${selectedTimes.length} agendamentos criados`
-          : 'Agendamento criado',
-      )
+        }),
+      ),
+    )
+
+    const ok = results.filter((r) => r.status === 'fulfilled').length
+    const failed = results.filter((r) => r.status === 'rejected')
+
+    if (ok > 0) {
+      toast.success(ok > 1 ? `${ok} agendamentos criados` : 'Agendamento criado')
       onSuccess()
-      onClose()
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-          : undefined
-      toast.error(msg ?? 'Erro ao criar agendamento')
     }
+    if (failed.length > 0) {
+      const firstMsg = (failed[0] as PromiseRejectedResult).reason?.response?.data?.message
+      toast.error(
+        failed.length === slotsToBook.length
+          ? (firstMsg ?? 'Nenhum horário pôde ser reservado')
+          : `${failed.length} horário(s) com conflito e não foram reservados`,
+      )
+    }
+    if (ok > 0) onClose()
   }
 
   const availableSlots = slots.filter((s) => s.available)

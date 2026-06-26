@@ -33,6 +33,9 @@ export async function updateClient(id: string, input: UpdateClientInput) {
 
 export async function deleteClient(id: string) {
   await getClient(id)
+  const activeRentals = await prisma.rental.count({ where: { clientId: id, active: true } })
+  if (activeRentals > 0)
+    throw Object.assign(new Error('Cliente possui locações ativas e não pode ser excluído'), { statusCode: 409 })
   return prisma.client.delete({ where: { id } })
 }
 
