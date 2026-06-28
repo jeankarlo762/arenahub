@@ -1,17 +1,15 @@
 ﻿import { useState } from 'react'
-import { MapPin, DollarSign, Palette, Users } from 'lucide-react'
+import { MapPin, DollarSign, Users } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { UsersTab } from './UsersTab'
 import { CourtsConfigTab } from './CourtsConfigTab'
 import { CourtsManageSection } from './CourtsManageSection'
 import { PaymentFeesTab } from './PaymentFeesTab'
-import { BrandingTab } from './BrandingTab'
 import { useAuthStore } from '../../store/auth.store'
 
 const ALL_TABS = [
   { key: 'courts', label: 'Quadras', icon: MapPin },
   { key: 'financial', label: 'Financeiro', icon: DollarSign },
-  { key: 'branding', label: 'Personalização', icon: Palette, adminOnly: true },
   { key: 'users', label: 'Usuários', icon: Users, adminOnly: true },
 ] as const
 
@@ -49,7 +47,6 @@ export default function SettingsPage() {
           </div>
         )}
         {activeTab === 'financial' && <PaymentFeesTab />}
-        {activeTab === 'branding' && user?.role === 'ADMIN' && <BrandingTab />}
         {activeTab === 'users' && user?.role === 'ADMIN' && <UsersTab />}
       </div>
     </Layout>
