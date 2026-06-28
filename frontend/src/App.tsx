@@ -31,7 +31,6 @@ import ReportsPage from './pages/Reports'
 import AutoBookingPage from './pages/AutoBooking'
 import AuditPage from './pages/Audit'
 import PublicBookingPage from './pages/PublicBooking'
-import DemoPage from './pages/Demo'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
@@ -124,7 +123,6 @@ export default function App() {
         <Route path="/auto-booking" element={<RequireAdmin><AutoBookingPage /></RequireAdmin>} />
         <Route path="/audit" element={<RequireAdmin><AuditPage /></RequireAdmin>} />
         <Route path="/booking/:slug" element={<PublicBookingPage />} />
-        <Route path="/demo" element={<DemoPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

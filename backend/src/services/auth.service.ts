@@ -7,43 +7,6 @@ import { sendSms } from './sms.service'
 
 const refreshTokenStore = new Map<string, string>()
 
-const DEMO_TENANT_EMAIL = 'demo@mtquadras.com'
-const DEMO_USER_EMAIL   = 'demo@mtquadras.com'
-
-export async function demoLogin() {
-  // Upsert demo tenant
-  const tenant = await prisma.tenant.upsert({
-    where: { email: DEMO_TENANT_EMAIL },
-    update: {},
-    create: { name: 'Arena Demonstração', email: DEMO_TENANT_EMAIL, mrrValue: 0, setupFee: 0, active: true },
-  })
-
-  // Upsert demo admin user (password irrelevant — token issued directly)
-  const demoUser = await prisma.user.upsert({
-    where: { email: DEMO_USER_EMAIL },
-    update: {},
-    create: {
-      name: 'Demo',
-      email: DEMO_USER_EMAIL,
-      passwordHash: await hashPassword(crypto.randomUUID()),
-      role: 'ADMIN',
-      tenantId: tenant.id,
-      active: true,
-    },
-  })
-
-  const payload: TokenPayload = { sub: demoUser.id, email: demoUser.email, role: demoUser.role }
-  const accessToken  = signAccessToken(payload)
-  const refreshToken = signRefreshToken(payload)
-  refreshTokenStore.set(refreshToken, demoUser.id)
-
-  return {
-    accessToken,
-    refreshToken,
-    user: { id: demoUser.id, name: demoUser.name, email: demoUser.email, role: demoUser.role },
-  }
-}
-
 export async function login(input: LoginInput) {
   const user = await prisma.user.findUnique({
     where: { email: input.email },
