@@ -10,4 +10,5 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/forgot-password', authController.forgotPassword)
   app.post('/verify-reset-code', authController.verifyResetCode)
   app.post('/reset-password', authController.resetPassword)
+  app.post('/demo', authController.demoLogin)
 }

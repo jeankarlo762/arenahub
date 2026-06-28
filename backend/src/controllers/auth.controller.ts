@@ -47,3 +47,8 @@ export async function resetPassword(request: FastifyRequest, reply: FastifyReply
   await authService.resetPassword(resetToken, password)
   return reply.send({ success: true })
 }
+
+export async function demoLogin(_request: FastifyRequest, reply: FastifyReply) {
+  const result = await authService.demoLogin()
+  return reply.send(result)
+}

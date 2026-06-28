@@ -15,3 +15,8 @@ export async function getMe(): Promise<User> {
   return res.data
 }
 
+export async function demoLogin(): Promise<LoginResponse> {
+  const res = await api.post<LoginResponse>('/auth/demo')
+  return res.data
+}
+
