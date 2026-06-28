@@ -1,6 +1,5 @@
-import { useState, useRef } from 'react'
-import { resizeImageToDataUrl } from '../../utils/image'
-import { Upload, RotateCcw, Save, Palette, ImageIcon, Eye, Type } from 'lucide-react'
+import { useState } from 'react'
+import { Save, Palette, Eye } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '../../components/ui/Button'
 import { useBrandingStore, applyBrandingCss } from '../../store/branding.store'
@@ -21,30 +20,11 @@ export function BrandingTab() {
   const { primaryColor, logoUrl, companyName, setBranding } = useBrandingStore()
 
   const [color, setColor] = useState(primaryColor)
-  const [logo, setLogo] = useState<string | null>(logoUrl)
-  const [name, setName] = useState(companyName ?? '')
   const [saving, setSaving] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   function handleColorChange(val: string) {
     setColor(val)
     applyBrandingCss(val)
-  }
-
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    try {
-      const resized = await resizeImageToDataUrl(file, 256, 0.85)
-      setLogo(resized)
-    } catch {
-      toast.error('Erro ao processar imagem. Use PNG ou JPG.')
-    }
-  }
-
-  function handleRemoveLogo() {
-    setLogo(null)
-    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function handleSave() {
@@ -52,8 +32,8 @@ export function BrandingTab() {
     try {
       const result = await settingsApi.upsertBranding({
         primaryColor: color,
-        logoUrl: logo,
-        companyName: name || null,
+        logoUrl,
+        companyName,
       })
       setBranding(result)
       applyBrandingCss(result.primaryColor)
@@ -65,7 +45,7 @@ export function BrandingTab() {
     }
   }
 
-  const isDirty = color !== primaryColor || logo !== logoUrl || (name || null) !== companyName
+  const isDirty = color !== primaryColor
 
   return (
     <div className="flex flex-col gap-8 max-w-3xl">
@@ -133,68 +113,6 @@ export function BrandingTab() {
         </div>
       </section>
 
-      {/* Logo */}
-      <section className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <ImageIcon size={18} className="text-gray-500" />
-          <h2 className="text-base font-semibold text-gray-900">Logo</h2>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div
-            className="flex items-center justify-center w-full h-36 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors"
-            onClick={() => fileRef.current?.click()}
-          >
-            {logo ? (
-              <img src={logo} alt="Logo preview" className="max-h-28 max-w-full object-contain" />
-            ) : (
-              <div className="flex flex-col items-center gap-2 text-gray-400">
-                <Upload size={28} />
-                <p className="text-sm font-medium">Clique para fazer upload</p>
-                <p className="text-xs">PNG, JPG, SVG — máx. 500 KB</p>
-              </div>
-            )}
-          </div>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          {logo && (
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
-                <Upload size={14} /> Trocar logo
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleRemoveLogo}>
-                <RotateCcw size={14} /> Remover
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Nome da empresa */}
-      <section className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center gap-2 mb-5">
-          <Type size={18} className="text-gray-500" />
-          <h2 className="text-base font-semibold text-gray-900">Nome da plataforma</h2>
-        </div>
-        <div className="flex flex-col gap-1 max-w-xs">
-          <label className="text-sm font-medium text-gray-700">Nome exibido na sidebar</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="MT Quadras"
-            maxLength={80}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
-          />
-          <p className="text-xs text-gray-400">Aparece na sidebar quando não há logo configurado</p>
-        </div>
-      </section>
-
       {/* Preview */}
       <section className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-center gap-2 mb-5">
@@ -205,9 +123,7 @@ export function BrandingTab() {
           {/* Mini sidebar preview */}
           <div className="w-44 bg-gray-900 rounded-xl overflow-hidden shrink-0">
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-700">
-              {logo
-                ? <img src={logo} alt="Logo" className="h-6 max-w-[110px] object-contain" />
-                : <span className="font-bold text-sm text-white tracking-tight">{name || 'MT Quadras'}</span>}
+              <span className="font-black italic text-base text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
             </div>
             {['Dashboard', 'Agendamentos', 'Configurações'].map((item, i) => (
               <div
