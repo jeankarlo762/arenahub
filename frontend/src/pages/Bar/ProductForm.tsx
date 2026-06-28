@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -74,10 +74,10 @@ export function ProductForm({ open, onClose, onSuccess, product, categories = []
       <div className="flex flex-col gap-4">
         <Input label="Nome" error={errors.name?.message} {...register('name')} placeholder="ex: Refrigerante, Cerveja" />
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">Categoria</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Categoria</label>
           <select
             {...register('category')}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none bg-white"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="">Sem categoria</option>
             {categories.map((cat) => (

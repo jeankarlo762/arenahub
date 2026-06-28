@@ -1,4 +1,4 @@
-import { Plus, Pencil, Settings2, Power, PowerOff } from 'lucide-react'
+﻿import { Plus, Pencil, Settings2, Power, PowerOff } from 'lucide-react'
 import { Modal } from '../../components/ui/Modal'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
@@ -37,27 +37,27 @@ export function CourtManageModal({
     >
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-gray-500">Crie, edite e configure suas quadras.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Crie, edite e configure suas quadras.</p>
           <Button size="sm" onClick={onNew}>
             <Plus size={15} /> Nova Quadra
           </Button>
         </div>
 
         {courts.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">Nenhuma quadra cadastrada ainda.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Nenhuma quadra cadastrada ainda.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {courts.map((court) => (
               <div
                 key={court.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg flex-wrap"
+                className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg flex-wrap"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900 truncate">{court.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{court.name}</p>
                     <Badge label={court.active ? 'Ativa' : 'Inativa'} status={court.active ? 'active' : 'inactive'} />
                   </div>
-                  <p className="text-xs text-gray-400">{court.type}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{court.type}</p>
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -69,7 +69,7 @@ export function CourtManageModal({
                   </Button>
                   {court.active ? (
                     <Button variant="ghost" size="sm" onClick={() => onDeactivate(court)} title="Desativar">
-                      <PowerOff size={14} className="text-red-500" />
+                      <PowerOff size={14} className="text-red-500 dark:text-red-400" />
                     </Button>
                   ) : (
                     <Button
@@ -79,7 +79,7 @@ export function CourtManageModal({
                       loading={activatingId === court.id}
                       title="Ativar"
                     >
-                      <Power size={14} className="text-green-600" />
+                      <Power size={14} className="text-green-600 dark:text-green-400" />
                     </Button>
                   )}
                 </div>

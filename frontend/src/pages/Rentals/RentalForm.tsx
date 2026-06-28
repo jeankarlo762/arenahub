@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -277,7 +277,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
         {/* Dias da semana — apenas para planos mensais, após plano selecionado */}
         {showWeekdays && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-1.5">Dias da semana *</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Dias da semana *</p>
             <div className="flex gap-2 flex-wrap">
               {WEEKDAY_LABELS.map((label, i) => {
                 const isAvailable = availableDays.has(i)
@@ -291,10 +291,10 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
                     title={!isAvailable ? 'Sem funcionamento nesta quadra' : undefined}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
                       !isAvailable
-                        ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'
+                        ? 'bg-gray-50 dark:bg-gray-800 text-gray-300 dark:text-gray-600 border-gray-100 dark:border-gray-800 cursor-not-allowed'
                         : isSelected
                         ? 'bg-orange-500 text-white border-orange-500'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-orange-300'
                     }`}
                   >
                     {label}
@@ -308,7 +308,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
         {/* Horários e Valores */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-medium text-gray-700">Horários e Valores *</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Horários e Valores *</p>
             <button
               type="button"
               onClick={() => append({ startTime: '', endTime: '', price: 0 })}
@@ -318,12 +318,12 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
             </button>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-3 flex flex-col gap-2">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex flex-col gap-2">
             <div className="grid grid-cols-[1fr_auto_1fr_1fr_auto] gap-2 items-center px-1">
-              <span className="text-xs font-semibold text-gray-500">Início</span>
-              <span className="text-xs text-gray-400 w-4 text-center">–</span>
-              <span className="text-xs font-semibold text-gray-500">Fim</span>
-              <span className="text-xs font-semibold text-gray-500">Valor (R$)</span>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Início</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500 w-4 text-center">–</span>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Fim</span>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Valor (R$)</span>
               <span className="w-6" />
             </div>
 
@@ -332,30 +332,30 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
                 <input
                   type="time"
                   {...register(`slots.${i}.startTime`)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-orange-400 bg-white"
+                  className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-orange-400 bg-white dark:bg-gray-800 dark:text-gray-100"
                 />
-                <span className="text-gray-400 text-sm text-center">–</span>
+                <span className="text-gray-400 dark:text-gray-500 text-sm text-center">–</span>
                 <input
                   type="time"
                   {...register(`slots.${i}.endTime`)}
-                  className="px-2 py-1.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-orange-400 bg-white"
+                  className="px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-orange-400 bg-white dark:bg-gray-800 dark:text-gray-100"
                 />
                 <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">R$</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 text-xs pointer-events-none">R$</span>
                   <input
                     type="number"
                     min={0}
                     step={0.01}
                     placeholder="0,00"
                     {...register(`slots.${i}.price`)}
-                    className="w-full pl-7 pr-2 py-1.5 text-sm border border-gray-300 rounded-lg outline-none focus:border-orange-400 bg-white"
+                    className="w-full pl-7 pr-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:border-orange-400 bg-white dark:bg-gray-800 dark:text-gray-100"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => remove(i)}
                   disabled={fields.length === 1}
-                  className="p-1.5 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -363,7 +363,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
             ))}
           </div>
           {errors.slots && (
-            <p className="text-xs text-red-500 mt-1">Preencha todos os horários</p>
+            <p className="text-xs text-red-500 dark:text-red-400 mt-1">Preencha todos os horários</p>
           )}
         </div>
 
@@ -379,7 +379,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
           <>
             <Input label="Data de início *" type="date" error={errors.startDate?.message} {...register('startDate')} />
             {computedEndDate && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg px-4 py-3 text-sm text-orange-700">
+              <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg px-4 py-3 text-sm text-orange-700 dark:text-orange-400">
                 Término previsto: <strong>{formatDateBR(computedEndDate)}</strong>
                 {' '}({PLAN_MONTHS[plan]} mês{PLAN_MONTHS[plan] > 1 ? 'es' : ''})
               </div>
@@ -396,8 +396,8 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
 
         {/* Pagamento */}
         {planSelected && (
-          <div className="border border-gray-100 rounded-xl p-4 flex flex-col gap-4">
-            <p className="text-sm font-semibold text-gray-700">Pagamento</p>
+          <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-4 flex flex-col gap-4">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Pagamento</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select label="Forma de pagamento" options={PAYMENT_METHOD_OPTIONS} {...register('paymentMethod')} />
               {!isDaily && (

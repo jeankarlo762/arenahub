@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Pencil, Trash2, Package, BarChart2, Download, Medal, Tag, Plus, X } from 'lucide-react'
 import {
@@ -181,16 +181,16 @@ export default function BarPage() {
       <div className="flex flex-col gap-6">
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex gap-1 border-b border-gray-200">
+          <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setTab('products')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'products' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'products' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
             >
               <Package size={15} /> Cardápio
             </button>
             <button
               onClick={() => setTab('stats')}
-              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'stats' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'stats' ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
             >
               <BarChart2 size={15} /> Relatório
             </button>
@@ -218,7 +218,7 @@ export default function BarPage() {
           productsLoading ? (
             <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>
           ) : products.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
+            <div className="text-center py-16 text-gray-400 dark:text-gray-500">
               <Package size={48} className="mx-auto mb-3 opacity-30" />
               <p className="text-sm">Nenhum produto cadastrado</p>
             </div>
@@ -226,23 +226,23 @@ export default function BarPage() {
             <div className="flex flex-col gap-6">
               {sortedCategories.map(([category, items]) => (
                 <div key={category}>
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">{category}</h3>
+                  <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{category}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                     {items.map((product) => (
-                      <div key={product.id} className={`bg-white rounded-xl border p-4 flex items-center justify-between gap-3 ${product.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}>
+                      <div key={product.id} className={`bg-white dark:bg-gray-900 rounded-xl border p-4 flex items-center justify-between gap-3 ${product.active ? 'border-gray-200 dark:border-gray-700' : 'border-gray-100 dark:border-gray-800 opacity-60'}`}>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-gray-900 truncate">{product.name}</p>
-                            {!product.active && <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full shrink-0">Inativo</span>}
+                            <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{product.name}</p>
+                            {!product.active && <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 px-1.5 py-0.5 rounded-full shrink-0">Inativo</span>}
                           </div>
-                          {product.description && <p className="text-xs text-gray-400 mt-0.5 truncate">{product.description}</p>}
+                          {product.description && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{product.description}</p>}
                           <p className="text-base font-bold text-orange-600 mt-1">{formatCurrency(product.price)}</p>
                         </div>
                         <div className="flex gap-1 shrink-0">
-                          <button onClick={() => { setEditingProduct(product); setProductFormOpen(true) }} className="p-1.5 text-gray-400 hover:text-orange-500 transition-colors">
+                          <button onClick={() => { setEditingProduct(product); setProductFormOpen(true) }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-orange-500 transition-colors">
                             <Pencil size={15} />
                           </button>
-                          <button onClick={() => setDeleteProductId(product.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                          <button onClick={() => setDeleteProductId(product.id)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors">
                             <Trash2 size={15} />
                           </button>
                         </div>
@@ -265,7 +265,7 @@ export default function BarPage() {
                   <button
                     key={p}
                     onClick={() => applyPeriod(p)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statsPeriod === p ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statsPeriod === p ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
                   >
                     {periodLabels[p]}
                   </button>
@@ -284,17 +284,17 @@ export default function BarPage() {
               <>
                 {/* Summary cards */}
                 <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                  <Card><p className="text-xs text-gray-500 mb-1">Faturamento</p><p className="text-xl sm:text-2xl font-bold text-orange-600">{formatCurrency(stats.revenue)}</p></Card>
-                  <Card><p className="text-xs text-gray-500 mb-1">Comandas pagas</p><p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.orderCount}</p></Card>
-                  <Card><p className="text-xs text-gray-500 mb-1">Itens vendidos</p><p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.itemCount}</p></Card>
-                  <Card><p className="text-xs text-gray-500 mb-1">Ticket médio</p><p className="text-xl sm:text-2xl font-bold text-green-700">{formatCurrency(stats.avgTicket)}</p></Card>
+                  <Card><p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Faturamento</p><p className="text-xl sm:text-2xl font-bold text-orange-600">{formatCurrency(stats.revenue)}</p></Card>
+                  <Card><p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Comandas pagas</p><p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.orderCount}</p></Card>
+                  <Card><p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Itens vendidos</p><p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.itemCount}</p></Card>
+                  <Card><p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Ticket médio</p><p className="text-xl sm:text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(stats.avgTicket)}</p></Card>
                 </div>
 
                 {/* Bar chart */}
                 <Card>
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">Faturamento diário</h2>
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Faturamento diário</h2>
                   {stats.daily.every((d) => d.revenue === 0) ? (
-                    <p className="text-sm text-gray-400 text-center py-8">Nenhuma comanda paga neste período</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Nenhuma comanda paga neste período</p>
                   ) : (
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={stats.daily}>
@@ -313,20 +313,20 @@ export default function BarPage() {
                   <Card>
                     <div className="flex items-center gap-2 mb-4">
                       <Medal size={18} className="text-orange-500" />
-                      <h2 className="text-base font-semibold text-gray-900">Produtos mais vendidos</h2>
+                      <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Produtos mais vendidos</h2>
                     </div>
                     <div className="flex flex-col gap-2">
                       {stats.topProducts.map((p, i) => (
-                        <div key={p.productId} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+                        <div key={p.productId} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
                           <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                            i === 0 ? 'bg-yellow-100 text-yellow-700' :
-                            i === 1 ? 'bg-gray-200 text-gray-600' :
-                            i === 2 ? 'bg-orange-100 text-orange-600' :
-                            'bg-gray-100 text-gray-500'
+                            i === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' :
+                            i === 1 ? 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400' :
+                            i === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+                            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                           }`}>{i + 1}</span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate">{p.name}</p>
-                            <p className="text-xs text-gray-500">{p.quantity} un. vendidas</p>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{p.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{p.quantity} un. vendidas</p>
                           </div>
                           <p className="text-sm font-bold text-orange-600 shrink-0">{formatCurrency(p.revenue)}</p>
                         </div>
@@ -356,23 +356,23 @@ export default function BarPage() {
               onChange={(e) => setNewCategoryName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
               placeholder="Nome da categoria..."
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
             />
             <Button onClick={handleAddCategory} loading={addingCategory} disabled={!newCategoryName.trim()}>
               <Plus size={15} />
             </Button>
           </div>
           {categories.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">Nenhuma categoria cadastrada</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhuma categoria cadastrada</p>
           ) : (
             <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
               {categories.map((cat) => (
-                <div key={cat.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-800">{cat.name}</span>
+                <div key={cat.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{cat.name}</span>
                   <button
                     onClick={() => handleDeleteCategory(cat.id)}
                     disabled={deletingCategoryId === cat.id}
-                    className="p-1 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50"
                   >
                     {deletingCategoryId === cat.id ? <Spinner size="sm" /> : <X size={14} />}
                   </button>

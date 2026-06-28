@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -83,9 +83,9 @@ export function PaymentForm({ open, onClose, onSuccess, booking }: PaymentFormPr
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="bg-gray-50 rounded-lg p-3 text-sm">
-          <p className="text-gray-600">Valor do agendamento</p>
-          <p className="font-semibold text-lg text-gray-900">{formatCurrency(Number(booking.totalPrice))}</p>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-sm">
+          <p className="text-gray-600 dark:text-gray-400">Valor do agendamento</p>
+          <p className="font-semibold text-lg text-gray-900 dark:text-gray-100">{formatCurrency(Number(booking.totalPrice))}</p>
         </div>
         <Input
           label="Valor pago (R$)"

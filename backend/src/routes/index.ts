@@ -13,6 +13,7 @@ import { playerRoutes } from './player.routes'
 import { superAdminRoutes } from './superadmin.routes'
 import { publicRoutes } from './public.routes'
 import { auditRoutes } from './audit.routes'
+import { supportRoutes } from './support.routes'
 
 export async function registerRoutes(app: FastifyInstance) {
   app.register(authRoutes, { prefix: '/api/auth' })
@@ -29,4 +30,5 @@ export async function registerRoutes(app: FastifyInstance) {
   app.register(superAdminRoutes, { prefix: '/api/superadmin' })
   app.register(publicRoutes, { prefix: '/api/public' })
   app.register(auditRoutes, { prefix: '/api/audit' })
+  app.register(supportRoutes, { prefix: '/api/support' })
 }

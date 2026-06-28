@@ -1,6 +1,7 @@
 import { Menu } from 'lucide-react'
 import { useUIStore } from '../../store/ui.store'
 import { NotificationBell } from '../ui/NotificationBell'
+import { SupportTicketButton } from '../ui/SupportTicketButton'
 
 interface HeaderProps {
   title: string
@@ -22,7 +23,8 @@ export function Header({ title, breadcrumb }: HeaderProps) {
         {breadcrumb && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{breadcrumb}</p>}
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
       </div>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-1">
+        <SupportTicketButton />
         <NotificationBell />
       </div>
     </header>

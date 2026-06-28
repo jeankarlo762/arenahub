@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { MapPin, DollarSign, Palette, Users } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { UsersTab } from './UsersTab'
@@ -26,7 +26,7 @@ export default function SettingsPage() {
   return (
     <Layout title="Configurações">
       <div className="flex flex-col gap-6">
-        <div className="flex gap-1 border-b border-gray-200">
+        <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
           {visibleTabs.map((t) => (
             <button
               key={t.key}
@@ -34,7 +34,7 @@ export default function SettingsPage() {
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 activeTab === t.key
                   ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
               }`}
             >
               <t.icon size={14} /> {t.label}

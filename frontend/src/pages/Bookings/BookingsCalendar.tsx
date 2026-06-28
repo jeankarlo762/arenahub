@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+﻿import { useState, useEffect, useCallback, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import type { Booking } from '../../types/booking'
@@ -23,6 +23,15 @@ const COURT_COLORS = [
   { bg: '#faf5ff', border: '#a855f7', text: '#581c87' },  // purple
   { bg: '#fdf2f8', border: '#ec4899', text: '#831843' },  // pink
   { bg: '#fefce8', border: '#eab308', text: '#713f12' },  // yellow
+]
+
+const COURT_COLORS_DARK = [
+  { bg: 'rgba(249,115,22,0.15)', border: '#f97316', text: '#fb923c' },  // orange
+  { bg: 'rgba(59,130,246,0.15)', border: '#3b82f6', text: '#60a5fa' },  // blue
+  { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', text: '#4ade80' },   // green
+  { bg: 'rgba(168,85,247,0.15)', border: '#a855f7', text: '#c084fc' },  // purple
+  { bg: 'rgba(236,72,153,0.15)', border: '#ec4899', text: '#f472b6' },  // pink
+  { bg: 'rgba(234,179,8,0.15)', border: '#eab308', text: '#facc15' },   // yellow
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,9 +97,26 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
   const [monday, setMonday] = useState(() => getMonday(new Date()))
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(false)
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const update = () => setIsDark(document.documentElement.classList.contains('dark') || mq.matches)
+    update()
+    const observer = new MutationObserver(update)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    mq.addEventListener('change', update)
+    return () => { observer.disconnect(); mq.removeEventListener('change', update) }
+  }, [])
 
   const courtColorMap = useMemo(
-    () => new Map(courts.map((c, i) => [c.id, COURT_COLORS[i % COURT_COLORS.length]])),
+    () => new Map(courts.map((c, i) => [
+      c.id,
+      {
+        light: COURT_COLORS[i % COURT_COLORS.length],
+        dark: COURT_COLORS_DARK[i % COURT_COLORS_DARK.length],
+      },
+    ])),
     [courts],
   )
 
@@ -124,44 +150,45 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
   const weekLabel = `${days[0].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} – ${days[6].toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}`
 
   return (
-    <div className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="flex flex-col bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
 
       {/* ── Toolbar ── */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 flex-wrap">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex-wrap">
         <button
           onClick={() => setMonday(getMonday(new Date()))}
-          className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           Hoje
         </button>
         <div className="flex items-center">
           <button
             onClick={() => setMonday((m) => addDays(m, -7))}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
           >
             <ChevronLeft size={18} />
           </button>
           <button
             onClick={() => setMonday((m) => addDays(m, 7))}
-            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
           >
             <ChevronRight size={18} />
           </button>
         </div>
-        <span className="text-sm font-semibold text-gray-800">{weekLabel}</span>
+        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{weekLabel}</span>
         {loading && <Spinner size="sm" className="text-orange-500 ml-1" />}
 
         {/* Court legend */}
         <div className="ml-auto flex items-center gap-3 flex-wrap">
           {courts.map((court) => {
-            const color = courtColorMap.get(court.id)
+            const colorSet = courtColorMap.get(court.id)
+            const borderColor = colorSet?.light.border
             return (
               <div key={court.id} className="flex items-center gap-1.5">
                 <div
                   className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: color?.border }}
+                  style={{ backgroundColor: borderColor }}
                 />
-                <span className="text-xs text-gray-600 truncate max-w-[120px]">{court.name}</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[120px]">{court.name}</span>
               </div>
             )
           })}
@@ -173,20 +200,20 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
         <div className="min-w-[640px]">
 
           {/* Day headers */}
-          <div className="flex border-b border-gray-100 sticky top-0 bg-white z-20">
+          <div className="flex border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-20">
             {/* Gutter */}
-            <div className="w-14 shrink-0 border-r border-gray-100" />
+            <div className="w-14 shrink-0 border-r border-gray-100 dark:border-gray-800" />
             {days.map((day, i) => {
               const isToday = toInputDate(day) === todayStr
               return (
                 <div
                   key={i}
-                  className={`flex-1 py-2 text-center border-r border-gray-100 last:border-0 ${isToday ? 'bg-orange-50' : ''}`}
+                  className={`flex-1 py-2 text-center border-r border-gray-100 dark:border-gray-800 last:border-0 ${isToday ? 'bg-orange-50 dark:bg-orange-900/20' : ''}`}
                 >
-                  <p className="text-xs font-medium text-gray-400 uppercase">{DAY_NAMES_SHORT[i]}</p>
+                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">{DAY_NAMES_SHORT[i]}</p>
                   <p
                     className={`text-xl font-bold leading-tight mt-0.5 mx-auto w-9 h-9 flex items-center justify-center rounded-full ${
-                      isToday ? 'bg-orange-500 text-white' : 'text-gray-900'
+                      isToday ? 'bg-orange-500 text-white' : 'text-gray-900 dark:text-gray-100'
                     }`}
                   >
                     {day.getDate()}
@@ -200,14 +227,14 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
           <div className="flex" style={{ height: TOTAL_HEIGHT }}>
 
             {/* Hour labels gutter */}
-            <div className="w-14 shrink-0 border-r border-gray-100 relative">
+            <div className="w-14 shrink-0 border-r border-gray-100 dark:border-gray-800 relative">
               {HOURS.map((hour) => (
                 <div
                   key={hour}
                   className="absolute w-full flex items-start justify-end pr-2"
                   style={{ top: (hour - START_HOUR) * HOUR_HEIGHT - 8 }}
                 >
-                  <span className="text-[11px] text-gray-400 leading-none">
+                  <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-none">
                     {String(hour).padStart(2, '0')}:00
                   </span>
                 </div>
@@ -222,13 +249,13 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
               return (
                 <div
                   key={di}
-                  className={`flex-1 relative border-r border-gray-100 last:border-0 ${isToday ? 'bg-orange-50/30' : ''}`}
+                  className={`flex-1 relative border-r border-gray-100 dark:border-gray-800 last:border-0 ${isToday ? 'bg-orange-50/30 dark:bg-orange-900/10' : ''}`}
                 >
                   {/* Hour dividers */}
                   {HOURS.map((hour) => (
                     <div
                       key={hour}
-                      className="absolute left-0 right-0 border-t border-gray-100"
+                      className="absolute left-0 right-0 border-t border-gray-100 dark:border-gray-800"
                       style={{ top: (hour - START_HOUR) * HOUR_HEIGHT }}
                     />
                   ))}
@@ -236,7 +263,7 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
                   {HOURS.map((hour) => (
                     <div
                       key={`h-${hour}`}
-                      className="absolute left-0 right-0 border-t border-dashed border-gray-100"
+                      className="absolute left-0 right-0 border-t border-dashed border-gray-100 dark:border-gray-800"
                       style={{ top: (hour - START_HOUR) * HOUR_HEIGHT + HOUR_HEIGHT / 2 }}
                     />
                   ))}
@@ -249,7 +276,10 @@ export function BookingsCalendar({ courts, onBookingClick }: Props) {
                     const height = Math.max((endMin - startMin) / 60 * HOUR_HEIGHT - 2, 20)
                     const left = `calc(${(col / cols) * 100}% + 2px)`
                     const width = `calc(${100 / cols}% - 4px)`
-                    const color = courtColorMap.get(booking.courtId) ?? COURT_COLORS[0]
+                    const colorSet = courtColorMap.get(booking.courtId)
+                    const color = isDark
+                      ? (colorSet?.dark ?? COURT_COLORS_DARK[0])
+                      : (colorSet?.light ?? COURT_COLORS[0])
                     const isShort = height < 38
 
                     return (

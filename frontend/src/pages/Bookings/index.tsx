@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { Plus, CalendarDays, List, Search, History, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
@@ -128,8 +128,8 @@ export default function BookingsPage() {
       header: 'Cliente',
       cell: (b: Booking) => (
         <div>
-          <p className="font-medium text-gray-900">{b.customerName}</p>
-          <p className="text-xs text-gray-500">{b.customerPhone}</p>
+          <p className="font-medium text-gray-900 dark:text-gray-100">{b.customerName}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{b.customerPhone}</p>
         </div>
       ),
     },
@@ -139,7 +139,7 @@ export default function BookingsPage() {
       cell: (b: Booking) => (
         <div>
           <p>{formatDate(b.date)}</p>
-          <p className="text-xs text-gray-500">{b.startTime} – {b.endTime}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{b.startTime} – {b.endTime}</p>
         </div>
       ),
     },
@@ -170,7 +170,7 @@ export default function BookingsPage() {
       <div className="flex flex-col gap-6">
         {/* Tabs + Action */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex gap-1 border-b border-gray-200">
+          <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
             {([
               { mode: 'list' as ViewMode, icon: List, label: 'Lista' },
               { mode: 'calendar' as ViewMode, icon: CalendarDays, label: 'Calendário' },
@@ -180,7 +180,9 @@ export default function BookingsPage() {
                 key={mode}
                 onClick={() => setViewMode(mode)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                  viewMode === mode ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  viewMode === mode
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
                 <Icon size={15} /> {label}
@@ -194,15 +196,15 @@ export default function BookingsPage() {
 
         {/* List filters card */}
         {viewMode === 'list' && (
-          <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3 flex-wrap">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-end gap-3 flex-wrap">
             <div className="relative flex-1 min-w-36">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Buscar cliente..."
                 value={filterCustomer}
                 onChange={(e) => setFilterCustomer(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
               />
             </div>
             <div className="flex gap-1 shrink-0">
@@ -213,7 +215,11 @@ export default function BookingsPage() {
                 <button
                   key={label}
                   onClick={() => setFilterCreatedDate(value)}
-                  className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${filterCreatedDate === value ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                  className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                    filterCreatedDate === value
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  }`}
                 >
                   {label}
                 </button>
@@ -242,13 +248,13 @@ export default function BookingsPage() {
           <>
             {/* Count card */}
             {!loading && (
-              <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-200">
-                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-50">
+              <div className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-50 dark:bg-orange-900/20">
                   <CalendarDays size={16} className="text-orange-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 leading-none">{bookings.length}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-none">{bookings.length}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     agendamento{bookings.length !== 1 ? 's' : ''}
                     {filterCreatedDate
                       ? ` feito${bookings.length !== 1 ? 's' : ''} em ${new Date(filterCreatedDate + 'T12:00:00').toLocaleDateString('pt-BR')}`
@@ -268,7 +274,7 @@ export default function BookingsPage() {
                 action={{ label: 'Novo Agendamento', onClick: () => setFormOpen(true) }}
               />
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden overflow-x-auto">
                 <Table
                   columns={columns}
                   data={bookings}
@@ -289,15 +295,15 @@ export default function BookingsPage() {
         {/* ── Histórico ── */}
         {viewMode === 'history' && (
           <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3 flex-wrap">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-end gap-3 flex-wrap">
               <div className="relative flex-1 min-w-48">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Buscar por nome, telefone..."
                   value={historySearch}
                   onChange={(e) => setHistorySearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
                 />
               </div>
               <Select
@@ -320,7 +326,7 @@ export default function BookingsPage() {
                 description="Tente ajustar os filtros de busca"
               />
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden overflow-x-auto">
                 <Table
                   columns={[
                     ...columns,
@@ -339,7 +345,7 @@ export default function BookingsPage() {
 
             {!historyLoading && historyBookings.length > 0 && (
               <div className="flex items-center justify-between">
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   {historyBookings.length} agendamento{historyBookings.length !== 1 ? 's' : ''} encontrado{historyBookings.length !== 1 ? 's' : ''}
                 </p>
                 <Button variant="secondary" onClick={() => exportHistoryCSV(historyBookings)}>

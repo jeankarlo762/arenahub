@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, CheckCircle, XCircle, Minus, RotateCcw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Modal } from '../../components/ui/Modal'
@@ -18,9 +18,9 @@ interface OrderDetailProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'bg-green-100 text-green-700',
-  CLOSED: 'bg-orange-100 text-orange-700',
-  CANCELLED: 'bg-red-100 text-red-600',
+  OPEN: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+  CLOSED: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400',
+  CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
 }
 const STATUS_LABELS: Record<string, string> = {
   OPEN: 'Aberta',
@@ -186,11 +186,11 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
         ) : (
           <div className="flex flex-col gap-5">
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-100">
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-gray-800">
               <div>
-                <p className="text-xl font-bold text-gray-900">#{order.number}</p>
-                <p className="text-gray-600 font-medium">{order.customerName}</p>
-                {order.notes && <p className="text-sm text-gray-400 mt-0.5">{order.notes}</p>}
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">#{order.number}</p>
+                <p className="text-gray-600 dark:text-gray-400 font-medium">{order.customerName}</p>
+                {order.notes && <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">{order.notes}</p>}
                 {order.paymentMethod && (
                   <p className="text-xs text-orange-600 font-medium mt-1">
                     Pago via {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
@@ -204,8 +204,8 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
                 <p className="text-2xl font-bold text-orange-600 mt-2">{formatCurrency(Number(order.total))}</p>
                 {hasPartialPayment && order.status === 'OPEN' && (
                   <div className="mt-1">
-                    <p className="text-xs text-gray-400">Já pago: {formatCurrency(Number((order as unknown as { paidAmount?: number }).paidAmount ?? 0))}</p>
-                    <p className="text-sm font-semibold text-orange-700">Restante: {formatCurrency(remainingToPay)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">Já pago: {formatCurrency(Number((order as unknown as { paidAmount?: number }).paidAmount ?? 0))}</p>
+                    <p className="text-sm font-semibold text-orange-700 dark:text-orange-400">Restante: {formatCurrency(remainingToPay)}</p>
                   </div>
                 )}
               </div>
@@ -213,9 +213,9 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
 
             {/* Add item */}
             {canEdit && (
-              <div className="flex gap-2 items-end bg-gray-50 rounded-xl p-3">
+              <div className="flex gap-2 items-end bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Produto</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produto</p>
                   <SearchableSelect
                     options={products.map((p) => ({
                       value: p.id,
@@ -228,12 +228,12 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
                   />
                 </div>
                 <div className="w-28 shrink-0">
-                  <p className="text-xs font-medium text-gray-600 mb-1">Qtd</p>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Qtd</p>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="w-7 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 transition-colors"
+                      className="w-7 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Minus size={13} />
                     </button>
@@ -242,12 +242,12 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
                       min={1}
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-                      className="w-10 text-center rounded-lg border border-gray-200 py-2 text-sm text-gray-900 focus:border-orange-400 outline-none"
+                      className="w-10 text-center rounded-lg border border-gray-200 dark:border-gray-700 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 focus:border-orange-400 outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => q + 1)}
-                      className="w-7 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 transition-colors"
+                      className="w-7 h-9 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Plus size={13} />
                     </button>
@@ -260,12 +260,12 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
             )}
 
             {/* Items list */}
-            <div className="flex flex-col gap-0 divide-y divide-gray-100">
+            <div className="flex flex-col gap-0 divide-y divide-gray-100 dark:divide-gray-700">
               {order.items.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-6">Nenhum item adicionado ainda</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Nenhum item adicionado ainda</p>
               ) : (
                 <>
-                  <div className="grid grid-cols-[1fr_60px_100px_100px_40px] gap-3 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <div className="grid grid-cols-[1fr_60px_100px_100px_40px] gap-3 pb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                     <span>Produto</span>
                     <span className="text-center">Qtd</span>
                     <span className="text-right">Unit.</span>
@@ -278,19 +278,19 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
                       className="grid grid-cols-[1fr_60px_100px_100px_40px] gap-3 items-center py-3"
                     >
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{item.product.name}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.product.name}</p>
                         {item.product.category && (
-                          <p className="text-xs text-gray-400">{item.product.category}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{item.product.category}</p>
                         )}
                       </div>
-                      <p className="text-sm text-center text-gray-700">{item.quantity}x</p>
-                      <p className="text-sm text-right text-gray-600">{formatCurrency(Number(item.unitPrice))}</p>
-                      <p className="text-sm font-semibold text-right text-gray-900">{formatCurrency(Number(item.subtotal))}</p>
+                      <p className="text-sm text-center text-gray-700 dark:text-gray-300">{item.quantity}x</p>
+                      <p className="text-sm text-right text-gray-600 dark:text-gray-400">{formatCurrency(Number(item.unitPrice))}</p>
+                      <p className="text-sm font-semibold text-right text-gray-900 dark:text-gray-100">{formatCurrency(Number(item.subtotal))}</p>
                       {canEdit ? (
                         <button
                           onClick={() => handleRemoveItem(item.id)}
                           disabled={removingItemId === item.id}
-                          className="p-1 text-gray-300 hover:text-red-500 transition-colors flex justify-center"
+                          className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-500 transition-colors flex justify-center"
                         >
                           {removingItemId === item.id ? <Spinner size="sm" /> : <Trash2 size={15} />}
                         </button>
@@ -325,7 +325,7 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
         }
       >
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Selecione como o cliente pagou a comanda #{order?.number}
             {order && ` — ${formatCurrency(hasPartialPayment ? remainingToPay : Number(order.total))}`}.
             {hasPartialPayment && (
@@ -342,12 +342,12 @@ export function OrderDetail({ open, onClose, orderId, onRefresh }: OrderDetailPr
                 onClick={() => setSelectedPayMethod(m.value)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-left transition-all ${
                   selectedPayMethod === m.value
-                    ? 'border-orange-500 bg-orange-50 text-orange-700'
-                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                  selectedPayMethod === m.value ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
+                  selectedPayMethod === m.value ? 'border-orange-500 bg-orange-500' : 'border-gray-300 dark:border-gray-600'
                 }`}>
                   {selectedPayMethod === m.value && <span className="w-2 h-2 rounded-full bg-white" />}
                 </span>

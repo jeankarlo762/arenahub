@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -192,7 +192,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
         />
 
         {selectedCourt && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {selectedCourt.slotMinutes} min por slot · {formatCurrency(Number(selectedCourt.pricePerSlot))} / slot
           </p>
         )}
@@ -208,7 +208,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
         {date && courtId && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Horários
                 {selectedTimes.length > 0 && (
                   <span className="ml-2 text-xs font-normal text-orange-600">
@@ -220,7 +220,7 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
                 <button
                   type="button"
                   onClick={() => setSelectedTimes([])}
-                  className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-xs text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
                 >
                   Limpar seleção
                 </button>
@@ -230,10 +230,10 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
             {loadingSlots ? (
               <div className="flex items-center gap-2 py-3">
                 <Spinner size="sm" className="text-orange-500" />
-                <span className="text-sm text-gray-400">Carregando horários...</span>
+                <span className="text-sm text-gray-400 dark:text-gray-500">Carregando horários...</span>
               </div>
             ) : availableSlots.length === 0 ? (
-              <p className="text-sm text-gray-400 py-3 bg-gray-50 rounded-lg text-center">
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-center">
                 Nenhum horário disponível nesta data
               </p>
             ) : (
@@ -249,10 +249,10 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
                       onClick={() => isAvailable && toggleSlot(slot.startTime)}
                       className={`rounded-lg px-2 py-2 text-center text-xs font-medium transition-all ${
                         !isAvailable
-                          ? 'bg-gray-100 text-gray-300 border border-gray-200 cursor-not-allowed line-through'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed line-through'
                           : isSelected
                           ? 'bg-orange-500 text-white border border-orange-500 shadow-sm'
-                          : 'bg-green-50 text-green-700 border border-green-200 hover:border-orange-400 hover:bg-orange-50'
+                          : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-700 hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
                       }`}
                     >
                       <span className="block">{slot.startTime}</span>
@@ -266,13 +266,13 @@ export function BookingForm({ open, onClose, onSuccess, courts, preSelect }: Boo
             )}
 
             {slotsError && (
-              <p className="text-xs text-red-500">{slotsError}</p>
+              <p className="text-xs text-red-500 dark:text-red-400">{slotsError}</p>
             )}
           </div>
         )}
 
-        <div className="border-t pt-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Dados do Cliente</p>
+        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3">Dados do Cliente</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Nome" placeholder="Nome do cliente" error={errors.customerName?.message} {...register('customerName')} />
             <Input

@@ -288,6 +288,41 @@ export async function superAdminRoutes(app: FastifyInstance) {
     return reply.status(204).send()
   })
 
+  // ---------- Suporte (tickets enviados pelos tenants) ----------
+  app.get('/support/tickets', async (req: FastifyRequest<{ Querystring: {
+    status?: string; page?: string; pageSize?: string
+  } }>, reply: FastifyReply) => {
+    const q = req.query
+    const page = Math.max(1, parseInt(q.page ?? '1', 10) || 1)
+    const pageSize = Math.min(100, Math.max(1, parseInt(q.pageSize ?? '20', 10) || 20))
+    const where: Record<string, unknown> = {}
+    if (q.status) where.status = q.status
+
+    const [total, tickets] = await Promise.all([
+      prisma.supportTicket.count({ where }),
+      prisma.supportTicket.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ])
+
+    return reply.send({ tickets, total, page, pageSize, totalPages: Math.ceil(total / pageSize) })
+  })
+
+  app.patch<{ Params: { id: string } }>('/support/tickets/:id', async (req, reply: FastifyReply) => {
+    const { status } = z.object({
+      status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
+    }).parse(req.body)
+
+    const ticket = await prisma.supportTicket.update({
+      where: { id: req.params.id },
+      data: { status },
+    })
+    return reply.send(ticket)
+  })
+
   // ---------- Auditoria global (todas as arenas) ----------
   app.get('/audit', async (req: FastifyRequest<{ Querystring: {
     page?: string; pageSize?: string; tenantId?: string; entity?: string; action?: string; search?: string; startDate?: string; endDate?: string

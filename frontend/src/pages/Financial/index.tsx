@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Card } from '../../components/ui/Card'
@@ -92,7 +92,6 @@ export default function FinancialPage() {
 
   useEffect(() => { load() }, [load])
 
-  // Atualização instantânea: recarrega ao voltar o foco para a aba
   useEffect(() => {
     function onFocus() { load() }
     window.addEventListener('focus', onFocus)
@@ -116,27 +115,27 @@ export default function FinancialPage() {
 
   function deltaColor(curr: number, prev: number, invertSign = false): string {
     const up = curr >= prev
-    return (up !== invertSign) ? 'text-green-600' : 'text-red-500'
+    return (up !== invertSign) ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
   }
 
   const summaryCards = [
     {
-      label: 'Total', value: formatCurrency(summary?.total ?? 0), color: 'text-gray-900', cardClass: '',
+      label: 'Total', value: formatCurrency(summary?.total ?? 0), color: 'text-gray-900 dark:text-gray-100', cardClass: '',
       delta: pctChange(summary?.total ?? 0, prevSummary?.total ?? 0),
       deltaColor: deltaColor(summary?.total ?? 0, prevSummary?.total ?? 0),
     },
     {
-      label: 'Recebido', value: formatCurrency(summary?.received ?? 0), color: 'text-green-700', cardClass: 'border-green-200 bg-green-50/30',
+      label: 'Recebido', value: formatCurrency(summary?.received ?? 0), color: 'text-green-700 dark:text-green-400', cardClass: 'border-green-200 dark:border-green-700 bg-green-50/30 dark:bg-green-900/20',
       delta: pctChange(summary?.received ?? 0, prevSummary?.received ?? 0),
       deltaColor: deltaColor(summary?.received ?? 0, prevSummary?.received ?? 0),
     },
     {
-      label: 'Pendente', value: formatCurrency(summary?.pending ?? 0), color: 'text-red-600', cardClass: (summary?.pending ?? 0) > 0 ? 'border-red-200 bg-red-50/30' : '',
+      label: 'Pendente', value: formatCurrency(summary?.pending ?? 0), color: 'text-red-600 dark:text-red-400', cardClass: (summary?.pending ?? 0) > 0 ? 'border-red-200 dark:border-red-700 bg-red-50/30 dark:bg-red-900/20' : '',
       delta: pctChange(summary?.pending ?? 0, prevSummary?.pending ?? 0),
       deltaColor: deltaColor(summary?.pending ?? 0, prevSummary?.pending ?? 0, true),
     },
     {
-      label: 'Transações', value: summary?.paymentCount ?? 0, color: 'text-orange-700', cardClass: '',
+      label: 'Transações', value: summary?.paymentCount ?? 0, color: 'text-orange-700 dark:text-orange-400', cardClass: '',
       delta: pctChange(summary?.paymentCount ?? 0, prevSummary?.paymentCount ?? 0),
       deltaColor: deltaColor(summary?.paymentCount ?? 0, prevSummary?.paymentCount ?? 0),
     },
@@ -145,12 +144,10 @@ export default function FinancialPage() {
   return (
     <Layout title="Financeiro">
       <div className="flex flex-col gap-6">
-        {/* Filters — horizontal */}
         <Card>
           <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-            {/* Quick periods */}
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-gray-500">Período</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Período</span>
               <div className="flex gap-2 flex-wrap">
                 {(['today', 'week', 'month', 'custom'] as const).map((p) => (
                   <button
@@ -159,7 +156,7 @@ export default function FinancialPage() {
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       quickPeriod === p
                         ? 'bg-orange-500 text-white'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     {p === 'today' ? 'Hoje' : p === 'week' ? 'Semana' : p === 'month' ? 'Mês' : 'Personalizado'}
@@ -168,16 +165,14 @@ export default function FinancialPage() {
               </div>
             </div>
 
-            {/* Date pickers */}
             <div className="flex items-end gap-3 flex-wrap">
               <DatePicker label="De" value={startDate} onChange={(e) => { setStartDate(e.target.value); setQuickPeriod('custom') }} className="w-36" />
               <DatePicker label="Até" value={endDate} onChange={(e) => { setEndDate(e.target.value); setQuickPeriod('custom') }} className="w-36" />
               <Button variant="secondary" onClick={load}>Filtrar</Button>
             </div>
 
-            {/* Source filter */}
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-gray-500">Origem</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Origem</span>
               <div className="flex gap-2 flex-wrap">
                 {([['courts', 'Quadras'], ['bar', 'Bar'], ['rentals', 'Locação'], ['all', 'Tudo']] as const).map(([val, label]) => (
                   <button
@@ -186,7 +181,7 @@ export default function FinancialPage() {
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       source === val
                         ? 'bg-orange-500 text-white'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                        : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                     }`}
                   >
                     {label}
@@ -204,7 +199,7 @@ export default function FinancialPage() {
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
               {summaryCards.map((c) => (
                 <Card key={c.label} className={c.cardClass}>
-                  <p className="text-xs text-gray-500 mb-1">{c.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{c.label}</p>
                   <p className={`text-xl sm:text-2xl font-bold ${c.color}`}>{c.value}</p>
                   {c.delta && (
                     <p className={`text-xs mt-1 font-medium ${c.deltaColor}`}>
@@ -216,9 +211,9 @@ export default function FinancialPage() {
             </div>
 
             <Card>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Receita Diária</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Receita Diária</h2>
               {daily.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-10">Sem dados no período selecionado</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-10">Sem dados no período selecionado</p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={daily}>
@@ -232,13 +227,12 @@ export default function FinancialPage() {
               )}
             </Card>
 
-            {/* Receita por Quadra (courts/all) + Métodos de Pagamento (sempre) */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {(source === 'courts' || source === 'all') && (
                 <Card>
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">Receita por Quadra</h2>
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Receita por Quadra</h2>
                   {byCourt.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-8">Sem dados</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados</p>
                   ) : (
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={byCourt} layout="vertical">
@@ -254,9 +248,9 @@ export default function FinancialPage() {
               )}
 
               <Card>
-                <h2 className="text-base font-semibold text-gray-900 mb-4">Formas de Pagamento</h2>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Formas de Pagamento</h2>
                 {byMethod.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-8">Sem dados no período</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados no período</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
@@ -286,11 +280,10 @@ export default function FinancialPage() {
             {source === 'bar' && barStats && (
               <div className="flex flex-col gap-6">
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  {/* Top products by quantity */}
                   <Card>
-                    <h2 className="text-base font-semibold text-gray-900 mb-4">Produtos Mais Vendidos</h2>
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Produtos Mais Vendidos</h2>
                     {barStats.topProducts.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-8">Sem dados no período</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados no período</p>
                     ) : (
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={barStats.topProducts} layout="vertical">
@@ -305,34 +298,33 @@ export default function FinancialPage() {
                   </Card>
                 </div>
 
-                {/* Margin ranking table */}
                 <Card>
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">Maior Margem de Lucro (produtos vendidos no período)</h2>
+                  <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Maior Margem de Lucro (produtos vendidos no período)</h2>
                   {barStats.byMargin.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-8">Sem dados no período</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados no período</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-gray-100">
-                            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
-                            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Produto</th>
-                            <th className="text-right py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Custo</th>
-                            <th className="text-right py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Venda</th>
-                            <th className="text-right py-2 pr-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Qtd</th>
-                            <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">Margem</th>
+                          <tr className="border-b border-gray-100 dark:border-gray-800">
+                            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">#</th>
+                            <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Produto</th>
+                            <th className="text-right py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Custo</th>
+                            <th className="text-right py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Venda</th>
+                            <th className="text-right py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Qtd</th>
+                            <th className="text-right py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Margem</th>
                           </tr>
                         </thead>
                         <tbody>
                           {barStats.byMargin.map((p, i) => (
-                            <tr key={p.productId} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                              <td className="py-2 pr-4 text-gray-400 font-mono text-xs">{i + 1}</td>
-                              <td className="py-2 pr-4 font-medium text-gray-900">{p.name}</td>
-                              <td className="py-2 pr-4 text-right text-gray-600">{formatCurrency(p.costPrice)}</td>
-                              <td className="py-2 pr-4 text-right text-gray-600">{formatCurrency(p.salePrice)}</td>
-                              <td className="py-2 pr-4 text-right text-gray-500">{p.quantity}</td>
+                            <tr key={p.productId} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                              <td className="py-2 pr-4 text-gray-400 dark:text-gray-500 font-mono text-xs">{i + 1}</td>
+                              <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">{p.name}</td>
+                              <td className="py-2 pr-4 text-right text-gray-600 dark:text-gray-400">{formatCurrency(p.costPrice)}</td>
+                              <td className="py-2 pr-4 text-right text-gray-600 dark:text-gray-400">{formatCurrency(p.salePrice)}</td>
+                              <td className="py-2 pr-4 text-right text-gray-500 dark:text-gray-400">{p.quantity}</td>
                               <td className="py-2 text-right">
-                                <span className={`font-semibold ${p.margin >= 50 ? 'text-green-600' : p.margin >= 20 ? 'text-orange-500' : 'text-red-500'}`}>
+                                <span className={`font-semibold ${p.margin >= 50 ? 'text-green-600 dark:text-green-400' : p.margin >= 20 ? 'text-orange-500 dark:text-orange-400' : 'text-red-500 dark:text-red-400'}`}>
                                   {p.margin.toFixed(1)}%
                                 </span>
                               </td>

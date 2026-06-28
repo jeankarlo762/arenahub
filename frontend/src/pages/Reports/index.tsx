@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { Layout } from '../../components/layout/Layout'
 import { Card } from '../../components/ui/Card'
@@ -86,27 +86,27 @@ export default function ReportsPage() {
           <>
             {/* ─── Receita total ─── */}
             <section>
-              <h2 className="text-base font-semibold text-gray-700 mb-3">Receita por Origem (período)</h2>
+              <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Receita por Origem (período)</h2>
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Quadras (recebido)</p>
-                  <p className="text-2xl font-bold text-gray-900">{formatCurrency(courtsReceived)}</p>
-                  <p className="text-xs text-gray-400">{courtsSummary?.paymentCount ?? 0} pagamento(s)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Quadras (recebido)</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(courtsReceived)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{courtsSummary?.paymentCount ?? 0} pagamento(s)</p>
                 </Card>
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Bar</p>
-                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(barRevenue)}</p>
-                  <p className="text-xs text-gray-400">{barStats?.orderCount ?? 0} comandas</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Bar</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(barRevenue)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{barStats?.orderCount ?? 0} comandas</p>
                 </Card>
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Locações (estimado)</p>
-                  <p className="text-2xl font-bold text-orange-600">{formatCurrency(rentalsEstimated)}</p>
-                  <p className="text-xs text-gray-400">{rentalReport?.activeCount ?? 0} locações ativas</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Locações (estimado)</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(rentalsEstimated)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{rentalReport?.activeCount ?? 0} locações ativas</p>
                 </Card>
-                <Card className="border-orange-200 bg-orange-50/40">
-                  <p className="text-xs text-gray-500 mb-1">Total Geral</p>
-                  <p className="text-2xl font-bold text-green-700">{formatCurrency(totalGeral)}</p>
-                  <p className="text-xs text-gray-400">Quadras + Bar + Locações</p>
+                <Card className="border-orange-200 dark:border-orange-700 bg-orange-50/40 dark:bg-orange-900/20">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Geral</p>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(totalGeral)}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Quadras + Bar + Locações</p>
                 </Card>
               </div>
             </section>
@@ -114,7 +114,7 @@ export default function ReportsPage() {
             {/* ─── Receita diária ─── */}
             {daily.length > 0 && (
               <Card>
-                <h2 className="text-base font-semibold text-gray-900 mb-4">Receita Diária</h2>
+                <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Receita Diária</h2>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={daily}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -130,12 +130,12 @@ export default function ReportsPage() {
             {/* ─── Bar ─── */}
             {barStats && (
               <section>
-                <h2 className="text-base font-semibold text-gray-700 mb-3">Bar</h2>
+                <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Bar</h2>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <Card>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Produtos mais vendidos</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Produtos mais vendidos</h3>
                     {barStats.topProducts.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-6">Sem dados</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Sem dados</p>
                     ) : (
                       <ResponsiveContainer width="100%" height={180}>
                         <BarChart data={barStats.topProducts} layout="vertical">
@@ -150,23 +150,23 @@ export default function ReportsPage() {
                   </Card>
 
                   <Card>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Resumo do bar</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Resumo do bar</h3>
                     <div className="flex flex-col gap-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Total de comandas</span>
+                        <span className="text-gray-500 dark:text-gray-400">Total de comandas</span>
                         <span className="font-semibold">{barStats.orderCount}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Ticket médio</span>
+                        <span className="text-gray-500 dark:text-gray-400">Ticket médio</span>
                         <span className="font-semibold">{formatCurrency(barStats.avgTicket)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Itens vendidos</span>
+                        <span className="text-gray-500 dark:text-gray-400">Itens vendidos</span>
                         <span className="font-semibold">{barStats.itemCount}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">Receita total</span>
-                        <span className="font-bold text-green-700">{formatCurrency(barStats.revenue)}</span>
+                        <span className="text-gray-500 dark:text-gray-400">Receita total</span>
+                        <span className="font-bold text-green-700 dark:text-green-400">{formatCurrency(barStats.revenue)}</span>
                       </div>
                     </div>
                   </Card>
@@ -177,21 +177,21 @@ export default function ReportsPage() {
             {/* ─── Locações ─── */}
             {rentalReport && (
               <section>
-                <h2 className="text-base font-semibold text-gray-700 mb-3">Locações</h2>
+                <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Locações</h2>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <Card>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Quadras com mais locações</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Quadras com mais locações</h3>
                     {rentalReport.topCourts.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-6">Sem dados</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Sem dados</p>
                     ) : (
                       <div className="flex flex-col gap-2">
                         {rentalReport.topCourts.slice(0, 5).map((c, i) => (
-                          <div key={i} className="flex items-center justify-between gap-2 text-sm py-1 border-b border-gray-50 last:border-0">
+                          <div key={i} className="flex items-center justify-between gap-2 text-sm py-1 border-b border-gray-50 dark:border-gray-800 last:border-0">
                             <div className="flex items-center gap-2 min-w-0">
-                              <div className="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-bold text-orange-600 shrink-0">{i + 1}</div>
+                              <div className="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-[10px] font-bold text-orange-600 dark:text-orange-400 shrink-0">{i + 1}</div>
                               <span className="truncate font-medium">{c.courtName}</span>
                             </div>
-                            <span className="shrink-0 text-orange-600 font-semibold">{formatCurrency(c.estimatedRevenue)}</span>
+                            <span className="shrink-0 text-orange-600 dark:text-orange-400 font-semibold">{formatCurrency(c.estimatedRevenue)}</span>
                           </div>
                         ))}
                       </div>
@@ -199,9 +199,9 @@ export default function ReportsPage() {
                   </Card>
 
                   <Card>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3">Atividade por dia da semana</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Atividade por dia da semana</h3>
                     {rentalReport.weekdayActivity.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-6">Sem dados</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Sem dados</p>
                     ) : (
                       <ResponsiveContainer width="100%" height={160}>
                         <BarChart data={rentalReport.weekdayActivity.map(w => ({ name: WEEKDAY_LABELS[w.weekday], v: w.rentalCount }))}>
@@ -222,23 +222,23 @@ export default function ReportsPage() {
 
             {/* ─── Torneios ─── */}
             <section>
-              <h2 className="text-base font-semibold text-gray-700 mb-3">Torneios</h2>
+              <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Torneios</h2>
               <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Total</p>
-                  <p className="text-2xl font-bold text-gray-900">{tournaments.length}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{tournaments.length}</p>
                 </Card>
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Em andamento</p>
-                  <p className="text-2xl font-bold text-orange-600">{activeTournaments.length}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Em andamento</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{activeTournaments.length}</p>
                 </Card>
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Finalizados</p>
-                  <p className="text-2xl font-bold text-green-700">{finishedTournaments.length}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Finalizados</p>
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">{finishedTournaments.length}</p>
                 </Card>
                 <Card>
-                  <p className="text-xs text-gray-500 mb-1">Total de participantes</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de participantes</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {tournaments.reduce((s, t) => s + (t._count?.teams ?? t.teams?.length ?? 0), 0)}
                   </p>
                 </Card>
@@ -246,33 +246,33 @@ export default function ReportsPage() {
 
               {tournaments.length > 0 && (
                 <Card>
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Todos os torneios</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Todos os torneios</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase">Torneio</th>
-                          <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase">Esporte</th>
-                          <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                          <th className="text-right py-2 text-xs font-semibold text-gray-500 uppercase">Participantes</th>
+                        <tr className="border-b border-gray-100 dark:border-gray-800">
+                          <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Torneio</th>
+                          <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Esporte</th>
+                          <th className="text-left py-2 pr-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                          <th className="text-right py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Participantes</th>
                         </tr>
                       </thead>
                       <tbody>
                         {tournaments.map((t) => (
-                          <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">
-                            <td className="py-2 pr-4 font-medium text-gray-900">{t.name}</td>
-                            <td className="py-2 pr-4 text-gray-600">{t.sport}</td>
+                          <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">{t.name}</td>
+                            <td className="py-2 pr-4 text-gray-600 dark:text-gray-400">{t.sport}</td>
                             <td className="py-2 pr-4">
                               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                t.status === 'FINISHED' ? 'bg-green-100 text-green-700' :
-                                t.status === 'IN_PROGRESS' ? 'bg-orange-100 text-orange-700' :
-                                t.status === 'OPEN' ? 'bg-blue-100 text-blue-700' :
-                                'bg-gray-100 text-gray-600'
+                                t.status === 'FINISHED' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                                t.status === 'IN_PROGRESS' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
+                                t.status === 'OPEN' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' :
+                                'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                               }`}>
                                 {TOURNAMENT_STATUS_LABELS[t.status]}
                               </span>
                             </td>
-                            <td className="py-2 text-right text-gray-600">{t._count?.teams ?? t.teams?.length ?? 0} / {t.maxTeams}</td>
+                            <td className="py-2 text-right text-gray-600 dark:text-gray-400">{t._count?.teams ?? t.teams?.length ?? 0} / {t.maxTeams}</td>
                           </tr>
                         ))}
                       </tbody>

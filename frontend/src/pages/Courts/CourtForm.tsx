@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -103,26 +103,26 @@ export function CourtForm({ open, onClose, onSuccess, court }: CourtFormProps) {
         />
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Valor do Jogo (R$)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Valor do Jogo (R$)</label>
             <input
               type="number"
               min={0}
               step={0.01}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 dark:focus:ring-orange-800 outline-none bg-white dark:bg-gray-800 dark:text-gray-100"
               {...register('pricePerSlot')}
             />
-            {errors.pricePerSlot && <p className="text-xs text-red-500 mt-1">{errors.pricePerSlot.message}</p>}
+            {errors.pricePerSlot && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.pricePerSlot.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Duração do Jogo (min)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duração do Jogo (min)</label>
             <input
               type="number"
               min={15}
               step={15}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 dark:focus:ring-orange-800 outline-none bg-white dark:bg-gray-800 dark:text-gray-100"
               {...register('slotMinutes')}
             />
-            {errors.slotMinutes && <p className="text-xs text-red-500 mt-1">{errors.slotMinutes.message}</p>}
+            {errors.slotMinutes && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.slotMinutes.message}</p>}
           </div>
         </div>
         <Input

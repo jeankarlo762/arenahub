@@ -344,6 +344,27 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+// status: OPEN | IN_PROGRESS | RESOLVED | CLOSED
+model SupportTicket {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  tenantName     String?
+  userId         String?
+  userName       String?
+  userEmail      String?
+  title          String
+  description    String
+  attachmentBase64 String?
+  attachmentName   String?
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 // Trilha de auditoria — registra toda criação/edição/exclusão feita no sistema.
 // action: CREATE | UPDATE | DELETE | UPDATE_MANY | DELETE_MANY
 model AuditLog {

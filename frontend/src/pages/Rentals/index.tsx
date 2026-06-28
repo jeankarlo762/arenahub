@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Pencil, Trash2, CalendarRange, Power, PowerOff, MapPin, ChevronRight } from 'lucide-react'
 import { RentalDetailModal } from './RentalDetailModal'
 import { formatCurrency } from '../../utils/format'
@@ -130,13 +130,13 @@ export default function RentalsPage() {
       <div className="flex flex-col gap-6">
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex gap-1 border-b border-gray-200">
+          <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
             {(['list', 'report'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                  tab === t ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  tab === t ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 {t === 'list' ? 'Locações' : 'Relatório'}
@@ -153,19 +153,19 @@ export default function RentalsPage() {
         {tab === 'list' && (
           <>
             <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden shrink-0">
+              <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shrink-0">
                 {(['all', 'active', 'inactive'] as const).map((f) => (
                   <button key={f} onClick={() => setFilterActive(f)}
-                    className={`px-3 py-2 text-sm font-medium transition-colors ${filterActive === f ? 'bg-orange-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} ${f !== 'all' ? 'border-l border-gray-200' : ''}`}
+                    className={`px-3 py-2 text-sm font-medium transition-colors ${filterActive === f ? 'bg-orange-500 text-white' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'} ${f !== 'all' ? 'border-l border-gray-200 dark:border-gray-700' : ''}`}
                   >
                     {f === 'all' ? 'Todos' : f === 'active' ? 'Ativos' : 'Inativos'}
                   </button>
                 ))}
               </div>
               <div className="relative flex-1 min-w-40">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
                 <input type="text" placeholder="Buscar cliente ou quadra..." value={search} onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" />
               </div>
             </div>
 
@@ -179,58 +179,58 @@ export default function RentalsPage() {
                   const total = rentalTotalValue(r)
                   const exp = expirationLabel(r)
                   const toneClass =
-                    exp.tone === 'red' ? 'bg-red-100 text-red-700'
-                    : exp.tone === 'orange' ? 'bg-orange-100 text-orange-700'
-                    : exp.tone === 'green' ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-500'
+                    exp.tone === 'red' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                    : exp.tone === 'orange' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400'
+                    : exp.tone === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                   return (
                   <div
                     key={r.id}
                     onClick={() => setDetailRental(r)}
-                    className={`bg-white rounded-xl border px-4 sm:px-5 py-3.5 cursor-pointer hover:border-orange-300 hover:shadow-sm transition-all ${r.active ? 'border-gray-200' : 'border-gray-100 opacity-60'}`}
+                    className={`bg-white dark:bg-gray-900 rounded-xl border px-4 sm:px-5 py-3.5 cursor-pointer hover:border-orange-300 hover:shadow-sm transition-all ${r.active ? 'border-gray-200 dark:border-gray-700' : 'border-gray-100 dark:border-gray-800 opacity-60'}`}
                   >
                     {/* ── Desktop layout (sm+) ── */}
                     <div className="hidden sm:flex items-center gap-6">
                       {/* Col 1 — Cliente + Quadra */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-gray-900 truncate">{r.clientName}</p>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{r.clientName}</p>
                           <Badge label={r.active ? 'Ativo' : 'Inativo'} status={r.active ? 'active' : 'inactive'} />
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                           <MapPin size={11} className="shrink-0" />
                           <span className="truncate">{r.court?.name ?? 'Sem quadra definida'}</span>
                         </div>
-                        {r.notes && <p className="text-xs text-gray-400 mt-0.5 truncate">{r.notes}</p>}
+                        {r.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 truncate">{r.notes}</p>}
                       </div>
                       {/* Col 2 — Dias */}
                       <div className="shrink-0">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Dias</p>
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Dias</p>
                         <div className="flex gap-1 flex-wrap max-w-[160px]">
                           {r.weekdays.map(d => (
-                            <span key={d} className="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-md">{WEEKDAY_LABELS[d]}</span>
+                            <span key={d} className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium rounded-md">{WEEKDAY_LABELS[d]}</span>
                           ))}
                         </div>
                       </div>
                       {/* Col 3 — Horários */}
                       <div className="shrink-0 min-w-[130px]">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Horários</p>
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Horários</p>
                         <div className="flex flex-col gap-0.5">
                           {r.slots.map((s, i) => (
                             <div key={i} className="flex items-center gap-1.5 text-xs">
-                              <span className="font-medium text-gray-700">{s.startTime}–{s.endTime}</span>
-                              {s.price > 0 && <span className="text-green-700 font-semibold">{formatCurrency(s.price)}</span>}
+                              <span className="font-medium text-gray-700 dark:text-gray-300">{s.startTime}–{s.endTime}</span>
+                              {s.price > 0 && <span className="text-green-700 dark:text-green-400 font-semibold">{formatCurrency(s.price)}</span>}
                             </div>
                           ))}
                         </div>
                       </div>
                       {/* Col 4 — Valor / Expiração */}
                       <div className="shrink-0 min-w-[130px]">
-                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Valor total</p>
+                        <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Valor total</p>
                         {total !== null ? (
-                          <p className="text-sm font-bold text-green-700">{formatCurrency(total)}</p>
+                          <p className="text-sm font-bold text-green-700 dark:text-green-400">{formatCurrency(total)}</p>
                         ) : (
-                          <p className="text-sm font-bold text-green-700">{formatCurrency(rentalMonthlyValue(r))}<span className="text-xs font-normal text-gray-400">/mês</span></p>
+                          <p className="text-sm font-bold text-green-700 dark:text-green-400">{formatCurrency(rentalMonthlyValue(r))}<span className="text-xs font-normal text-gray-400 dark:text-gray-500">/mês</span></p>
                         )}
                         <span className={`mt-1 inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${toneClass}`}>
                           {exp.text}
@@ -238,16 +238,16 @@ export default function RentalsPage() {
                       </div>
                       {/* Col 5 — Ações */}
                       <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={r.active ? 'Desativar' : 'Ativar'}>
+                        <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`} title={r.active ? 'Desativar' : 'Ativar'}>
                           {r.active ? <PowerOff size={15} /> : <Power size={15} />}
                         </button>
-                        <button onClick={() => { setSelected(r); setFormOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors">
+                        <button onClick={() => { setSelected(r); setFormOpen(true) }} className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                           <Pencil size={15} />
                         </button>
-                        <button onClick={() => { setSelected(r); setDeleteOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                        <button onClick={() => { setSelected(r); setDeleteOpen(true) }} className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                           <Trash2 size={15} />
                         </button>
-                        <ChevronRight size={15} className="text-gray-300 ml-1" />
+                        <ChevronRight size={15} className="text-gray-300 dark:text-gray-600 ml-1" />
                       </div>
                     </div>
 
@@ -257,23 +257,23 @@ export default function RentalsPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-semibold text-gray-900">{r.clientName}</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">{r.clientName}</p>
                             <Badge label={r.active ? 'Ativo' : 'Inativo'} status={r.active ? 'active' : 'inactive'} />
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
+                          <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                             <MapPin size={11} className="shrink-0" />
                             <span className="truncate">{r.court?.name ?? 'Sem quadra definida'}</span>
                           </div>
-                          {r.notes && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{r.notes}</p>}
+                          {r.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-1">{r.notes}</p>}
                         </div>
                         <div className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
-                          <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-green-600 hover:bg-green-50'}`} title={r.active ? 'Desativar' : 'Ativar'}>
+                          <button onClick={() => handleToggleActive(r)} className={`p-1.5 rounded-lg transition-colors ${r.active ? 'text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20' : 'text-gray-400 dark:text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'}`} title={r.active ? 'Desativar' : 'Ativar'}>
                             {r.active ? <PowerOff size={14} /> : <Power size={14} />}
                           </button>
-                          <button onClick={() => { setSelected(r); setFormOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors">
+                          <button onClick={() => { setSelected(r); setFormOpen(true) }} className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors">
                             <Pencil size={14} />
                           </button>
-                          <button onClick={() => { setSelected(r); setDeleteOpen(true) }} className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                          <button onClick={() => { setSelected(r); setDeleteOpen(true) }} className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -281,7 +281,7 @@ export default function RentalsPage() {
                       {/* Linha 2 — Dias */}
                       <div className="flex gap-1 flex-wrap">
                         {r.weekdays.map(d => (
-                          <span key={d} className="px-1.5 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-md">{WEEKDAY_LABELS[d]}</span>
+                          <span key={d} className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium rounded-md">{WEEKDAY_LABELS[d]}</span>
                         ))}
                       </div>
                       {/* Linha 3 — Horários + valor */}
@@ -289,16 +289,16 @@ export default function RentalsPage() {
                         <div className="flex flex-col gap-0.5">
                           {r.slots.map((s, i) => (
                             <div key={i} className="flex items-center gap-1.5 text-xs">
-                              <span className="font-medium text-gray-700">{s.startTime}–{s.endTime}</span>
-                              {s.price > 0 && <span className="text-green-700 font-semibold">{formatCurrency(s.price)}</span>}
+                              <span className="font-medium text-gray-700 dark:text-gray-300">{s.startTime}–{s.endTime}</span>
+                              {s.price > 0 && <span className="text-green-700 dark:text-green-400 font-semibold">{formatCurrency(s.price)}</span>}
                             </div>
                           ))}
                         </div>
                         <div className="text-right shrink-0">
                           {total !== null ? (
-                            <p className="text-sm font-bold text-green-700">{formatCurrency(total)}</p>
+                            <p className="text-sm font-bold text-green-700 dark:text-green-400">{formatCurrency(total)}</p>
                           ) : (
-                            <p className="text-sm font-bold text-green-700">{formatCurrency(rentalMonthlyValue(r))}<span className="text-xs font-normal text-gray-400">/mês</span></p>
+                            <p className="text-sm font-bold text-green-700 dark:text-green-400">{formatCurrency(rentalMonthlyValue(r))}<span className="text-xs font-normal text-gray-400 dark:text-gray-500">/mês</span></p>
                           )}
                           <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${toneClass}`}>
                             {exp.text}
@@ -372,43 +372,43 @@ function RentalReportTab() {
           {/* Summary cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <Card>
-              <p className="text-xs text-gray-500 mb-1">Locações Ativas</p>
-              <p className="text-2xl font-bold text-green-700">{report.activeCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Locações Ativas</p>
+              <p className="text-2xl font-bold text-green-700 dark:text-green-400">{report.activeCount}</p>
             </Card>
             <Card>
-              <p className="text-xs text-gray-500 mb-1">Locações Inativas</p>
-              <p className="text-2xl font-bold text-gray-500">{report.inactiveCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Locações Inativas</p>
+              <p className="text-2xl font-bold text-gray-500 dark:text-gray-400">{report.inactiveCount}</p>
             </Card>
             <Card>
-              <p className="text-xs text-gray-500 mb-1">Total de Locações</p>
-              <p className="text-2xl font-bold text-gray-900">{report.totalCount}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Locações</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{report.totalCount}</p>
             </Card>
             <Card>
-              <p className="text-xs text-gray-500 mb-1">Receita Estimada</p>
-              <p className="text-2xl font-bold text-orange-600">{formatCurrency(report.estimatedRevenue)}</p>
-              <p className="text-xs text-gray-400 mt-1">No período selecionado</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Receita Estimada</p>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(report.estimatedRevenue)}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">No período selecionado</p>
             </Card>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Top courts */}
             <Card>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Quadras com mais locações</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Quadras com mais locações</h2>
               {report.topCourts.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Sem dados</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {report.topCourts.map((court, i) => (
-                    <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
+                    <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-600 shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-xs font-bold text-orange-600 dark:text-orange-400 shrink-0">
                           {i + 1}
                         </div>
-                        <p className="text-sm font-medium text-gray-800 truncate">{court.courtName}</p>
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{court.courtName}</p>
                       </div>
                       <div className="flex items-center gap-4 shrink-0 text-sm">
-                        <span className="text-gray-500">{court.rentalCount} locação{court.rentalCount !== 1 ? 'ções' : ''}</span>
-                        <span className="font-semibold text-orange-600">{formatCurrency(court.estimatedRevenue)}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{court.rentalCount} locação{court.rentalCount !== 1 ? 'ções' : ''}</span>
+                        <span className="font-semibold text-orange-600 dark:text-orange-400">{formatCurrency(court.estimatedRevenue)}</span>
                       </div>
                     </div>
                   ))}
@@ -418,9 +418,9 @@ function RentalReportTab() {
 
             {/* Weekday activity chart */}
             <Card>
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Atividade por Dia da Semana</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Atividade por Dia da Semana</h2>
               {weekdayData.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-8">Sem dados</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados</p>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={weekdayData}>

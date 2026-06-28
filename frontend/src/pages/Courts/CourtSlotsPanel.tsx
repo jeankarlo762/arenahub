@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, ChevronUp, X, Phone, User } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { DatePicker } from '../../components/ui/DatePicker'
@@ -117,29 +117,29 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
   const total = slots.length
 
   const quickBadge = () => {
-    if (quickLoading) return <Spinner size="sm" className="text-gray-400" />
+    if (quickLoading) return <Spinner size="sm" className="text-gray-400 dark:text-gray-500" />
     if (quickAvailable === null || quickTotal === null) return null
-    if (quickTotal === 0) return <span className="text-xs text-gray-400">Fechada hoje</span>
+    if (quickTotal === 0) return <span className="text-xs text-gray-400 dark:text-gray-500">Fechada hoje</span>
     if (quickAvailable === 0)
-      return <span className="text-xs font-semibold text-red-500">Lotada hoje</span>
+      return <span className="text-xs font-semibold text-red-500 dark:text-red-400">Lotada hoje</span>
     return (
-      <span className="text-xs font-semibold text-green-600">
+      <span className="text-xs font-semibold text-green-600 dark:text-green-400">
         {quickAvailable}/{quickTotal} livres hoje
       </span>
     )
   }
 
   return (
-    <div className="border-t border-gray-100 pt-3">
+    <div className="border-t border-gray-100 dark:border-gray-800 pt-3">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between text-sm text-gray-600 hover:text-gray-900 transition-colors"
+        className="w-full flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
       >
         <span className="font-medium">Horários disponíveis</span>
         <div className="flex items-center gap-2">
           {!open && quickBadge()}
           {open && !loading && !closed && total > 0 && (
-            <span className={`text-xs font-semibold ${available > 0 ? 'text-green-600' : 'text-red-500'}`}>
+            <span className={`text-xs font-semibold ${available > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
               {available}/{total} livres
             </span>
           )}
@@ -158,7 +158,7 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
             />
           </div>
 
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-gray-400 dark:text-gray-500">
             {court.slotMinutes} min por slot · {formatCurrency(Number(court.pricePerSlot))} / slot
           </p>
 
@@ -167,11 +167,11 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
               <Spinner size="sm" className="text-orange-500" />
             </div>
           ) : closed ? (
-            <p className="text-xs text-center text-gray-400 py-3 bg-gray-50 rounded-lg">
+            <p className="text-xs text-center text-gray-400 dark:text-gray-500 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               Quadra fechada neste dia
             </p>
           ) : slots.length === 0 ? (
-            <p className="text-xs text-center text-gray-400 py-3 bg-gray-50 rounded-lg">
+            <p className="text-xs text-center text-gray-400 dark:text-gray-500 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               Nenhum horário configurado
             </p>
           ) : (
@@ -186,10 +186,10 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
                     title={isRented ? `Alugado: ${(slot as { rental?: { clientName: string } }).rental?.clientName}` : undefined}
                     className={`rounded-lg px-2 py-1.5 text-center text-xs font-medium transition-colors ${
                       slot.available
-                        ? 'bg-green-50 text-green-700 border border-green-200 cursor-pointer hover:bg-orange-50 hover:border-orange-400 hover:text-orange-700'
+                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-700 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:border-orange-400 hover:text-orange-700'
                         : isRented
-                          ? 'bg-blue-50 text-blue-600 border border-blue-200 cursor-default'
-                          : 'bg-red-50 text-red-600 border border-red-200 cursor-pointer hover:bg-red-100 line-through'
+                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 cursor-default'
+                          : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-700 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/40 line-through'
                     }`}
                   >
                     {slot.startTime}
@@ -199,7 +199,7 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
             </div>
           )}
 
-          <p className="text-[11px] text-gray-400 text-center">
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 text-center">
             {slots.some((s) => s.available) ? 'Verde: disponível · ' : ''}
             {slots.some((s) => !s.available && !(s as {rental?:unknown}).rental && s.booking) ? 'Vermelho: agendado · ' : ''}
             {slots.some((s) => !s.available && !!(s as {rental?:{clientName:string}}).rental) ? 'Azul: alugado' : ''}
@@ -211,15 +211,15 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
         <div
           ref={popupRef}
           style={popupStyle}
-          className="w-60 bg-white rounded-xl border border-gray-200 shadow-xl p-4 flex flex-col gap-3"
+          className="w-60 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-xl p-4 flex flex-col gap-3"
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               {popup.slot.startTime} – {popup.slot.endTime}
             </p>
             <button
               onClick={() => setPopup(null)}
-              className="p-0.5 text-gray-300 hover:text-gray-500 transition-colors"
+              className="p-0.5 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors"
             >
               <X size={14} />
             </button>
@@ -227,15 +227,15 @@ export function CourtSlotsPanel({ court, onBookSlot, refreshKey }: CourtSlotsPan
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-full bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center shrink-0">
                 <User size={13} className="text-orange-500" />
               </div>
-              <p className="text-sm font-semibold text-gray-900 truncate">{popup.booking.customerName}</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{popup.booking.customerName}</p>
             </div>
 
             <a
               href={`tel:${popup.booking.customerPhone}`}
-              className="flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-medium transition-colors"
+              className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 font-medium transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <Phone size={13} />

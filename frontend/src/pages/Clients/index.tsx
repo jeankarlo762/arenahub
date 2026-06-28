@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+﻿import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, Search, Pencil, Trash2, Users } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -103,13 +103,13 @@ export default function ClientsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-48">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar por nome ou telefone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
           <Button onClick={openCreate}><Plus size={16} /> Novo Cliente</Button>
@@ -120,9 +120,9 @@ export default function ClientsPage() {
         ) : clients.length === 0 ? (
           <EmptyState icon={<Users size={48} />} title="Nenhum cliente cadastrado" description="Adicione clientes para gerenciá-los aqui" action={{ label: 'Novo Cliente', onClick: openCreate }} />
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
             {clients.map((c) => (
-              <div key={c.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group">
+              <div key={c.id} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
                 {/* Clicking the row (not actions) opens detail */}
                 <button
                   className="flex items-center gap-4 flex-1 min-w-0 text-left"
@@ -132,20 +132,20 @@ export default function ClientsPage() {
                     <span className="text-sm font-bold">{c.firstName[0]}{c.lastName[0]}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">{c.firstName} {c.lastName}</p>
-                    {c.phone && <p className="text-xs text-gray-400">{c.phone}</p>}
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{c.firstName} {c.lastName}</p>
+                    {c.phone && <p className="text-xs text-gray-400 dark:text-gray-500">{c.phone}</p>}
                   </div>
                 </button>
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); openEdit(c) }}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
                   >
                     <Pencil size={14} />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setSelected(c); setDeleteOpen(true) }}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -156,7 +156,7 @@ export default function ClientsPage() {
         )}
 
         {!loading && clients.length > 0 && (
-          <p className="text-xs text-gray-400 text-right">{clients.length} cliente{clients.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-right">{clients.length} cliente{clients.length !== 1 ? 's' : ''}</p>
         )}
       </div>
 

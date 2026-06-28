@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Building2, UsersRound, DollarSign, ScrollText, KeyRound, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Building2, UsersRound, DollarSign, ScrollText, KeyRound, LifeBuoy, LogOut, Menu, X } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
 
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/superadmin/financeiro', icon: DollarSign, label: 'Financeiro', end: false },
   { to: '/superadmin/auditoria', icon: ScrollText, label: 'Auditoria', end: false },
   { to: '/superadmin/seguranca', icon: KeyRound, label: 'Segurança', end: false },
+  { to: '/superadmin/suporte', icon: LifeBuoy, label: 'Suporte', end: false },
 ]
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { MapPin, Search } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { Badge } from '../../components/ui/Badge'
@@ -43,19 +43,19 @@ export default function CourtsPage() {
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Search bar */}
           <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar quadra..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 dark:focus:ring-orange-800 outline-none bg-white dark:bg-gray-800 dark:text-gray-100"
             />
           </div>
         </div>
 
         {!loading && visibleCourts.length > 0 && (
-          <p className="text-xs text-gray-400">{visibleCourts.length} quadra{visibleCourts.length !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">{visibleCourts.length} quadra{visibleCourts.length !== 1 ? 's' : ''}</p>
         )}
 
         {loading ? (
@@ -73,10 +73,10 @@ export default function CourtsPage() {
             {visibleCourts.map((court) => (
               <div
                 key={court.id}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col gap-4"
+                className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 flex flex-col gap-4"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-semibold text-gray-900 text-lg">{court.name}</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">{court.name}</h3>
                   <Badge label="Ativa" status="active" />
                 </div>
 

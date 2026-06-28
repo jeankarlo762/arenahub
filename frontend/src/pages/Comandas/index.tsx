@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, History, Trash2 } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { Button } from '../../components/ui/Button'
@@ -14,7 +14,6 @@ import { METHOD_LABELS } from '../../constants/shared'
 import { OrderDetail } from '../Bar/OrderDetail'
 import { OrderForm } from '../Bar/OrderForm'
 
-// Minimum number of comanda cells shown (SAIPOS-style grid)
 const MIN_CELLS = 20
 
 export default function ComandasPage() {
@@ -69,7 +68,6 @@ export default function ComandasPage() {
     }
   }
 
-  // Map open orders by their number for the grid
   const ordersByNumber = new Map<number, BarOrder>()
   for (const o of openOrders) ordersByNumber.set(o.number, o)
 
@@ -93,13 +91,13 @@ export default function ComandasPage() {
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-36">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar por nome ou número..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+              className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
             />
           </div>
 
@@ -118,7 +116,7 @@ export default function ComandasPage() {
         ) : (
           <>
             {/* Legend */}
-            <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
               <span className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded bg-green-500 inline-block" /> Disponível
               </span>
@@ -170,37 +168,37 @@ export default function ComandasPage() {
             {/* ── Histórico (CLOSED) ── */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <History size={16} className="text-gray-400" />
-                <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Histórico de pagamentos</h2>
+                <History size={16} className="text-gray-400 dark:text-gray-500" />
+                <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Histórico de pagamentos</h2>
                 {filteredClosed.length > 0 && (
-                  <span className="bg-gray-100 text-gray-500 text-xs font-bold px-2 py-0.5 rounded-full">
+                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-bold px-2 py-0.5 rounded-full">
                     {filteredClosed.length}
                   </span>
                 )}
               </div>
 
               {filteredClosed.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-6">Nenhuma comanda paga ainda</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Nenhuma comanda paga ainda</p>
               ) : (
-                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700 overflow-hidden">
                   {filteredClosed.map((order) => (
                     <button
                       key={order.id}
                       onClick={() => openDetail(order.id)}
-                      className="w-full flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                      className="w-full flex items-center gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                     >
-                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                        <p className="text-xs font-bold text-gray-600">#{order.number}</p>
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
+                        <p className="text-xs font-bold text-gray-600 dark:text-gray-400">#{order.number}</p>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{order.customerName}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{order.customerName}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
                           {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
                           {order.paymentMethod && ` · ${METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}`}
                           {' · '}{formatDate(order.createdAt)}
                         </p>
                       </div>
-                      <p className="text-sm font-bold text-gray-700 shrink-0">{formatCurrency(Number(order.total))}</p>
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300 shrink-0">{formatCurrency(Number(order.total))}</p>
                     </button>
                   ))}
                 </div>

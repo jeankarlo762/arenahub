@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Trophy, Search, Crown, Users, ChevronDown, ChevronUp, Pencil, Trash2, UserPlus } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
@@ -60,7 +60,7 @@ export default function TournamentsPage() {
       <div className="flex flex-col gap-6">
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex gap-1 border-b border-gray-200 w-full sm:w-auto">
+          <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 w-full sm:w-auto">
             {(['list', 'players'] as const).map((t) => (
               <button
                 key={t}
@@ -68,7 +68,7 @@ export default function TournamentsPage() {
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
                   tab === t
                     ? 'border-orange-500 text-orange-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                 }`}
               >
                 {t === 'list' ? 'Torneios' : 'Jogadores'}
@@ -85,13 +85,13 @@ export default function TournamentsPage() {
         {tab === 'list' && (
           <>
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Buscar torneio ou esporte..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
               />
             </div>
 
@@ -110,11 +110,11 @@ export default function TournamentsPage() {
                 {filtered.map((t) => (
                   <div
                     key={t.id}
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col cursor-pointer hover:border-orange-300 hover:shadow-md transition-all overflow-hidden"
+                    className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col cursor-pointer hover:border-orange-300 hover:shadow-md transition-all overflow-hidden"
                     onClick={() => navigate(`/tournaments/${t.id}`)}
                   >
                     {t.imageUrl ? (
-                      <div className="h-36 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="h-36 bg-gray-50 dark:bg-gray-800 flex items-center justify-center overflow-hidden shrink-0">
                         <img src={t.imageUrl} alt={t.name} className="w-full h-full object-contain" />
                       </div>
                     ) : (
@@ -126,22 +126,22 @@ export default function TournamentsPage() {
                     <div className="p-5 flex flex-col gap-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{t.name}</h3>
-                          <p className="text-sm text-gray-500">{t.sport} · {MATCH_TYPE_LABELS[t.matchType] ?? 'Equipes'}</p>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{t.name}</h3>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{t.sport} · {MATCH_TYPE_LABELS[t.matchType] ?? 'Equipes'}</p>
                         </div>
                         <Badge label={TOURNAMENT_STATUS_LABELS[t.status]} status={t.status} />
                       </div>
 
-                      <div className="text-sm text-gray-600 flex flex-col gap-1">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 flex flex-col gap-1">
                         <p>{formatDate(t.startDate)} – {formatDate(t.endDate)}</p>
                         <p>{t._count?.teams ?? t.teams?.length ?? 0} / {t.maxTeams} participantes</p>
-                        {t.prizeInfo && <p className="text-xs text-gray-400 truncate">{t.prizeInfo}</p>}
+                        {t.prizeInfo && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{t.prizeInfo}</p>}
                       </div>
 
                       {t.champion && (
-                        <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg px-3 py-2">
                           <Crown size={14} className="text-yellow-500 shrink-0" />
-                          <span className="text-sm font-semibold text-yellow-700 truncate">{t.champion}</span>
+                          <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-400 truncate">{t.champion}</span>
                         </div>
                       )}
                     </div>
@@ -204,7 +204,6 @@ function PlayersTab() {
     }
   }
 
-  // Distinct sports (modalidades) across all players' tournament history
   const sports = Array.from(
     new Set(players.flatMap((p) => p.tournaments.map((t) => t.sport)).filter(Boolean)),
   ).sort()
@@ -219,7 +218,7 @@ function PlayersTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <p className="text-sm text-gray-500 flex-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400 flex-1">
           Lista de jogadores com ranking e pontuação de torneios encerrados.
         </p>
         <Button onClick={() => { setEditing(null); setFormOpen(true) }}>
@@ -227,7 +226,6 @@ function PlayersTab() {
         </Button>
       </div>
 
-      {/* Filtros tipo + modalidade */}
       <div className="flex items-end gap-3 flex-wrap">
         <Select
           label="Tipo"
@@ -246,13 +244,13 @@ function PlayersTab() {
       </div>
 
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
         <input
           type="text"
           placeholder="Buscar jogador..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+          className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
         />
       </div>
 
@@ -274,17 +272,17 @@ function PlayersTab() {
             const rank = idx + 1
             const medal = rank <= 3 && player.points > 0 ? '🥇🥈🥉'[rank - 1] : null
             return (
-              <div key={player.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+              <div key={player.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
                 <div
                   className="w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 cursor-pointer"
                   onClick={() => setExpanded(isExpanded ? null : player.id)}
                 >
                   {/* Rank */}
                   <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                    medal && rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                    medal && rank === 2 ? 'bg-gray-100 text-gray-600' :
-                    medal && rank === 3 ? 'bg-orange-100 text-orange-700' :
-                    'bg-gray-50 text-gray-500'
+                    medal && rank === 1 ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400' :
+                    medal && rank === 2 ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' :
+                    medal && rank === 3 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400' :
+                    'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                   }`}>
                     {medal ?? `#${rank}`}
                   </div>
@@ -293,7 +291,7 @@ function PlayersTab() {
                   {player.photo ? (
                     <img src={player.photo} alt={player.name} className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover border-2 border-orange-200 shrink-0" />
                   ) : (
-                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-orange-100 flex items-center justify-center text-sm font-bold text-orange-600 border-2 border-orange-200 shrink-0">
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-sm font-bold text-orange-600 dark:text-orange-400 border-2 border-orange-200 shrink-0">
                       {player.name.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -301,12 +299,12 @@ function PlayersTab() {
                   {/* Name + meta */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-900 truncate">{player.name}</p>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">{player.name}</p>
                       {!player.registered && (
-                        <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full shrink-0 hidden sm:inline">não cadastrado</span>
+                        <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded-full shrink-0 hidden sm:inline">não cadastrado</span>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-500">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       {player.age != null ? `${player.age} anos · ` : ''}
                       {player.tournamentCount} torneio{player.tournamentCount !== 1 ? 's' : ''}
                     </p>
@@ -314,24 +312,24 @@ function PlayersTab() {
 
                   {/* Points */}
                   <span className={`px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold shrink-0 ${
-                    player.points > 0 ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-400'
+                    player.points > 0 ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
                   }`}>
                     {player.points} pts
                   </span>
 
-                  {/* Actions (desktop only — mobile actions appear inside expanded section) */}
+                  {/* Actions (desktop only) */}
                   {player.registered && (
                     <div className="hidden sm:flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => { setEditing(player); setFormOpen(true) }}
-                        className="p-1.5 text-gray-400 hover:text-orange-500 transition-colors"
+                        className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-orange-500 transition-colors"
                         title="Editar"
                       >
                         <Pencil size={15} />
                       </button>
                       <button
                         onClick={() => setRemoving(player)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                        className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors"
                         title="Remover"
                       >
                         <Trash2 size={15} />
@@ -339,50 +337,50 @@ function PlayersTab() {
                     </div>
                   )}
 
-                  <span className="p-1 text-gray-400 shrink-0 pointer-events-none">
+                  <span className="p-1 text-gray-400 dark:text-gray-500 shrink-0 pointer-events-none">
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                   </span>
                 </div>
 
                 {isExpanded && (
-                  <div className="border-t border-gray-100 px-4 sm:px-5 pb-4 pt-3">
+                  <div className="border-t border-gray-100 dark:border-gray-800 px-4 sm:px-5 pb-4 pt-3">
                     {/* Mobile actions */}
                     {player.registered && (
                       <div className="sm:hidden flex gap-2 mb-3">
                         <button
                           onClick={() => { setEditing(player); setFormOpen(true) }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-600 border border-gray-200 hover:border-orange-400 hover:text-orange-500 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-orange-400 hover:text-orange-500 transition-colors"
                         >
                           <Pencil size={13} /> Editar
                         </button>
                         <button
                           onClick={() => setRemoving(player)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-600 border border-gray-200 hover:border-red-400 hover:text-red-500 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-red-400 hover:text-red-500 transition-colors"
                         >
                           <Trash2 size={13} /> Remover
                         </button>
                       </div>
                     )}
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Histórico de torneios</p>
+                    <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">Histórico de torneios</p>
                     {player.tournaments.length === 0 ? (
-                      <p className="text-sm text-gray-400">Ainda não participou de torneios encerrados.</p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500">Ainda não participou de torneios encerrados.</p>
                     ) : (
                       <div className="flex flex-col gap-2">
                         {player.tournaments.map((entry, i) => (
-                          <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 last:border-0">
+                          <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-800 truncate">{entry.tournamentName}</p>
-                              <p className="text-xs text-gray-400">{formatDate(entry.date)}</p>
+                              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{entry.tournamentName}</p>
+                              <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(entry.date)}</p>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
                               {entry.position ? (
-                                <span className="text-sm text-gray-600">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                   {entry.position === 1 ? '🥇' : entry.position === 2 ? '🥈' : entry.position === 3 ? '🥉' : `${entry.position}º`}
                                 </span>
                               ) : (
-                                <span className="text-xs text-gray-400 italic">Posição não definida</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 italic">Posição não definida</span>
                               )}
-                              <span className={`text-sm font-semibold ${entry.points > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+                              <span className={`text-sm font-semibold ${entry.points > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400 dark:text-gray-500'}`}>
                                 +{entry.points} pts
                               </span>
                             </div>

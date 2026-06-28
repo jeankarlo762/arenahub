@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { MapPin, Phone, User, CreditCard, X, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Modal } from '../../components/ui/Modal'
@@ -95,38 +95,38 @@ export function RentalDetailModal({ open, onClose, rental }: RentalDetailModalPr
 
         {/* Tenant info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
             <User size={16} className="text-orange-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Locatário</p>
-              <p className="text-sm font-semibold text-gray-900 truncate">{rental.clientName}</p>
+              <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Locatário</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{rental.clientName}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
             <Phone size={16} className="text-orange-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Telefone</p>
-              <p className="text-sm font-semibold text-gray-900">{rental.clientPhone ?? '—'}</p>
+              <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Telefone</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{rental.clientPhone ?? '—'}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
             <MapPin size={16} className="text-orange-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Quadra</p>
-              <p className="text-sm font-semibold text-gray-900">{rental.court?.name ?? '—'}</p>
-              <p className="text-xs text-gray-400">{rental.weekdays.map(d => WEEKDAY_LABELS[d]).join(', ')}</p>
+              <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Quadra</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{rental.court?.name ?? '—'}</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{rental.weekdays.map(d => WEEKDAY_LABELS[d]).join(', ')}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+          <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
             <CreditCard size={16} className="text-orange-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Pagamento</p>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Pagamento</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 {rental.paymentFrequency === 'DAILY' ? 'Diário' : 'Mensal'}
                 {rental.paymentMethod ? ` · ${METHOD_LABELS[rental.paymentMethod] ?? rental.paymentMethod}` : ''}
               </p>
               {rental.paymentFrequency !== 'DAILY' && rental.paymentDay && (
-                <p className="text-xs text-gray-400">Vence dia {rental.paymentDay}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Vence dia {rental.paymentDay}</p>
               )}
             </div>
           </div>
@@ -134,23 +134,23 @@ export function RentalDetailModal({ open, onClose, rental }: RentalDetailModalPr
 
         {/* Totals */}
         <div className="flex gap-3">
-          <div className="flex-1 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Pago</p>
-            <p className="text-lg font-bold text-green-700">{formatCurrency(totalPaid)}</p>
-            <p className="text-xs text-gray-400">{paid.length} parcela{paid.length !== 1 ? 's' : ''}</p>
+          <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-xl px-4 py-3">
+            <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Pago</p>
+            <p className="text-lg font-bold text-green-700 dark:text-green-400">{formatCurrency(totalPaid)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{paid.length} parcela{paid.length !== 1 ? 's' : ''}</p>
           </div>
-          <div className="flex-1 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Pendente</p>
-            <p className="text-lg font-bold text-red-600">{formatCurrency(totalPending)}</p>
-            <p className="text-xs text-gray-400">{pending.length} parcela{pending.length !== 1 ? 's' : ''}</p>
+          <div className="flex-1 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl px-4 py-3">
+            <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-0.5">Pendente</p>
+            <p className="text-lg font-bold text-red-600 dark:text-red-400">{formatCurrency(totalPending)}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{pending.length} parcela{pending.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
 
         {/* Confirmation banner */}
         {confirming && (
-          <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-4 flex flex-col gap-3">
-            <p className="text-sm font-semibold text-orange-800">Confirmar pagamento?</p>
-            <p className="text-sm text-orange-700">
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-xl px-4 py-4 flex flex-col gap-3">
+            <p className="text-sm font-semibold text-orange-800 dark:text-orange-400">Confirmar pagamento?</p>
+            <p className="text-sm text-orange-700 dark:text-orange-400">
               Parcela <strong>{formatChipLabel(confirming.dueDate, rental.paymentFrequency)}</strong> — <strong>{formatCurrency(Number(confirming.amount))}</strong>
             </p>
             <div className="flex gap-2">
@@ -174,12 +174,12 @@ export function RentalDetailModal({ open, onClose, rental }: RentalDetailModalPr
 
         {/* Payment chips */}
         <div>
-          <p className="text-sm font-semibold text-gray-700 mb-3">Pagamentos</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Pagamentos</p>
 
           {loading ? (
             <div className="flex justify-center py-6"><Spinner size="md" className="text-orange-500" /></div>
           ) : payments.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">Nenhum pagamento gerado</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Nenhum pagamento gerado</p>
           ) : (
             <div className="flex flex-wrap gap-2 max-h-72 overflow-y-auto py-1">
               {payments.map((p) => {
@@ -201,18 +201,18 @@ export function RentalDetailModal({ open, onClose, rental }: RentalDetailModalPr
                     title={isPaid ? 'Clique para desfazer' : 'Clique para confirmar pagamento'}
                     className={`flex flex-col items-center px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all select-none min-w-[60px] ${
                       isConfirming
-                        ? 'bg-orange-100 border-orange-400 text-orange-700 scale-105 shadow-md'
+                        ? 'bg-orange-100 dark:bg-orange-900/30 border-orange-400 text-orange-700 dark:text-orange-400 scale-105 shadow-md'
                         : isPaid
-                        ? 'bg-green-100 border-green-300 text-green-700 hover:bg-green-200'
-                        : 'bg-red-100 border-red-300 text-red-700 hover:bg-red-200 hover:scale-105'
+                        ? 'bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
+                        : 'bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 hover:scale-105'
                     }`}
                   >
                     {isThisToggling ? (
-                      <Spinner size="sm" className={isPaid ? 'text-green-500' : 'text-red-500'} />
+                      <Spinner size="sm" className={isPaid ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'} />
                     ) : isPaid ? (
-                      <Check size={12} className="mb-0.5 text-green-500" />
+                      <Check size={12} className="mb-0.5 text-green-500 dark:text-green-400" />
                     ) : (
-                      <X size={12} className="mb-0.5 text-red-400" />
+                      <X size={12} className="mb-0.5 text-red-400 dark:text-red-500" />
                     )}
                     <span>{formatChipLabel(p.dueDate, rental.paymentFrequency)}</span>
                     <span className="text-[10px] font-normal opacity-75 mt-0.5">
