@@ -181,8 +181,8 @@ model BarOrder {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
-  @@unique([tenantId, number])
   @@index([tenantId])
+  @@index([tenantId, number])
   @@index([tenantId, status])
 }
 

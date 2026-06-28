@@ -93,27 +93,18 @@ export async function getOrder(id: string) {
 }
 
 export async function createOrder(input: CreateOrderInput) {
-  const exists = await prisma.barOrder.findFirst({ where: { number: input.number } })
+  const exists = await prisma.barOrder.findFirst({ where: { number: input.number, status: 'OPEN' } })
   if (exists) {
-    throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
+    throw Object.assign(new Error(`Comanda #${input.number} já está aberta`), { statusCode: 409 })
   }
-  try {
-    return await prisma.barOrder.create({
-      data: {
-        number: input.number,
-        customerName: input.customerName,
-        notes: input.notes,
-      },
-      include: { items: { include: { product: true } } },
-    })
-  } catch (err: unknown) {
-    const e = err as { code?: string }
-    if (e.code === 'P2002') {
-      // Race condition: another request created the same number between our check and insert
-      throw Object.assign(new Error(`Comanda #${input.number} já existe`), { statusCode: 409 })
-    }
-    throw err
-  }
+  return prisma.barOrder.create({
+    data: {
+      number: input.number,
+      customerName: input.customerName,
+      notes: input.notes,
+    },
+    include: { items: { include: { product: true } } },
+  })
 }
 
 export async function updateOrder(id: string, input: UpdateOrderInput) {
@@ -325,7 +316,7 @@ export async function getBarStats(startDate: string, endDate: string) {
 
 export async function getOrderByNumber(number: number) {
   return prisma.barOrder.findFirst({
-    where: { number },
+    where: { number, status: 'OPEN' },
     include: {
       items: { include: { product: true }, orderBy: { createdAt: 'asc' } },
     },
@@ -334,34 +325,42 @@ export async function getOrderByNumber(number: number) {
 
 export async function reopenOrder(id: string, clearItems: boolean, newCustomerName?: string) {
   const order = await getOrder(id)
-  if (clearItems) {
-    // Reabrir vazia: zera itens/valores. Permite registrar um novo cliente no mesmo número.
-    await prisma.$transaction([
-      prisma.barOrderItem.deleteMany({ where: { orderId: id } }),
-      prisma.barOrder.update({
-        where: { id },
-        data: {
-          status: 'OPEN',
-          total: 0,
-          paymentMethod: null,
-          paidAmount: 0,
-          ...(newCustomerName ? { customerName: newCustomerName } : {}),
-        },
-      }),
-    ])
-  } else {
-    await prisma.barOrder.update({
-      where: { id },
-      // paidAmount = current total (already paid), new items will increase total beyond this
-      data: {
-        status: 'OPEN',
-        paymentMethod: null,
-        paidAmount: order.total,
-        ...(newCustomerName ? { customerName: newCustomerName } : {}),
-      },
-    })
+
+  // Ensure no OPEN order already exists for this number (grid would only show one)
+  const alreadyOpen = await prisma.barOrder.findFirst({ where: { number: order.number, status: 'OPEN' } })
+  if (alreadyOpen) {
+    throw Object.assign(new Error(`Comanda #${order.number} já está aberta`), { statusCode: 409 })
   }
-  return getOrder(id)
+
+  // Create a NEW row — preserves the closed order in history
+  const newOrder = await prisma.barOrder.create({
+    data: {
+      number: order.number,
+      customerName: newCustomerName ?? order.customerName,
+      notes: clearItems ? null : order.notes,
+    },
+    include: { items: { include: { product: true } } },
+  })
+
+  if (!clearItems && order.items.length > 0) {
+    const totalAmount = order.items.reduce((sum, item) => sum + Number(item.subtotal), 0)
+    await prisma.$transaction([
+      ...order.items.map((item) =>
+        prisma.barOrderItem.create({
+          data: {
+            orderId: newOrder.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            subtotal: item.subtotal,
+          },
+        })
+      ),
+      prisma.barOrder.update({ where: { id: newOrder.id }, data: { total: totalAmount } }),
+    ])
+  }
+
+  return getOrder(newOrder.id)
 }
 
 export async function removeItem(orderId: string, itemId: string) {
