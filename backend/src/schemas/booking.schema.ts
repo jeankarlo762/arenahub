@@ -40,6 +40,7 @@ export const bookingFiltersSchema = z.object({
   date: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
+  createdDate: z.string().optional(),
   courtId: z.string().optional(),
   customerName: z.string().optional(),
   customerPhone: z.string().optional(),

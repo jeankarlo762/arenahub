@@ -54,8 +54,8 @@ export default function BookingsPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [selected, setSelected] = useState<Booking | null>(null)
 
-  // List filters
-  const [filterDate, setFilterDate] = useState(toInputDate(new Date()))
+  // List filters — filterCreatedDate: when the booking was registered (createdAt)
+  const [filterCreatedDate, setFilterCreatedDate] = useState(toInputDate(new Date()))
   const [filterCourt, setFilterCourt] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterCustomer, setFilterCustomer] = useState('')
@@ -72,7 +72,7 @@ export default function BookingsPage() {
     setLoading(true)
     try {
       const params: Record<string, string> = {}
-      if (filterDate) params.date = filterDate
+      if (filterCreatedDate) params.createdDate = filterCreatedDate
       if (filterCourt) params.courtId = filterCourt
       if (filterStatus) params.status = filterStatus
       if (filterCustomer) params.customerName = filterCustomer
@@ -82,7 +82,7 @@ export default function BookingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterDate, filterCourt, filterStatus, filterCustomer])
+  }, [filterCreatedDate, filterCourt, filterStatus, filterCustomer])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -208,19 +208,18 @@ export default function BookingsPage() {
             <div className="flex gap-1 shrink-0">
               {[
                 { label: 'Hoje', value: toInputDate(new Date()) },
-                { label: 'Amanhã', value: toInputDate(new Date(Date.now() + 86400000)) },
                 { label: 'Todos', value: '' },
               ].map(({ label, value }) => (
                 <button
                   key={label}
-                  onClick={() => setFilterDate(value)}
-                  className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${filterDate === value ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                  onClick={() => setFilterCreatedDate(value)}
+                  className={`px-2.5 py-1.5 text-xs rounded-lg font-medium transition-colors ${filterCreatedDate === value ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <DatePicker label="Data" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="w-36" />
+            <DatePicker label="Feito em" value={filterCreatedDate} onChange={(e) => setFilterCreatedDate(e.target.value)} className="w-36" />
             <Select
               label="Quadra"
               options={[{ value: '', label: 'Todas' }, ...courts.map((c) => ({ value: c.id, label: c.name }))]}
@@ -240,24 +239,46 @@ export default function BookingsPage() {
 
         {/* ── Lista ── */}
         {viewMode === 'list' && (
-          bookings.length === 0 && !loading ? (
-            <EmptyState
-              icon={<CalendarDays size={48} />}
-              title="Nenhum agendamento encontrado"
-              description="Tente alterar os filtros ou crie um novo agendamento"
-              action={{ label: 'Novo Agendamento', onClick: () => setFormOpen(true) }}
-            />
-          ) : (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
-              <Table
-                columns={columns}
-                data={bookings}
-                keyExtractor={(b) => b.id}
-                loading={loading}
-                onRowClick={openDetail}
+          <>
+            {/* Count card */}
+            {!loading && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-200">
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-orange-50">
+                  <CalendarDays size={16} className="text-orange-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 leading-none">{bookings.length}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    agendamento{bookings.length !== 1 ? 's' : ''}
+                    {filterCreatedDate
+                      ? ` feito${bookings.length !== 1 ? 's' : ''} em ${new Date(filterCreatedDate + 'T12:00:00').toLocaleDateString('pt-BR')}`
+                      : ' no total'}
+                    {filterCourt ? ` · ${courts.find(c => c.id === filterCourt)?.name ?? ''}` : ''}
+                    {filterStatus ? ` · ${statusOptions.find(s => s.value === filterStatus)?.label ?? ''}` : ''}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {bookings.length === 0 && !loading ? (
+              <EmptyState
+                icon={<CalendarDays size={48} />}
+                title="Nenhum agendamento encontrado"
+                description="Tente alterar os filtros ou crie um novo agendamento"
+                action={{ label: 'Novo Agendamento', onClick: () => setFormOpen(true) }}
               />
-            </div>
-          )
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden overflow-x-auto">
+                <Table
+                  columns={columns}
+                  data={bookings}
+                  keyExtractor={(b) => b.id}
+                  loading={loading}
+                  onRowClick={openDetail}
+                />
+              </div>
+            )}
+          </>
         )}
 
         {/* ── Calendário ── */}

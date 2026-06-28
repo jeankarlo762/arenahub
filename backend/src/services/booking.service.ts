@@ -25,6 +25,7 @@ export async function listBookings(filters: {
   date?: string
   startDate?: string
   endDate?: string
+  createdDate?: string
   courtId?: string
   customerName?: string
   customerPhone?: string
@@ -45,6 +46,13 @@ export async function listBookings(filters: {
     where.date = { gte: d, lt: next }
   }
 
+  if (filters.createdDate) {
+    const d = new Date(filters.createdDate + 'T00:00:00')
+    const next = new Date(d)
+    next.setDate(next.getDate() + 1)
+    where.createdAt = { gte: d, lt: next }
+  }
+
   if (filters.courtId) where.courtId = filters.courtId
   if (filters.status) where.status = filters.status
 
@@ -62,7 +70,9 @@ export async function listBookings(filters: {
   return prisma.booking.findMany({
     where,
     include: { court: { select: { id: true, name: true } }, payment: true },
-    orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+    orderBy: filters.createdDate
+      ? [{ createdAt: 'desc' }]
+      : [{ date: 'asc' }, { startTime: 'asc' }],
   })
 }
 
