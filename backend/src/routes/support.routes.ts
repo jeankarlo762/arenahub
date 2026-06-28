@@ -13,6 +13,14 @@ const createTicketSchema = z.object({
 export async function supportRoutes(app: FastifyInstance) {
   app.addHook('preHandler', authenticate)
 
+  app.get('/tickets', async (req: FastifyRequest, reply: FastifyReply) => {
+    const tickets = await prisma.supportTicket.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+    })
+    return reply.send(tickets)
+  })
+
   app.post('/tickets', async (req: FastifyRequest, reply: FastifyReply) => {
     const input = createTicketSchema.parse(req.body)
 

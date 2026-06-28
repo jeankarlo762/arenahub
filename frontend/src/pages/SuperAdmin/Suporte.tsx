@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { SuperAdminLayout } from './SuperAdminLayout'
-import { LifeBuoy, ChevronDown, Download, RefreshCw } from 'lucide-react'
-import { listSupportTickets, updateTicketStatus } from '../../api/support.api'
+import { LifeBuoy, ChevronDown, Download, RefreshCw, MessageSquare, Send } from 'lucide-react'
+import { listSupportTickets, updateTicketStatus, replyToTicket } from '../../api/support.api'
 import type { SupportTicket } from '../../api/support.api'
 import toast from 'react-hot-toast'
 
@@ -36,6 +36,8 @@ function formatDate(iso: string) {
 function TicketRow({ ticket, onStatusChange }: { ticket: SupportTicket; onStatusChange: () => void }) {
   const [expanded, setExpanded] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [replyText, setReplyText] = useState(ticket.replyText ?? '')
+  const [sendingReply, setSendingReply] = useState(false)
 
   async function handleStatus(status: string) {
     setUpdatingStatus(true)
@@ -47,6 +49,20 @@ function TicketRow({ ticket, onStatusChange }: { ticket: SupportTicket; onStatus
       toast.error('Erro ao atualizar status')
     } finally {
       setUpdatingStatus(false)
+    }
+  }
+
+  async function handleReply() {
+    if (!replyText.trim()) return
+    setSendingReply(true)
+    try {
+      await replyToTicket(ticket.id, replyText.trim())
+      toast.success('Resposta enviada')
+      onStatusChange()
+    } catch {
+      toast.error('Erro ao enviar resposta')
+    } finally {
+      setSendingReply(false)
     }
   }
 
@@ -79,6 +95,11 @@ function TicketRow({ ticket, onStatusChange }: { ticket: SupportTicket; onStatus
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[ticket.status] ?? STATUS_STYLES.OPEN}`}>
               {STATUS_LABELS[ticket.status] ?? ticket.status}
             </span>
+            {ticket.replyText && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                <MessageSquare size={10} /> Respondido
+              </span>
+            )}
             {ticket.attachmentName && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                 <Download size={10} /> anexo
@@ -95,7 +116,7 @@ function TicketRow({ ticket, onStatusChange }: { ticket: SupportTicket; onStatus
 
       {/* Expanded body */}
       {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-800 px-4 pb-4 pt-3 space-y-3">
+        <div className="border-t border-gray-100 dark:border-gray-800 px-4 pb-4 pt-3 space-y-4">
           <div>
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Descrição</p>
             <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 rounded-lg p-3 leading-relaxed">
@@ -116,19 +137,41 @@ function TicketRow({ ticket, onStatusChange }: { ticket: SupportTicket; onStatus
             </div>
           )}
 
-          <div className="flex items-center gap-2 pt-1">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">Alterar status:</p>
-            <div className="flex gap-2 flex-wrap">
-              {STATUS_OPTIONS.filter(s => s.value && s.value !== ticket.status).map(s => (
-                <button
-                  key={s.value}
-                  onClick={() => handleStatus(s.value)}
-                  disabled={updatingStatus}
-                  className="px-2.5 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-                >
-                  {s.label}
-                </button>
-              ))}
+          {/* Reply box */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare size={14} className="text-gray-500 dark:text-gray-400" />
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Resposta ao usuário</p>
+            </div>
+            <textarea
+              value={replyText}
+              onChange={e => setReplyText(e.target.value)}
+              rows={3}
+              placeholder="Digite sua resposta para o usuário…"
+              className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+            />
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2 flex-wrap">
+                <p className="text-xs text-gray-500 dark:text-gray-400 self-center mr-1">Status:</p>
+                {STATUS_OPTIONS.filter(s => s.value && s.value !== ticket.status).map(s => (
+                  <button
+                    key={s.value}
+                    onClick={() => handleStatus(s.value)}
+                    disabled={updatingStatus}
+                    className="px-2.5 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handleReply}
+                disabled={sendingReply || !replyText.trim()}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-lg disabled:opacity-50 transition-colors"
+              >
+                <Send size={12} />
+                {sendingReply ? 'Enviando…' : 'Enviar Resposta'}
+              </button>
             </div>
           </div>
         </div>

@@ -12,6 +12,8 @@ export interface SupportTicket {
   attachmentBase64: string | null
   attachmentName: string | null
   status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+  replyText: string | null
+  repliedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -45,7 +47,17 @@ export async function listSupportTickets(params?: {
   return res.data
 }
 
+export async function listMyTickets(): Promise<SupportTicket[]> {
+  const res = await api.get<SupportTicket[]>('/support/tickets')
+  return res.data
+}
+
 export async function updateTicketStatus(id: string, status: string): Promise<SupportTicket> {
   const res = await api.patch<SupportTicket>(`/superadmin/support/tickets/${id}`, { status })
+  return res.data
+}
+
+export async function replyToTicket(id: string, replyText: string): Promise<SupportTicket> {
+  const res = await api.patch<SupportTicket>(`/superadmin/support/tickets/${id}`, { replyText })
   return res.data
 }

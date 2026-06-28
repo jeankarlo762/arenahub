@@ -357,6 +357,8 @@ model SupportTicket {
   attachmentBase64 String?
   attachmentName   String?
   status         String   @default("OPEN")
+  replyText      String?
+  repliedAt      DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

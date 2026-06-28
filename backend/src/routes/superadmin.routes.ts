@@ -312,13 +312,21 @@ export async function superAdminRoutes(app: FastifyInstance) {
   })
 
   app.patch<{ Params: { id: string } }>('/support/tickets/:id', async (req, reply: FastifyReply) => {
-    const { status } = z.object({
-      status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
+    const input = z.object({
+      status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
+      replyText: z.string().max(5000).optional().nullable(),
     }).parse(req.body)
+
+    const data: Record<string, unknown> = {}
+    if (input.status !== undefined) data.status = input.status
+    if (input.replyText !== undefined) {
+      data.replyText = input.replyText
+      data.repliedAt = input.replyText ? new Date() : null
+    }
 
     const ticket = await prisma.supportTicket.update({
       where: { id: req.params.id },
-      data: { status },
+      data,
     })
     return reply.send(ticket)
   })

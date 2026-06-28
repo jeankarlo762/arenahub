@@ -17,6 +17,7 @@ import {
   ScrollText,
   Moon,
   Sun,
+  LifeBuoy,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
@@ -158,6 +159,22 @@ export function Sidebar() {
               ))}
             </>
           )}
+          {/* Suporte — sempre visível */}
+          <div className="my-3 mx-4 border-t border-gray-700/70" />
+          <NavLink
+            to="/suporte"
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-orange-500 text-white'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+              )
+            }
+          >
+            <LifeBuoy size={18} className="shrink-0" />
+            {sidebarOpen && <span>Suporte</span>}
+          </NavLink>
         </nav>
 
         <div className="border-t border-gray-700 p-4 shrink-0">
