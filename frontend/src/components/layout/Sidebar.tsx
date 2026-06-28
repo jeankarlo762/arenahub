@@ -47,7 +47,7 @@ const adminItems = [
 export function Sidebar() {
   const { user, refreshToken, clearAuth, hasModule } = useAuthStore()
   const { sidebarOpen, toggleSidebar, darkMode, toggleDarkMode } = useUIStore()
-  const { logoUrl, companyName } = useBrandingStore()
+  const { logoUrl } = useBrandingStore()
   const navigate = useNavigate()
 
   const isAdmin = user?.role === 'ADMIN'
