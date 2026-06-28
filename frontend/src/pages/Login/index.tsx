@@ -59,13 +59,13 @@ export default function LoginPage() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6 text-orange-600" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <span className="font-black italic text-xl text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
             </div>
-            <span className="text-white font-bold text-xl tracking-tight">ArenaHub</span>
+            <div>
+              <span className="text-white font-bold text-xl tracking-tight">MT Quadras</span>
+              <p className="text-orange-100 text-xs">May Tecnologia</p>
+            </div>
           </div>
         </div>
 
@@ -103,12 +103,9 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-10 lg:hidden">
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="white" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <span className="font-black italic text-sm text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
             </div>
-            <span className="font-bold text-gray-900 text-lg">ArenaHub</span>
+            <span className="font-bold text-gray-900 text-lg">MT Quadras</span>
           </div>
 
           <div className="mb-8">
@@ -182,7 +179,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-xs text-gray-400">
-            ArenaHub — Gestão de Quadras Esportivas
+            MT Quadras — May Tecnologia
           </p>
         </div>
       </div>

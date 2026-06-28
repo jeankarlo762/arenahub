@@ -1,11 +1,11 @@
 {
-  "name": "ArenaHub — Gestão de Quadras",
-  "short_name": "ArenaHub",
+  "name": "MT Quadras — Gestão de Quadras",
+  "short_name": "MT Quadras",
   "description": "Sistema de gestão de quadras esportivas",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f9fafb",
-  "theme_color": "#f97316",
+  "theme_color": "#F2B705",
   "orientation": "portrait-primary",
   "icons": [
     {

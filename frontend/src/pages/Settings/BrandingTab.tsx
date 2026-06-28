@@ -103,7 +103,7 @@ export function BrandingTab() {
                     }
                   }}
                   className="w-28 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-mono focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
-                  placeholder="#f97316"
+                  placeholder="#F2B705"
                 />
               </div>
             </div>
@@ -187,7 +187,7 @@ export function BrandingTab() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="ArenaHub"
+            placeholder="MT Quadras"
             maxLength={80}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
           />
@@ -207,7 +207,7 @@ export function BrandingTab() {
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-700">
               {logo
                 ? <img src={logo} alt="Logo" className="h-6 max-w-[110px] object-contain" />
-                : <span className="font-bold text-sm text-white tracking-tight">{name || 'ArenaHub'}</span>}
+                : <span className="font-bold text-sm text-white tracking-tight">{name || 'MT Quadras'}</span>}
             </div>
             {['Dashboard', 'Agendamentos', 'Configurações'].map((item, i) => (
               <div

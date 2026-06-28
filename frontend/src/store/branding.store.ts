@@ -13,7 +13,7 @@ interface BrandingState extends BrandingData {
 }
 
 export const useBrandingStore = create<BrandingState>((set) => ({
-  primaryColor: '#f97316',
+  primaryColor: '#F2B705',
   logoUrl: null,
   companyName: null,
   loaded: false,

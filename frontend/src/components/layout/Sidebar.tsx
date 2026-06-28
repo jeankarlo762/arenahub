@@ -22,6 +22,7 @@ import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
 import { useUIStore } from '../../store/ui.store'
 import { useBrandingStore } from '../../store/branding.store'
+import { MTLogo } from '../ui/MTLogo'
 import * as authApi from '../../api/auth.api'
 import toast from 'react-hot-toast'
 
@@ -90,7 +91,7 @@ export function Sidebar() {
           {sidebarOpen && (
             logoUrl
               ? <img src={logoUrl} alt="Logo" className="h-12 max-w-[148px] object-contain" />
-              : <span className="font-bold text-xl tracking-tight">{companyName || 'ArenaHub'}</span>
+              : <MTLogo size="lg" />
           )}
         </div>
 

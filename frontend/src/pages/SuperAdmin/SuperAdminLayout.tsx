@@ -27,13 +27,10 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <div className="flex items-center justify-between px-5 h-16 border-b border-gray-700 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" stroke="white" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+            <span className="font-black italic text-sm text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-tight leading-none">ArenaHub</span>
+            <span className="font-bold text-sm tracking-tight leading-none">MT Quadras</span>
             <span className="text-[10px] text-orange-400 font-medium mt-0.5">Super Admin</span>
           </div>
         </div>
@@ -128,12 +125,9 @@ export function SuperAdminLayout({ children, title, subtitle, action }: {
           </button>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-orange-500 rounded-md flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5" stroke="white" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+              <span className="font-black italic text-[10px] text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
             </div>
-            <span className="font-bold text-sm">ArenaHub</span>
+            <span className="font-bold text-sm">MT Quadras</span>
             <span className="text-[10px] text-orange-400 font-medium">Super Admin</span>
           </div>
         </div>

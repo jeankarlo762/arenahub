@@ -274,7 +274,7 @@ export default function TournamentBracketPage() {
 
       {/* Footer */}
       <div className="bg-gray-900 border-t border-gray-800 px-6 py-2.5 flex items-center justify-between text-xs text-gray-600 shrink-0">
-        <span>ArenaHub — Chaveamento · {tournament.name}</span>
+        <span>MT Quadras — Chaveamento · {tournament.name}</span>
         <span className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
           Clique em um participante para avançá-lo de fase · Auto-refresh a cada 30s

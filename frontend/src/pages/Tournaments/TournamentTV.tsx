@@ -257,7 +257,7 @@ export default function TournamentTVPage() {
 
       {/* Bottom bar */}
       <div className="bg-gray-900 border-t border-gray-800 px-8 py-3 flex items-center justify-between text-xs text-gray-600">
-        <span>ArenaHub — Sistema de Gestão de Quadras Esportivas</span>
+        <span>MT Quadras — May Tecnologia · Sistema de Gestão de Quadras Esportivas</span>
         <span className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse inline-block" />
           Atualização automática a cada 30 segundos
