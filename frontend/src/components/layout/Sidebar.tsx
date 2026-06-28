@@ -15,6 +15,8 @@ import {
   BarChart2,
   Link,
   ScrollText,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { cn } from '../../utils/cn'
 import { useAuthStore } from '../../store/auth.store'
@@ -43,7 +45,7 @@ const adminItems = [
 
 export function Sidebar() {
   const { user, refreshToken, clearAuth, hasModule } = useAuthStore()
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const { sidebarOpen, toggleSidebar, darkMode, toggleDarkMode } = useUIStore()
   const { logoUrl, companyName } = useBrandingStore()
   const navigate = useNavigate()
 
@@ -165,6 +167,19 @@ export function Sidebar() {
               <p className="text-xs text-gray-500 capitalize">{user.role === 'ADMIN' ? 'Administrador' : 'Operador'}</p>
             </div>
           )}
+          <button
+            onClick={toggleDarkMode}
+            title={darkMode ? 'Desativar modo escuro' : 'Ativar modo escuro'}
+            className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors mb-1"
+          >
+            {darkMode
+              ? <Sun size={18} className="shrink-0 text-yellow-400" />
+              : <Moon size={18} className="shrink-0" />
+            }
+            {sidebarOpen && (
+              <span>{darkMode ? 'Modo claro' : 'Modo escuro'}</span>
+            )}
+          </button>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-2 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"

@@ -14,7 +14,7 @@ export function Layout({ children, title, breadcrumb }: LayoutProps) {
   const { sidebarOpen } = useUIStore()
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
       <Sidebar />
       <div
         className={cn(

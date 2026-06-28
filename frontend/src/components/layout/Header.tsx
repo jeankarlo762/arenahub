@@ -11,16 +11,16 @@ export function Header({ title, breadcrumb }: HeaderProps) {
   const { toggleSidebar } = useUIStore()
 
   return (
-    <header className="h-16 flex items-center gap-4 px-6 bg-white border-b border-gray-200 shrink-0">
+    <header className="h-16 flex items-center gap-4 px-6 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shrink-0">
       <button
         onClick={toggleSidebar}
-        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors lg:hidden"
+        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors lg:hidden"
       >
         <Menu size={20} />
       </button>
       <div className="min-w-0 flex-1 overflow-hidden">
-        {breadcrumb && <p className="text-xs text-gray-400 truncate">{breadcrumb}</p>}
-        <h1 className="text-lg font-semibold text-gray-900 truncate">{title}</h1>
+        {breadcrumb && <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{breadcrumb}</p>}
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{title}</h1>
       </div>
       <div className="ml-auto">
         <NotificationBell />

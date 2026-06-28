@@ -38,15 +38,15 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
       />
       <div
         className={cn(
-          'relative w-full bg-white rounded-xl shadow-xl flex flex-col max-h-[90vh]',
+          'relative w-full bg-white dark:bg-gray-900 rounded-xl shadow-xl flex flex-col max-h-[90vh]',
           sizes[size],
         )}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="rounded-lg p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           >
             <X size={20} />
           </button>
@@ -55,7 +55,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         <div className="overflow-y-auto flex-1 px-6 py-4">{children}</div>
 
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap justify-end gap-3 shrink-0">
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap justify-end gap-3 shrink-0">
             {footer}
           </div>
         )}
