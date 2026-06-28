@@ -51,32 +51,41 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-orange-700 flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-orange-500 to-orange-700 flex-col items-center justify-center p-12 relative overflow-hidden">
         {/* Background circles */}
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full" />
         <div className="absolute -bottom-32 -left-16 w-80 h-80 bg-white/10 rounded-full" />
         <div className="absolute top-1/2 right-8 w-48 h-48 bg-white/5 rounded-full" />
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <span className="font-black italic text-xl text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
+        <div className="relative z-10 flex flex-col items-center text-center space-y-8">
+          {/* Logo centralizada e grande */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-28 h-28 bg-white/20 rounded-3xl flex items-center justify-center shadow-2xl">
+              <span
+                className="font-black italic text-6xl text-white leading-none select-none"
+                style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}
+              >
+                MT
+              </span>
             </div>
             <div>
-              <span className="text-white font-bold text-xl tracking-tight">MT Quadras</span>
-              <p className="text-orange-100 text-xs">May Tecnologia</p>
+              <p className="text-white font-bold text-3xl tracking-tight">MT Quadras</p>
+              <p className="text-white/70 text-sm mt-1">May Tecnologia</p>
             </div>
           </div>
-        </div>
 
-        <div className="relative z-10 space-y-6">
-          <h1 className="text-4xl font-bold text-white leading-tight">
-            Gestão de quadras<br />esportivas simplificada
-          </h1>
-          <p className="text-orange-100 text-lg leading-relaxed">
-            Agendamentos, torneios e controle financeiro em um só lugar.
-          </p>
-          <div className="flex flex-col gap-3">
+          <div className="w-16 h-px bg-white/30" />
+
+          <div className="space-y-3">
+            <h1 className="text-2xl font-semibold text-white leading-snug">
+              Gestão de quadras<br />esportivas simplificada
+            </h1>
+            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
+              Agendamentos, torneios e controle financeiro em um só lugar.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
             {['Agendamentos em tempo real', 'Controle financeiro completo', 'Gestão de torneios'].map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
@@ -84,16 +93,10 @@ export default function LoginPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <span className="text-orange-100 text-sm">{item}</span>
+                <span className="text-white/80 text-sm">{item}</span>
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="relative z-10">
-          <p className="text-orange-200 text-xs">
-            Sistema de gestão profissional
-          </p>
         </div>
       </div>
 
