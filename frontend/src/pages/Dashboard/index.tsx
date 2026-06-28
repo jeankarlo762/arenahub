@@ -21,18 +21,19 @@ import type { FinancialSummary, DailyRevenue } from '../../types/financial'
 import { formatCurrency, BOOKING_STATUS_LABELS } from '../../utils/format'
 import { formatDate, toInputDate } from '../../utils/date'
 import { useAuthStore } from '../../store/auth.store'
+import { useUIStore } from '../../store/ui.store'
 import toast from 'react-hot-toast'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-4 animate-pulse">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 bg-gray-200 rounded-xl shrink-0" />
+        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl shrink-0" />
         <div className="flex-1">
-          <div className="h-3 bg-gray-200 rounded w-24 mb-2" />
-          <div className="h-6 bg-gray-200 rounded w-16" />
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2" />
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16" />
         </div>
       </div>
     </div>
@@ -43,7 +44,7 @@ function SkeletonRows({ n = 3 }: { n?: number }) {
   return (
     <div className="flex flex-col gap-2">
       {Array.from({ length: n }).map((_, i) => (
-        <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+        <div key={i} className="h-14 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
       ))}
     </div>
   )
@@ -64,7 +65,7 @@ function MoMBadge({ current, previous }: { current: number; previous: number }) 
   const pct = Math.round(((current - previous) / previous) * 100)
   const up = pct >= 0
   return (
-    <span className={`flex items-center gap-0.5 text-xs font-medium mt-0.5 ${up ? 'text-green-600' : 'text-red-500'}`}>
+    <span className={`flex items-center gap-0.5 text-xs font-medium mt-0.5 ${up ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
       {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
       {up ? '+' : ''}{pct}% vs mês ant.
     </span>
@@ -73,7 +74,7 @@ function MoMBadge({ current, previous }: { current: number; previous: number }) 
 
 function RefreshBar({ loading, lastUpdated }: { loading: boolean; lastUpdated: Date | null }) {
   return (
-    <div className="flex items-center justify-end gap-2 text-xs text-gray-400">
+    <div className="flex items-center justify-end gap-2 text-xs text-gray-400 dark:text-gray-500">
       {lastUpdated && !loading && (
         <span>Atualizado às {lastUpdated.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
       )}
@@ -84,13 +85,17 @@ function RefreshBar({ loading, lastUpdated }: { loading: boolean; lastUpdated: D
 function BookingRow({ b, today }: { b: Booking; today: string }) {
   const urgent = isUrgent(b, today)
   return (
-    <div className={`flex items-center justify-between p-3 rounded-lg text-sm gap-2 ${urgent ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50'}`}>
+    <div className={`flex items-center justify-between p-3 rounded-lg text-sm gap-2 ${
+      urgent
+        ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700'
+        : 'bg-gray-50 dark:bg-gray-800'
+    }`}>
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           {urgent && <Clock size={12} className="text-amber-500 shrink-0" />}
-          <p className="font-medium text-gray-900 truncate">{b.customerName}</p>
+          <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{b.customerName}</p>
         </div>
-        <p className="text-gray-500 text-xs">{b.court?.name ?? '—'} · {b.startTime}–{b.endTime}</p>
+        <p className="text-gray-500 dark:text-gray-400 text-xs">{b.court?.name ?? '—'} · {b.startTime}–{b.endTime}</p>
       </div>
       <Badge label={BOOKING_STATUS_LABELS[b.status]} status={b.status} />
     </div>
@@ -129,9 +134,9 @@ function OperatorDashboard() {
   useEffect(() => { load() }, [load])
 
   const metrics = [
-    { label: 'Agendamentos Hoje', value: todayBookings.length, icon: CalendarDays, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: 'Quadras Ativas', value: activeCourts, icon: MapPin, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Torneios Ativos', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Agendamentos Hoje', value: todayBookings.length, icon: CalendarDays, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    { label: 'Quadras Ativas', value: activeCourts, icon: MapPin, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+    { label: 'Torneios Ativos', value: upcomingTournaments, icon: Trophy, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
   ]
 
   return (
@@ -148,8 +153,8 @@ function OperatorDashboard() {
                   <m.icon size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">{m.label}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{m.value}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">{m.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{m.value}</p>
                 </div>
               </div>
             </Card>
@@ -157,11 +162,11 @@ function OperatorDashboard() {
       </div>
 
       <Card>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Agendamentos Hoje</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Agendamentos Hoje</h2>
         {loading ? (
           <SkeletonRows />
         ) : todayBookings.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">Nenhum agendamento hoje</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Nenhum agendamento hoje</p>
         ) : (
           <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
             {todayBookings.map((b) => <BookingRow key={b.id} b={b} today={today} />)}
@@ -182,6 +187,7 @@ function AdminDashboard() {
     return toInputDate(d)
   }, [])
   const navigate = useNavigate()
+  const { darkMode } = useUIStore()
 
   const monthStart = useMemo(() => {
     const d = new Date()
@@ -261,23 +267,27 @@ function AdminDashboard() {
 
   useEffect(() => { load() }, [load])
 
+  const chartColor = darkMode ? '#F2B705' : '#f97316'
+  const chartGrid  = darkMode ? '#374151' : '#f0f0f0'
+  const chartTick  = darkMode ? '#9ca3af' : '#6b7280'
+
   return (
     <div className="flex flex-col gap-6">
       <RefreshBar loading={loading} lastUpdated={lastUpdated} />
 
-      {/* Alerts strip */}
+      {/* Alerts strip — comandas em aberto */}
       {!loading && openOrders.length > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl flex-wrap">
+        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl flex-wrap">
           <div className="flex items-center gap-1.5 shrink-0">
             <AlertTriangle size={14} className="text-amber-500" />
-            <span className="text-xs font-semibold text-amber-700">Comandas em aberto:</span>
+            <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Comandas em aberto:</span>
           </div>
           <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">
             {openOrders.slice(0, 6).map((o) => (
               <button
                 key={o.id}
                 onClick={() => navigate('/comandas')}
-                className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-full text-xs font-medium text-amber-800 transition-colors whitespace-nowrap"
+                className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/40 border border-amber-300 dark:border-amber-600 rounded-full text-xs font-medium text-amber-800 dark:text-amber-300 transition-colors whitespace-nowrap"
               >
                 <ReceiptText size={11} />
                 #{o.number} {o.customerName}
@@ -286,7 +296,7 @@ function AdminDashboard() {
             {openOrders.length > 6 && (
               <button
                 onClick={() => navigate('/comandas')}
-                className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-full text-xs text-amber-700 transition-colors"
+                className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/40 border border-amber-300 dark:border-amber-600 rounded-full text-xs text-amber-700 dark:text-amber-400 transition-colors"
               >
                 +{openOrders.length - 6} mais
               </button>
@@ -295,12 +305,12 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* Overdue rental payments alert */}
+      {/* Overdue rental payments */}
       {!loading && overduePayments.length > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl flex-wrap">
+        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-xl flex-wrap">
           <div className="flex items-center gap-1.5 shrink-0">
             <AlertTriangle size={14} className="text-red-500" />
-            <span className="text-xs font-semibold text-red-700">
+            <span className="text-xs font-semibold text-red-700 dark:text-red-400">
               {overduePayments.length} pagamento{overduePayments.length > 1 ? 's' : ''} de locação em atraso:
             </span>
           </div>
@@ -309,7 +319,7 @@ function AdminDashboard() {
               <button
                 key={p.id}
                 onClick={() => navigate('/rentals')}
-                className="flex items-center gap-1 px-2 py-0.5 bg-red-100 hover:bg-red-200 border border-red-300 rounded-full text-xs font-medium text-red-800 transition-colors whitespace-nowrap"
+                className="flex items-center gap-1 px-2 py-0.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/40 border border-red-300 dark:border-red-600 rounded-full text-xs font-medium text-red-800 dark:text-red-300 transition-colors whitespace-nowrap"
               >
                 {p.rental.clientName} — {new Date(p.dueDate).toLocaleDateString('pt-BR')}
               </button>
@@ -317,7 +327,7 @@ function AdminDashboard() {
             {overduePayments.length > 5 && (
               <button
                 onClick={() => navigate('/rentals')}
-                className="px-2 py-0.5 bg-red-100 hover:bg-red-200 border border-red-300 rounded-full text-xs text-red-700 transition-colors"
+                className="px-2 py-0.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-800/40 border border-red-300 dark:border-red-600 rounded-full text-xs text-red-700 dark:text-red-400 transition-colors"
               >
                 +{overduePayments.length - 5} mais
               </button>
@@ -334,24 +344,24 @@ function AdminDashboard() {
           <>
             <Card>
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="bg-orange-50 text-orange-600 rounded-xl p-2 sm:p-3 shrink-0">
+                <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-xl p-2 sm:p-3 shrink-0">
                   <CalendarDays size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">Agendamentos Hoje</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayBookings.length}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">Agendamentos Hoje</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{todayBookings.length}</p>
                 </div>
               </div>
             </Card>
 
             <Card>
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="bg-green-50 text-green-600 rounded-xl p-2 sm:p-3 shrink-0">
+                <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl p-2 sm:p-3 shrink-0">
                   <DollarSign size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">Receita do Mês</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatCurrency(summary?.received ?? 0)}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">Receita do Mês</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary?.received ?? 0)}</p>
                   {summary && prevSummary && (
                     <MoMBadge current={summary.received} previous={prevSummary.received} />
                   )}
@@ -361,24 +371,24 @@ function AdminDashboard() {
 
             <Card>
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="bg-purple-50 text-purple-600 rounded-xl p-2 sm:p-3 shrink-0">
+                <div className="bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl p-2 sm:p-3 shrink-0">
                   <MapPin size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">Quadras Ativas</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{activeCourts}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">Quadras Ativas</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{activeCourts}</p>
                 </div>
               </div>
             </Card>
 
             <Card>
               <div className="flex items-center gap-3 sm:gap-4">
-                <div className="bg-orange-50 text-orange-600 rounded-xl p-2 sm:p-3 shrink-0">
+                <div className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-xl p-2 sm:p-3 shrink-0">
                   <Trophy size={20} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">Torneios Ativos</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900">{upcomingTournaments}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">Torneios Ativos</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{upcomingTournaments}</p>
                 </div>
               </div>
             </Card>
@@ -389,22 +399,28 @@ function AdminDashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Revenue chart */}
         <Card>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Receita — Últimos 7 dias</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Receita — Últimos 7 dias</h2>
           {loading ? (
-            <div className="h-[200px] bg-gray-100 rounded-lg animate-pulse" />
+            <div className="h-[200px] bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
           ) : dailyRevenue.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-16">Sem dados de receita</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-16">Sem dados de receita</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={dailyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} width={55} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartGrid} />
+                <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11, fill: chartTick }} />
+                <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11, fill: chartTick }} width={55} />
                 <Tooltip
+                  contentStyle={{
+                    backgroundColor: darkMode ? '#1f2937' : '#fff',
+                    border: `1px solid ${darkMode ? '#374151' : '#e5e7eb'}`,
+                    borderRadius: 8,
+                    color: darkMode ? '#f3f4f6' : '#111827',
+                  }}
                   formatter={(v) => [formatCurrency(Number(v)), 'Receita']}
                   labelFormatter={(l) => formatDate(l as string)}
                 />
-                <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill={chartColor} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -412,11 +428,11 @@ function AdminDashboard() {
 
         {/* Today's bookings */}
         <Card>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Agendamentos Hoje</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Agendamentos Hoje</h2>
           {loading ? (
             <SkeletonRows />
           ) : todayBookings.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Nenhum agendamento hoje</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Nenhum agendamento hoje</p>
           ) : (
             <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
               {todayBookings.map((b) => <BookingRow key={b.id} b={b} today={today} />)}
@@ -428,10 +444,10 @@ function AdminDashboard() {
       {/* Tomorrow's bookings */}
       {(loading || tomorrowBookings.length > 0) && (
         <Card>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Agendamentos Amanhã
             {!loading && (
-              <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-500 text-xs font-medium rounded-full">
+              <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded-full">
                 {tomorrowBookings.length}
               </span>
             )}
@@ -441,10 +457,10 @@ function AdminDashboard() {
           ) : (
             <div className="flex flex-col gap-2 max-h-52 overflow-y-auto">
               {tomorrowBookings.map((b) => (
-                <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm gap-2">
+                <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm gap-2">
                   <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{b.customerName}</p>
-                    <p className="text-gray-500 text-xs">{b.court?.name ?? '—'} · {b.startTime}–{b.endTime}</p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{b.customerName}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs">{b.court?.name ?? '—'} · {b.startTime}–{b.endTime}</p>
                   </div>
                   <Badge label={BOOKING_STATUS_LABELS[b.status]} status={b.status} />
                 </div>
@@ -457,18 +473,23 @@ function AdminDashboard() {
       {/* Top clients */}
       {!loading && topClients.length > 0 && (
         <Card>
-          <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
             <Crown size={16} className="text-orange-500" /> Top Clientes — Consumo no Bar
           </h2>
           <div className="flex flex-col gap-1">
             {topClients.slice(0, 8).map((c, i) => (
-              <div key={c.customerName} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-gray-100 text-gray-600' : i === 2 ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-400'}`}>
+              <div key={c.customerName} className="flex items-center gap-3 py-2 border-b border-gray-50 dark:border-gray-700/50 last:border-0">
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                  i === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                  : i === 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                  : i === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                  : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500'
+                }`}>
                   {i + 1}
                 </span>
-                <p className="flex-1 text-sm font-medium text-gray-900 truncate">{c.customerName}</p>
-                <p className="text-xs text-gray-400 shrink-0">{c.orderCount} comanda{c.orderCount !== 1 ? 's' : ''}</p>
-                <p className="text-sm font-semibold text-green-700 shrink-0">{formatCurrency(c.total)}</p>
+                <p className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{c.customerName}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{c.orderCount} comanda{c.orderCount !== 1 ? 's' : ''}</p>
+                <p className="text-sm font-semibold text-green-700 dark:text-green-400 shrink-0">{formatCurrency(c.total)}</p>
               </div>
             ))}
           </div>
@@ -477,16 +498,16 @@ function AdminDashboard() {
 
       {/* Pending payments */}
       <Card>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Pendentes de Pagamento</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Pendentes de Pagamento</h2>
         {loading ? (
           <SkeletonRows n={2} />
         ) : pendingBookings.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">Nenhum pagamento pendente</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">Nenhum pagamento pendente</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-gray-500 uppercase">
+                <tr className="text-left text-xs text-gray-500 dark:text-gray-400 uppercase">
                   <th className="pb-2 pr-4 whitespace-nowrap">Cliente</th>
                   <th className="pb-2 pr-4 whitespace-nowrap">Quadra</th>
                   <th className="pb-2 pr-4 whitespace-nowrap hidden sm:table-cell">Data</th>
@@ -494,14 +515,14 @@ function AdminDashboard() {
                   <th className="pb-2 whitespace-nowrap">Valor</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {pendingBookings.map((b) => (
                   <tr key={b.id}>
-                    <td className="py-2 pr-4 font-medium text-gray-900">{b.customerName}</td>
-                    <td className="py-2 pr-4 text-gray-600">{b.court?.name ?? '—'}</td>
-                    <td className="py-2 pr-4 text-gray-600 hidden sm:table-cell">{formatDate(b.date)}</td>
-                    <td className="py-2 pr-4 text-gray-600 hidden sm:table-cell">{b.startTime}–{b.endTime}</td>
-                    <td className="py-2 font-medium text-gray-900">{formatCurrency(Number(b.totalPrice))}</td>
+                    <td className="py-2 pr-4 font-medium text-gray-900 dark:text-gray-100">{b.customerName}</td>
+                    <td className="py-2 pr-4 text-gray-600 dark:text-gray-400">{b.court?.name ?? '—'}</td>
+                    <td className="py-2 pr-4 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{formatDate(b.date)}</td>
+                    <td className="py-2 pr-4 text-gray-600 dark:text-gray-400 hidden sm:table-cell">{b.startTime}–{b.endTime}</td>
+                    <td className="py-2 font-medium text-gray-900 dark:text-gray-100">{formatCurrency(Number(b.totalPrice))}</td>
                   </tr>
                 ))}
               </tbody>

@@ -25,8 +25,6 @@ export function NotificationBell() {
     return () => clearInterval(interval)
   }, [load])
 
-  // Marca tudo como visto — só é chamado ao FECHAR o dropdown, para que as
-  // notificações não-vistas continuem destacadas enquanto o painel está aberto.
   const markSeen = useCallback(() => {
     const now = new Date().toISOString()
     setLastSeen(now)
@@ -50,7 +48,7 @@ export function NotificationBell() {
 
   function handleOpen() {
     setOpen((v) => {
-      if (v) markSeen() // estava aberto → fechando: marca como visto
+      if (v) markSeen()
       return !v
     })
   }
@@ -59,7 +57,7 @@ export function NotificationBell() {
     <div className="relative" ref={ref}>
       <button
         onClick={handleOpen}
-        className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+        className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
         aria-label="Notificações"
       >
         <Bell size={20} />
@@ -71,30 +69,30 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
             <div>
-              <p className="text-sm font-semibold text-gray-900">Novos agendamentos</p>
-              <p className="text-xs text-gray-400">Últimas 24 horas</p>
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Novos agendamentos</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">Últimas 24 horas</p>
             </div>
             {unread > 0 && (
-              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full whitespace-nowrap">
+              <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-semibold rounded-full whitespace-nowrap">
                 {unread} {unread === 1 ? 'nova' : 'novas'}
               </span>
             )}
           </div>
-          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+          <div className="max-h-80 overflow-y-auto divide-y divide-gray-50 dark:divide-gray-800">
             {bookings.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-6">Nenhum agendamento recente</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Nenhum agendamento recente</p>
             ) : (
               bookings.map((b) => {
                 const isNew = new Date(b.createdAt) > new Date(lastSeen)
                 return (
-                  <div key={b.id} className={`px-4 py-3 flex gap-3 items-start ${isNew ? 'bg-orange-50' : ''}`}>
+                  <div key={b.id} className={`px-4 py-3 flex gap-3 items-start ${isNew ? 'bg-orange-50 dark:bg-orange-900/20' : ''}`}>
                     {isNew && <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{b.customerName}</p>
-                      <p className="text-xs text-gray-500">{b.court?.name} · {formatDate(b.date)} {b.startTime}–{b.endTime}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{b.customerName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{b.court?.name} · {formatDate(b.date)} {b.startTime}–{b.endTime}</p>
                     </div>
                   </div>
                 )
