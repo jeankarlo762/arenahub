@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Shield, ArrowLeft } from 'lucide-react'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
