@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FileText, ArrowLeft } from 'lucide-react'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -11,14 +11,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function TermosPage() {
+  const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
             <ArrowLeft size={16} /> Voltar
-          </Link>
+          </button>
           <div className="flex items-center gap-2 ml-2">
             <div className="p-1.5 bg-orange-100 rounded-lg">
               <FileText size={16} className="text-orange-600" />
