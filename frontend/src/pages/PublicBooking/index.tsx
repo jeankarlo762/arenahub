@@ -470,9 +470,9 @@ export default function PublicBookingPage() {
       <div className="border-t border-gray-100 mt-8 py-5 text-center space-y-1">
         <p className="text-xs text-gray-400">Powered by <span className="font-semibold text-gray-500">MT Quadras</span> · May Tecnologia</p>
         <p className="text-xs text-gray-300 space-x-2">
-          <Link to="/privacidade" className="hover:text-gray-500 underline transition-colors">Política de Privacidade</Link>
+          <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-gray-500 underline transition-colors">Política de Privacidade</Link>
           <span>·</span>
-          <Link to="/termos" className="hover:text-gray-500 underline transition-colors">Termos de Uso</Link>
+          <Link to="/termos" target="_blank" rel="noopener noreferrer" className="hover:text-gray-500 underline transition-colors">Termos de Uso</Link>
         </p>
       </div>
     </div>
