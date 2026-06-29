@@ -1,5 +1,5 @@
 {
-  "name": "arenamk-backend",
+  "name": "mtquadras-backend",
   "version": "1.0.0",
   "description": "Backend para sistema de gerenciamento de quadras esportivas",
   "main": "dist/server.js",
