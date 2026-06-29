@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useEffect } from 'react'
+import { PrivacyBanner } from './components/ui/PrivacyBanner'
 import { useAuthStore } from './store/auth.store'
 import { useBrandingStore, applyBrandingCss } from './store/branding.store'
 import * as authApi from './api/auth.api'
@@ -33,6 +34,8 @@ import AutoBookingPage from './pages/AutoBooking'
 import AuditPage from './pages/Audit'
 import SuporteUserPage from './pages/Suporte'
 import PublicBookingPage from './pages/PublicBooking'
+import PrivacidadePage from './pages/Privacidade'
+import TermosPage from './pages/Termos'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore()
@@ -91,6 +94,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppInit />
+      <PrivacyBanner />
       <Toaster
         position="top-right"
         toastOptions={{
@@ -127,6 +131,8 @@ export default function App() {
         <Route path="/audit" element={<RequireAdmin><AuditPage /></RequireAdmin>} />
         <Route path="/suporte" element={<RequireAuth><SuporteUserPage /></RequireAuth>} />
         <Route path="/booking/:slug" element={<PublicBookingPage />} />
+        <Route path="/privacidade" element={<PrivacidadePage />} />
+        <Route path="/termos" element={<TermosPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

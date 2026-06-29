@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -183,6 +183,11 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-xs text-gray-400">
             MT Quadras — May Tecnologia
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-300 space-x-2">
+            <Link to="/privacidade" className="hover:text-gray-500 underline transition-colors">Política de Privacidade</Link>
+            <span>·</span>
+            <Link to="/termos" className="hover:text-gray-500 underline transition-colors">Termos de Uso</Link>
           </p>
         </div>
       </div>

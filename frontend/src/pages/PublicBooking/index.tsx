@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { MapPin, Clock, ChevronLeft, CalendarDays, CheckCircle, Check } from 'lucide-react'
 import { Spinner } from '../../components/ui/Spinner'
 import { Button } from '../../components/ui/Button'
@@ -71,6 +71,7 @@ export default function PublicBookingPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
+  const [consentGiven, setConsentGiven] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [confirmedCount, setConfirmedCount] = useState(0)
 
@@ -410,7 +411,24 @@ export default function PublicBookingPage() {
               <Input label="E-mail (opcional)" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" type="email" />
             </div>
 
-            <Button onClick={handleSubmit} loading={submitting} disabled={!name.trim() || !phone.trim()}>
+            {/* Consentimento LGPD */}
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 accent-orange-500 shrink-0"
+              />
+              <span className="text-xs text-gray-500 leading-relaxed">
+                Li e concordo com a{' '}
+                <Link to="/privacidade" target="_blank" className="text-orange-600 underline hover:text-orange-700">
+                  Política de Privacidade
+                </Link>{' '}
+                e autorizo o uso dos meus dados para finalizar este agendamento, conforme a LGPD (Lei nº 13.709/2018).
+              </span>
+            </label>
+
+            <Button onClick={handleSubmit} loading={submitting} disabled={!name.trim() || !phone.trim() || !consentGiven}>
               Confirmar {chosenSlots.length > 1 ? `${chosenSlots.length} horários` : 'agendamento'}
               {totalPrice > 0 ? ` · ${brl(totalPrice)}` : ''}
             </Button>
@@ -446,6 +464,16 @@ export default function PublicBookingPage() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Footer LGPD */}
+      <div className="border-t border-gray-100 mt-8 py-5 text-center space-y-1">
+        <p className="text-xs text-gray-400">Powered by <span className="font-semibold text-gray-500">MT Quadras</span> · May Tecnologia</p>
+        <p className="text-xs text-gray-300 space-x-2">
+          <Link to="/privacidade" className="hover:text-gray-500 underline transition-colors">Política de Privacidade</Link>
+          <span>·</span>
+          <Link to="/termos" className="hover:text-gray-500 underline transition-colors">Termos de Uso</Link>
+        </p>
       </div>
     </div>
   )
