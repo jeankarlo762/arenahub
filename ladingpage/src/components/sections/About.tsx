@@ -32,7 +32,7 @@ export default function About() {
 
           <AnimatedSection delay={0.2}>
             <p className="text-white/60 text-base leading-relaxed mb-6">
-              A MK Sistemas desenvolve sistemas e produtos de software com foco em resolver problemas reais de quem opera negócios. O MT Quadras é um dos nossos produtos — construído ouvindo donos de arena e refinado com uso no dia a dia.
+              A MK Sistemas desenvolve sistemas e produtos de software com foco em resolver problemas reais de quem opera negócios. O ArenaHub é um dos nossos produtos — construído ouvindo donos de arena e refinado com uso no dia a dia.
             </p>
             <p className="text-white/50 text-base leading-relaxed mb-8">
               Acreditamos que tecnologia boa não precisa ser complicada. Precisa funcionar.

@@ -25,13 +25,13 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <Logo size="md" />
             <p className="text-white/40 text-sm leading-relaxed max-w-xs">
-              MT Quadras é um produto da MK Sistemas — sistemas que funcionam, sem enrolação.
+              ArenaHub é um produto da MK Sistemas — sistemas que funcionam, sem enrolação.
             </p>
             <span
               className="text-[10px] text-white/25 uppercase tracking-widest"
               style={{ fontFamily: '"JetBrains Mono", monospace' }}
             >
-              MT Quadras — um produto MK Sistemas
+              ArenaHub — um produto MK Sistemas
             </span>
           </div>
 
