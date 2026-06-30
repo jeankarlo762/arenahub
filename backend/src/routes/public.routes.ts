@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../config/database'
 import * as courtsApi from '../services/court.service'
 import { timesOverlap, timeToMinutes } from '../utils/date'
-import { sendWhatsApp } from '../services/whatsapp.service'
+import { sendMessage as sendWhatsApp } from '../services/baileys.service'
 
 const publicBookingBodySchema = z.object({
   courtId: z.string().min(1),

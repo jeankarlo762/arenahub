@@ -14,6 +14,7 @@ import { superAdminRoutes } from './superadmin.routes'
 import { publicRoutes } from './public.routes'
 import { auditRoutes } from './audit.routes'
 import { supportRoutes } from './support.routes'
+import { whatsappRoutes } from './whatsapp.routes'
 
 export async function registerRoutes(app: FastifyInstance) {
   app.register(authRoutes, { prefix: '/api/auth' })
@@ -31,4 +32,5 @@ export async function registerRoutes(app: FastifyInstance) {
   app.register(publicRoutes, { prefix: '/api/public' })
   app.register(auditRoutes, { prefix: '/api/audit' })
   app.register(supportRoutes, { prefix: '/api/support' })
+  app.register(whatsappRoutes, { prefix: '/api/settings/whatsapp' })
 }
