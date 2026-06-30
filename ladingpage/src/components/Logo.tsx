@@ -22,7 +22,7 @@ export default function Logo({ size = 'md' }: LogoProps) {
         className={`${s.name} font-semibold text-[#F8F8F8]`}
         style={{ fontFamily: '"Inter", sans-serif' }}
       >
-        May Tecnologia
+        MK Sistemas
       </span>
     </div>
   );

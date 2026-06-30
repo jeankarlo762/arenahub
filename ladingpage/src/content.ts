@@ -7,7 +7,7 @@ export const LINKS = {
   whatsapp: 'https://wa.me/5511939404620',
   form: '[URL_DO_FORM]',
   companySite: '[URL_SITE_EMPRESA]',
-  contact: 'contato@maytecnologia.com',
+  contact: 'contato@mksistemas.com.br',
   instagram: '@maytecnologia.app',
 };
 
