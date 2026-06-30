@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../config/database'
 import * as courtsApi from '../services/court.service'
 import { timesOverlap, timeToMinutes } from '../utils/date'
+import { sendWhatsApp } from '../services/whatsapp.service'
 
 const publicBookingBodySchema = z.object({
   courtId: z.string().min(1),
@@ -73,7 +74,7 @@ export async function publicRoutes(app: FastifyInstance) {
       return reply.status(400).send({ message: 'Não é possível agendar em uma data passada' })
     }
 
-    const tenant = await prisma.tenant.findUnique({ where: { bookingSlug: slug }, select: { id: true, active: true } })
+    const tenant = await prisma.tenant.findUnique({ where: { bookingSlug: slug }, select: { id: true, name: true, active: true } })
     if (!tenant || !tenant.active) return reply.status(404).send({ message: 'Não encontrado' })
 
     const court = await prisma.court.findFirst({ where: { id: body.courtId, tenantId: tenant.id, active: true } })
@@ -152,6 +153,26 @@ export async function publicRoutes(app: FastifyInstance) {
           },
         })
       })
+
+      // Notificação WhatsApp — fire-and-forget, não bloqueia a resposta
+      const [day, month, year] = [
+        bookingDate.getDate().toString().padStart(2, '0'),
+        (bookingDate.getMonth() + 1).toString().padStart(2, '0'),
+        bookingDate.getFullYear(),
+      ]
+      const whatsappMsg =
+        `✅ *Agendamento confirmado!*\n\n` +
+        `Olá, *${body.customerName}*! Seu agendamento foi realizado com sucesso.\n\n` +
+        `🏟️ *Arena:* ${tenant.name}\n` +
+        `🎾 *Quadra:* ${court.name}\n` +
+        `📅 *Data:* ${day}/${month}/${year}\n` +
+        `⏰ *Horário:* ${body.startTime} às ${body.endTime}\n` +
+        `💰 *Total:* R$ ${totalPrice.toFixed(2).replace('.', ',')}\n\n` +
+        `Qualquer dúvida, entre em contato com a arena. Até lá! 👋`
+
+      sendWhatsApp(body.customerPhone, whatsappMsg).catch((err) =>
+        console.error('[WhatsApp] Erro ao notificar agendamento:', err),
+      )
 
       return reply.status(201).send(booking)
     } catch (err: unknown) {
