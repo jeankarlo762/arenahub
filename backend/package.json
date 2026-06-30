@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend para sistema de gerenciamento de quadras esportivas",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "npx prisma generate && ./node_modules/.bin/tsc",
