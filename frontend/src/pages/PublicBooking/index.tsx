@@ -468,7 +468,7 @@ export default function PublicBookingPage() {
 
       {/* Footer LGPD */}
       <div className="border-t border-gray-100 mt-8 py-5 text-center space-y-1">
-        <p className="text-xs text-gray-400">Powered by <span className="font-semibold text-gray-500">MT Quadras</span> · May Tecnologia</p>
+        <p className="text-xs text-gray-400">Powered by <span className="font-semibold text-gray-500">ArenaHub</span> · MK Sistemas</p>
         <p className="text-xs text-gray-300 space-x-2">
           <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="hover:text-gray-500 underline transition-colors">Política de Privacidade</Link>
           <span>·</span>

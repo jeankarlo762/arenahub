@@ -65,12 +65,12 @@ export default function LoginPage() {
                 className="font-black italic text-6xl text-white leading-none select-none"
                 style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}
               >
-                MT
+                MK
               </span>
             </div>
             <div>
-              <p className="text-white font-bold text-3xl tracking-tight">MT Quadras</p>
-              <p className="text-white/70 text-sm mt-1">May Tecnologia</p>
+              <p className="text-white font-bold text-3xl tracking-tight">ArenaHub</p>
+              <p className="text-white/70 text-sm mt-1">MK Sistemas</p>
             </div>
           </div>
 
@@ -106,9 +106,9 @@ export default function LoginPage() {
           {/* Mobile logo */}
           <div className="flex items-center gap-2 mb-10 lg:hidden">
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="font-black italic text-sm text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
+              <span className="font-black italic text-sm text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MK</span>
             </div>
-            <span className="font-bold text-gray-900 text-lg">MT Quadras</span>
+            <span className="font-bold text-gray-900 text-lg">ArenaHub</span>
           </div>
 
           <div className="mb-8">
@@ -182,7 +182,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-xs text-gray-400">
-            MT Quadras — May Tecnologia
+            ArenaHub — MK Sistemas
           </p>
           <p className="mt-2 text-center text-xs text-gray-300 space-x-2">
             <Link to="/privacidade" className="hover:text-gray-500 underline transition-colors">Política de Privacidade</Link>

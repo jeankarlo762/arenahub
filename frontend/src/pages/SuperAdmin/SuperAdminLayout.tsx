@@ -28,10 +28,10 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <div className="flex items-center justify-between px-5 h-16 border-b border-gray-700 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shrink-0">
-            <span className="font-black italic text-sm text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
+            <span className="font-black italic text-sm text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MK</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-sm tracking-tight leading-none">MT Quadras</span>
+            <span className="font-bold text-sm tracking-tight leading-none">ArenaHub</span>
             <span className="text-[10px] text-orange-400 font-medium mt-0.5">Super Admin</span>
           </div>
         </div>
@@ -126,9 +126,9 @@ export function SuperAdminLayout({ children, title, subtitle, action }: {
           </button>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-orange-500 rounded-md flex items-center justify-center">
-              <span className="font-black italic text-[10px] text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
+              <span className="font-black italic text-[10px] text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MK</span>
             </div>
-            <span className="font-bold text-sm">MT Quadras</span>
+            <span className="font-bold text-sm">ArenaHub</span>
             <span className="text-[10px] text-orange-400 font-medium">Super Admin</span>
           </div>
         </div>

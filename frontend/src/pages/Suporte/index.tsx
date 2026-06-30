@@ -235,7 +235,7 @@ export default function SuportePage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Suporte</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Seus chamados com a equipe MT Quadras</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Seus chamados com a equipe ArenaHub</p>
             </div>
           </div>
           <button

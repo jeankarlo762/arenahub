@@ -24,7 +24,7 @@ export default function PrivacidadePage() {
             <div className="p-1.5 bg-orange-100 rounded-lg">
               <Shield size={16} className="text-orange-600" />
             </div>
-            <span className="font-semibold text-gray-900">MT Quadras</span>
+            <span className="font-semibold text-gray-900">ArenaHub</span>
           </div>
         </div>
       </div>
@@ -37,13 +37,13 @@ export default function PrivacidadePage() {
 
         <Section title="1. Quem somos">
           <p>
-            O <strong>MT Quadras</strong> é um sistema de gestão de quadras esportivas desenvolvido e operado pela <strong>May Tecnologia</strong>
+            O <strong>ArenaHub</strong> é um sistema de gestão de quadras esportivas desenvolvido e operado pela <strong>MK Sistemas</strong>
             ("nós", "nosso"). Esta Política de Privacidade descreve como coletamos, usamos, armazenamos e protegemos os dados pessoais
             de nossos clientes (arenas esportivas) e dos usuários finais (clientes das arenas).
           </p>
           <p>
-            <strong>Controlador de Dados:</strong> May Tecnologia<br />
-            <strong>E-mail de contato (DPO):</strong> privacidade@mtquadras.com.br<br />
+            <strong>Controlador de Dados:</strong> MK Sistemas<br />
+            <strong>E-mail de contato (DPO):</strong> privacidade@mksistemas.com.br<br />
             <strong>Encarregado de Dados (DPO):</strong> disponível pelo e-mail acima para exercício de direitos previstos na LGPD.
           </p>
         </Section>
@@ -131,7 +131,7 @@ export default function PrivacidadePage() {
             <li><strong>Petição</strong> — apresentar reclamação à ANPD (Autoridade Nacional de Proteção de Dados)</li>
           </ul>
           <p className="mt-3 bg-orange-50 border border-orange-100 rounded-lg p-3">
-            Para exercer qualquer direito, entre em contato pelo módulo de <strong>Suporte</strong> dentro da plataforma ou pelo e-mail <strong>privacidade@mtquadras.com.br</strong>. Responderemos em até 15 dias úteis.
+            Para exercer qualquer direito, entre em contato pelo módulo de <strong>Suporte</strong> dentro da plataforma ou pelo e-mail <strong>privacidade@mksistemas.com.br</strong>. Responderemos em até 15 dias úteis.
           </p>
         </Section>
 
@@ -150,7 +150,7 @@ export default function PrivacidadePage() {
 
         <Section title="8. Cookies e armazenamento local">
           <p>
-            O MT Quadras utiliza <strong>armazenamento local do navegador (localStorage)</strong> para manter sua sessão autenticada.
+            O ArenaHub utiliza <strong>armazenamento local do navegador (localStorage)</strong> para manter sua sessão autenticada.
             Não utilizamos cookies de rastreamento, publicidade ou analytics de terceiros. Os dados de sessão são eliminados automaticamente
             ao fazer logout ou quando o token expira.
           </p>
@@ -178,7 +178,7 @@ export default function PrivacidadePage() {
         </Section>
 
         <div className="border-t border-gray-200 pt-6 text-sm text-gray-400 text-center">
-          <p>MT Quadras — May Tecnologia · privacidade@mtquadras.com.br</p>
+          <p>ArenaHub — MK Sistemas · privacidade@mksistemas.com.br</p>
           <p className="mt-1">Lei Geral de Proteção de Dados Pessoais — Lei nº 13.709/2018</p>
         </div>
       </div>

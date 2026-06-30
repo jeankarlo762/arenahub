@@ -29,7 +29,7 @@ export function PrivacyBanner() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-white mb-0.5">Privacidade e cookies</p>
           <p className="text-xs text-gray-400 leading-relaxed">
-            O MT Quadras usa armazenamento local para manter sua sessão ativa. Não utilizamos cookies de rastreamento ou publicidade.
+            O ArenaHub usa armazenamento local para manter sua sessão ativa. Não utilizamos cookies de rastreamento ou publicidade.
             Ao continuar, você concorda com nossa{' '}
             <Link to="/privacidade" className="text-orange-400 hover:text-orange-300 underline" onClick={accept}>
               Política de Privacidade

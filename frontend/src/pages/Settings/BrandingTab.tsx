@@ -123,7 +123,7 @@ export function BrandingTab() {
           {/* Mini sidebar preview */}
           <div className="w-44 bg-gray-900 rounded-xl overflow-hidden shrink-0">
             <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-700">
-              <span className="font-black italic text-base text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MT</span>
+              <span className="font-black italic text-base text-white leading-none" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>MK</span>
             </div>
             {['Dashboard', 'Agendamentos', 'Configurações'].map((item, i) => (
               <div

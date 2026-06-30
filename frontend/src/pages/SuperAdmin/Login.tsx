@@ -57,8 +57,8 @@ export default function SuperAdminLoginPage() {
             <ShieldCheck size={28} className="text-white" />
           </div>
           <div className="text-center">
-            <h1 className="text-white font-bold text-xl tracking-tight">MT Quadras</h1>
-            <p className="text-gray-500 text-xs mt-0.5">Painel Super Administrador · May Tecnologia</p>
+            <h1 className="text-white font-bold text-xl tracking-tight">ArenaHub</h1>
+            <p className="text-gray-500 text-xs mt-0.5">Painel Super Administrador · MK Sistemas</p>
           </div>
         </div>
 
