@@ -17,3 +17,12 @@ export async function connectWhatsApp(): Promise<void> {
 export async function disconnectWhatsApp(): Promise<void> {
   await api.post('/settings/whatsapp/disconnect')
 }
+
+export async function getWhatsAppTemplate(): Promise<{ template: string }> {
+  const res = await api.get<{ template: string }>('/settings/whatsapp/template')
+  return res.data
+}
+
+export async function saveWhatsAppTemplate(template: string): Promise<void> {
+  await api.put('/settings/whatsapp/template', { template })
+}

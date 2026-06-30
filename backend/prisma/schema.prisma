@@ -22,13 +22,14 @@ model Tenant {
   updatedAt     DateTime @updatedAt
 }
 
-// Branding por tenant — cor primária, logo (base64) e nome de exibição.
+// Branding por tenant — cor primária, logo (base64), nome de exibição e template de mensagem WhatsApp.
 model TenantBranding {
-  tenantId     String   @id
-  primaryColor String   @default("#f97316")
-  logoUrl      String?
-  companyName  String?
-  updatedAt    DateTime @updatedAt
+  tenantId          String   @id
+  primaryColor      String   @default("#f97316")
+  logoUrl           String?
+  companyName       String?
+  whatsappTemplate  String?
+  updatedAt         DateTime @updatedAt
 }
 
 // Role: ADMIN | OPERATOR | SUPERADMIN

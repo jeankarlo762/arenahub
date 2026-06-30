@@ -2,6 +2,16 @@ import { prisma } from '../config/database'
 import { getTenantId } from '../config/tenant-context'
 import { randomBytes } from 'crypto'
 
+export const DEFAULT_WHATSAPP_TEMPLATE =
+  `✅ *Agendamento confirmado!*\n\n` +
+  `Olá, *{nome}*! Seu agendamento foi realizado com sucesso.\n\n` +
+  `🏟️ *Arena:* {arena}\n` +
+  `🎾 *Quadra:* {quadra}\n` +
+  `📅 *Data:* {data}\n` +
+  `⏰ *Horário:* {horario}\n` +
+  `💰 *Total:* R$ {total}\n\n` +
+  `Qualquer dúvida, entre em contato com a arena. Até lá! 👋`
+
 const PAYMENT_METHODS = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'TRANSFER']
 
 export async function getBranding() {
@@ -51,6 +61,24 @@ export async function setBookingSlug(slug?: string) {
     }
     throw err
   }
+}
+
+export async function getWhatsAppTemplate() {
+  const tenantId = getTenantId()
+  if (!tenantId) return { template: DEFAULT_WHATSAPP_TEMPLATE }
+  const b = await prisma.tenantBranding.findUnique({ where: { tenantId }, select: { whatsappTemplate: true } })
+  return { template: b?.whatsappTemplate ?? DEFAULT_WHATSAPP_TEMPLATE }
+}
+
+export async function setWhatsAppTemplate(template: string) {
+  const tenantId = getTenantId()
+  if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  await prisma.tenantBranding.upsert({
+    where: { tenantId },
+    create: { tenantId, whatsappTemplate: template },
+    update: { whatsappTemplate: template },
+  })
+  return { template }
 }
 
 export async function upsertPaymentFee(method: string, feePercent: number) {
