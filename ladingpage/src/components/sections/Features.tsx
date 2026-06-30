@@ -9,6 +9,7 @@ const iconMap: Record<string, React.ElementType> = {
   BarChart2,
   UtensilsCrossed,
   CalendarCheck,
+  MessageCircle,
   Users,
 };
 
