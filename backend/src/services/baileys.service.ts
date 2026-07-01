@@ -147,13 +147,26 @@ export async function disconnect(): Promise<void> {
   await prisma.whatsAppAuth.deleteMany({}).catch(() => {})
 }
 
+// Normaliza um telefone brasileiro para o formato que o WhatsApp usa.
+// Muitos números antigos estão registrados no WhatsApp SEM o 9º dígito
+// (o "9" logo após o DDD), então enviar com o 9 faz a mensagem falhar.
+// Regra: 55 + DDD(2) + 9 + 8 dígitos = 13 → remove o 9 → 12 dígitos.
+export function normalizeBrazilNumber(raw: string): string {
+  let digits = raw.replace(/\D/g, '')
+  if (!digits.startsWith('55')) digits = `55${digits}`
+  // Remove o 9º dígito extra de celulares (posição logo após o DDD)
+  if (digits.length === 13 && digits[4] === '9') {
+    digits = digits.slice(0, 4) + digits.slice(5)
+  }
+  return digits
+}
+
 export async function sendMessage(to: string, text: string): Promise<void> {
   if (!sock || status !== 'connected') {
     console.warn('[WhatsApp] Mensagem não enviada: WhatsApp não conectado')
     return
   }
-  const digits = to.replace(/\D/g, '')
-  const number = digits.startsWith('55') ? digits : `55${digits}`
+  const number = normalizeBrazilNumber(to)
   await sock.sendMessage(`${number}@s.whatsapp.net`, { text })
 }
 
