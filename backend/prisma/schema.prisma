@@ -368,6 +368,14 @@ model SupportTicket {
   @@index([createdAt])
 }
 
+// Sessão do WhatsApp (Baileys) persistida no banco para sobreviver a
+// reinícios do servidor (Railway tem filesystem efêmero). Guarda creds e
+// chaves de sinalização como JSON serializado (BufferJSON).
+model WhatsAppAuth {
+  id    String @id
+  value String
+}
+
 // Trilha de auditoria — registra toda criação/edição/exclusão feita no sistema.
 // action: CREATE | UPDATE | DELETE | UPDATE_MANY | DELETE_MANY
 model AuditLog {

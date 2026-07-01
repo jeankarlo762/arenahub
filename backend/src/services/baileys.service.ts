@@ -1,14 +1,18 @@
 import makeWASocket, {
-  useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
   Browsers,
+  initAuthCreds,
+  BufferJSON,
+  proto,
+  type AuthenticationCreds,
+  type AuthenticationState,
+  type SignalDataTypeMap,
 } from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
 import QRCode from 'qrcode'
-import path from 'path'
-import fs from 'fs'
 import pino from 'pino'
+import { prisma } from '../config/database'
 
 type Status = 'disconnected' | 'connecting' | 'connected'
 
@@ -17,10 +21,72 @@ let sock: any = null
 let qrDataUrl: string | null = null
 let status: Status = 'disconnected'
 
-const AUTH_DIR = path.join(process.cwd(), '.whatsapp-auth')
-
 export function getInfo() {
   return { status, qr: qrDataUrl }
+}
+
+// ── Auth state persistido no PostgreSQL ──────────────────────────────
+// Substitui o useMultiFileAuthState (que grava em disco) para que a sessão
+// sobreviva a reinícios do servidor no Railway (filesystem efêmero).
+async function useDatabaseAuthState(): Promise<{
+  state: AuthenticationState
+  saveCreds: () => Promise<void>
+}> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function readData(id: string): Promise<any | null> {
+    const row = await prisma.whatsAppAuth.findUnique({ where: { id } })
+    return row ? JSON.parse(row.value, BufferJSON.reviver) : null
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function writeData(id: string, value: any): Promise<void> {
+    const str = JSON.stringify(value, BufferJSON.replacer)
+    await prisma.whatsAppAuth.upsert({
+      where: { id },
+      create: { id, value: str },
+      update: { value: str },
+    })
+  }
+  async function removeData(id: string): Promise<void> {
+    await prisma.whatsAppAuth.deleteMany({ where: { id } })
+  }
+
+  const creds: AuthenticationCreds = (await readData('creds')) || initAuthCreds()
+
+  return {
+    state: {
+      creds,
+      keys: {
+        get: async <T extends keyof SignalDataTypeMap>(type: T, ids: string[]) => {
+          const data: { [id: string]: SignalDataTypeMap[T] } = {}
+          await Promise.all(
+            ids.map(async (id) => {
+              let value = await readData(`${type}-${id}`)
+              if (type === 'app-state-sync-key' && value) {
+                value = proto.Message.AppStateSyncKeyData.fromObject(value)
+              }
+              data[id] = value
+            }),
+          )
+          return data
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        set: async (data: any) => {
+          const tasks: Promise<void>[] = []
+          for (const category in data) {
+            for (const id in data[category]) {
+              const value = data[category][id]
+              const key = `${category}-${id}`
+              tasks.push(value ? writeData(key, value) : removeData(key))
+            }
+          }
+          await Promise.all(tasks)
+        },
+      },
+    },
+    saveCreds: async () => {
+      await writeData('creds', creds)
+    },
+  }
 }
 
 export async function connect(): Promise<void> {
@@ -28,16 +94,13 @@ export async function connect(): Promise<void> {
   status = 'connecting'
   qrDataUrl = null
 
-  if (!fs.existsSync(AUTH_DIR)) fs.mkdirSync(AUTH_DIR, { recursive: true })
-
-  const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR)
+  const { state, saveCreds } = await useDatabaseAuthState()
   const { version } = await fetchLatestBaileysVersion()
 
   sock = makeWASocket({
     version,
     auth: state,
     logger: pino({ level: 'silent' }),
-    printQRInTerminal: false,
     browser: Browsers.ubuntu('ArenaHub'),
     connectTimeoutMs: 30_000,
   })
@@ -65,7 +128,10 @@ export async function connect(): Promise<void> {
       sock = null
       console.log(`[WhatsApp] Desconectado (código ${code})`)
 
-      if (!loggedOut) {
+      if (loggedOut) {
+        // Sessão invalidada pelo WhatsApp — limpa credenciais para novo QR
+        await prisma.whatsAppAuth.deleteMany({}).catch(() => {})
+      } else {
         console.log('[WhatsApp] Reconectando em 5s...')
         setTimeout(() => connect(), 5000)
       }
@@ -78,7 +144,7 @@ export async function disconnect(): Promise<void> {
   sock = null
   status = 'disconnected'
   qrDataUrl = null
-  if (fs.existsSync(AUTH_DIR)) fs.rmSync(AUTH_DIR, { recursive: true, force: true })
+  await prisma.whatsAppAuth.deleteMany({}).catch(() => {})
 }
 
 export async function sendMessage(to: string, text: string): Promise<void> {
@@ -91,7 +157,10 @@ export async function sendMessage(to: string, text: string): Promise<void> {
   await sock.sendMessage(`${number}@s.whatsapp.net`, { text })
 }
 
-// Auto-conecta na inicialização se já existe sessão salva
-if (fs.existsSync(AUTH_DIR)) {
-  connect().catch((err: unknown) => console.error('[WhatsApp] Erro na inicialização:', err))
-}
+// Auto-conecta na inicialização se já existe sessão salva no banco
+prisma.whatsAppAuth
+  .findUnique({ where: { id: 'creds' } })
+  .then((row) => {
+    if (row) connect().catch((err: unknown) => console.error('[WhatsApp] Erro na inicialização:', err))
+  })
+  .catch(() => { /* tabela ainda não migrada — ignora */ })
