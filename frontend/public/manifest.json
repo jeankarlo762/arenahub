@@ -1,6 +1,6 @@
 {
-  "name": "MT Quadras — Gestão de Quadras",
-  "short_name": "MT Quadras",
+  "name": "ArenaHub — Gestão de Quadras",
+  "short_name": "ArenaHub",
   "description": "Sistema de gestão de quadras esportivas",
   "start_url": "/",
   "display": "standalone",
