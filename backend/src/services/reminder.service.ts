@@ -1,4 +1,5 @@
 import { prisma } from '../config/database'
+import { env } from '../config/env'
 import { sendMessage as sendWhatsApp } from './baileys.service'
 import { DEFAULT_WHATSAPP_REMINDER_TEMPLATE, fillWhatsAppTemplate } from './settings.service'
 
@@ -6,7 +7,7 @@ import { DEFAULT_WHATSAPP_REMINDER_TEMPLATE, fillWhatsAppTemplate } from './sett
 // são digitados no horário local da arena; para saber o instante real usamos -03:00.
 const BR_OFFSET = '-03:00'
 
-// Verifica reservas que começam em ~1h e ainda não receberam lembrete.
+// Verifica reservas que começam em ~1h e ainda não pediram confirmação de presença.
 async function runReminderCheck(): Promise<void> {
   const now = Date.now()
 
@@ -46,7 +47,7 @@ async function runReminderCheck(): Promise<void> {
 
       const template = branding?.whatsappReminderTemplate ?? DEFAULT_WHATSAPP_REMINDER_TEMPLATE
       const [y, m, d] = dateStr.split('-')
-      const message = fillWhatsAppTemplate(template, {
+      let message = fillWhatsAppTemplate(template, {
         nome: b.customerName,
         arena: tenant?.name ?? '',
         quadra: b.court.name,
@@ -54,6 +55,12 @@ async function runReminderCheck(): Promise<void> {
         horario: `${b.startTime} às ${b.endTime}`,
         total: Number(b.totalPrice).toFixed(2).replace('.', ','),
       })
+
+      // Link da página onde o cliente confirma ou avisa que não vai comparecer.
+      const link = `${env.FRONTEND_URL.replace(/\/$/, '')}/confirmar/${b.id}`
+      message = message.includes('{link}')
+        ? message.replace(/\{link\}/g, link)
+        : `${message}\n\nConfirme sua presença: ${link}`
 
       await sendWhatsApp(b.customerPhone, message)
       await prisma.booking.update({ where: { id: b.id }, data: { reminderSentAt: new Date() } })

@@ -13,13 +13,13 @@ export const DEFAULT_WHATSAPP_TEMPLATE =
   `Qualquer dúvida, entre em contato com a arena. Até lá! 👋`
 
 export const DEFAULT_WHATSAPP_REMINDER_TEMPLATE =
-  `⏰ *Lembrete de agendamento*\n\n` +
-  `Olá, *{nome}*! Passando para lembrar do seu horário:\n\n` +
+  `⏰ *Confirmação de presença*\n\n` +
+  `Olá, *{nome}*! Seu horário está chegando:\n\n` +
   `🏟️ *Arena:* {arena}\n` +
   `🎾 *Quadra:* {quadra}\n` +
   `📅 *Data:* {data}\n` +
   `⏰ *Horário:* {horario}\n\n` +
-  `Te esperamos! 👋`
+  `Você vai comparecer? Confirme aqui:\n{link}`
 
 export const DEFAULT_WHATSAPP_OWNER_TEMPLATE =
   `🔔 *Novo agendamento!*\n\n` +

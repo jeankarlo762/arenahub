@@ -217,4 +217,47 @@ export async function publicRoutes(app: FastifyInstance) {
       return reply.status(e.statusCode ?? 500).send({ message: e.message ?? 'Erro interno' })
     }
   })
+
+  // GET /api/public/presence/:id — resumo do agendamento para a página de confirmação
+  app.get('/presence/:id', async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      select: {
+        id: true, customerName: true, date: true, startTime: true, endTime: true,
+        status: true, presenceConfirmedAt: true,
+        court: { select: { name: true } },
+      },
+    })
+    if (!booking) return reply.status(404).send({ message: 'Agendamento não encontrado' })
+
+    return reply.send({
+      customerName: booking.customerName,
+      courtName: booking.court.name,
+      date: booking.date.toISOString().slice(0, 10),
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      status: booking.status,
+      confirmed: !!booking.presenceConfirmedAt,
+    })
+  })
+
+  // POST /api/public/presence/:id — cliente confirma presença ou avisa que não vai
+  app.post('/presence/:id', async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const { confirm } = request.body as { confirm?: boolean }
+
+    const booking = await prisma.booking.findUnique({ where: { id }, select: { id: true, status: true } })
+    if (!booking) return reply.status(404).send({ message: 'Agendamento não encontrado' })
+
+    if (confirm) {
+      // Mantém o agendamento e registra a confirmação de presença
+      await prisma.booking.update({ where: { id }, data: { presenceConfirmedAt: new Date() } })
+      return reply.send({ ok: true, result: 'confirmed' })
+    }
+
+    // Cliente não vai comparecer: marca como NO_SHOW (libera o horário na agenda)
+    await prisma.booking.update({ where: { id }, data: { status: 'NO_SHOW' } })
+    return reply.send({ ok: true, result: 'no_show' })
+  })
 }

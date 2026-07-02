@@ -99,9 +99,10 @@ model Booking {
   totalPrice     Decimal
   status         String    @default("CONFIRMED")
   notes          String?
-  payment        Payment?
-  reminderSentAt DateTime? // marca quando o lembrete de 1h foi enviado
-  createdAt      DateTime  @default(now())
+  payment            Payment?
+  reminderSentAt     DateTime? // marca quando a mensagem de confirmação de presença foi enviada
+  presenceConfirmedAt DateTime? // marca quando o cliente confirmou presença pelo link
+  createdAt          DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   @@index([tenantId])

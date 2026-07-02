@@ -35,6 +35,7 @@ import AuditPage from './pages/Audit'
 import SuporteUserPage from './pages/Suporte'
 import AccountPage from './pages/Account'
 import PublicBookingPage from './pages/PublicBooking'
+import ConfirmPresencePage from './pages/ConfirmPresence'
 import PrivacidadePage from './pages/Privacidade'
 import TermosPage from './pages/Termos'
 
@@ -133,6 +134,7 @@ export default function App() {
         <Route path="/suporte" element={<RequireAuth><SuporteUserPage /></RequireAuth>} />
         <Route path="/minha-conta" element={<RequireAuth><AccountPage /></RequireAuth>} />
         <Route path="/booking/:slug" element={<PublicBookingPage />} />
+        <Route path="/confirmar/:id" element={<ConfirmPresencePage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
         <Route path="/termos" element={<TermosPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

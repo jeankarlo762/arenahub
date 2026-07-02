@@ -141,7 +141,7 @@ export function IntegrationsTab() {
               <CheckCircle2 size={18} className="text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-green-800 dark:text-green-300">WhatsApp conectado!</p>
-                <p className="text-xs text-green-600 dark:text-green-500 mt-0.5">Clientes recebem confirmação e lembrete automáticos ao agendar pelo link público.</p>
+                <p className="text-xs text-green-600 dark:text-green-500 mt-0.5">Clientes recebem confirmação da reserva e pedido de confirmação de presença automaticamente.</p>
               </div>
             </div>
           )}
@@ -219,8 +219,8 @@ export function IntegrationsTab() {
           />
 
           <MessageBlock
-            title="Lembrete 1h antes"
-            description="Enviado ao cliente cerca de 1 hora antes do horário agendado."
+            title="Confirmação de presença (1h antes)"
+            description="Enviada ~1h antes do horário. Um link é adicionado automaticamente: se o cliente confirmar, o agendamento é mantido; se disser que não vai, ele é marcado como 'não compareceu' e o horário é liberado."
             value={config.reminder}
             onChange={(v) => setConfig((c) => ({ ...c, reminder: v }))}
           />
