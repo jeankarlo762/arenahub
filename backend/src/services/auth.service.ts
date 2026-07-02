@@ -119,7 +119,7 @@ export async function getMe(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      id: true, name: true, email: true, role: true, active: true, createdAt: true,
+      id: true, name: true, email: true, role: true, phone: true, active: true, createdAt: true,
       tenant: { select: { modulesConfig: true } },
     },
   })
@@ -133,9 +133,27 @@ export async function getMe(userId: string) {
     name: user.name,
     email: user.email,
     role: user.role,
+    phone: user.phone,
     active: user.active,
     createdAt: user.createdAt,
     modulesConfig: user.tenant?.modulesConfig ?? null,
+  }
+}
+
+export async function updateMe(userId: string, data: { name: string; phone?: string | null }) {
+  try {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { name: data.name, phone: data.phone || null },
+      select: { id: true, name: true, email: true, role: true, phone: true },
+    })
+    return user
+  } catch (err: unknown) {
+    const e = err as { code?: string }
+    if (e.code === 'P2002') {
+      throw Object.assign(new Error('Este telefone já está em uso'), { statusCode: 409 })
+    }
+    throw err
   }
 }
 

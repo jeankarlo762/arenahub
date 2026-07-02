@@ -7,6 +7,7 @@ import { errorHandler } from './middlewares/errorHandler'
 import { prisma } from './config/database'
 import { tenantStore, createStore } from './config/tenant-context'
 import { initSeedIfNeeded } from './seed'
+import { startReminderScheduler } from './services/reminder.service'
 
 // bodyLimit raised to 8MB so base64 image payloads (player/team photos) fit
 const app = Fastify({ logger: env.NODE_ENV === 'development', bodyLimit: 8 * 1024 * 1024 })
@@ -34,6 +35,7 @@ async function start() {
     await initSeedIfNeeded(prisma)
     await app.listen({ port: env.PORT, host: '0.0.0.0' })
     console.log(`Server running on http://localhost:${env.PORT}`)
+    startReminderScheduler()
   } catch (err) {
     app.log.error(err)
     await prisma.$disconnect()

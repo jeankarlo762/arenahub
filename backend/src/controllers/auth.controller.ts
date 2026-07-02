@@ -3,6 +3,10 @@ import { z } from 'zod'
 import * as authService from '../services/auth.service'
 import { loginSchema, refreshSchema } from '../schemas/auth.schema'
 
+const updateMeSchema = z.object({
+  name: z.string().min(1, 'Nome obrigatório'),
+  phone: z.string().optional().or(z.literal('')),
+})
 const forgotPasswordSchema = z.object({ phone: z.string().min(10) })
 const verifyResetCodeSchema = z.object({ phone: z.string().min(10), code: z.string().length(6) })
 const resetPasswordSchema = z.object({ resetToken: z.string().min(1), password: z.string().min(6) })
@@ -27,6 +31,15 @@ export async function logout(request: FastifyRequest, reply: FastifyReply) {
 
 export async function getMe(request: FastifyRequest, reply: FastifyReply) {
   const result = await authService.getMe(request.user.id)
+  return reply.send(result)
+}
+
+export async function updateMe(request: FastifyRequest, reply: FastifyReply) {
+  const input = updateMeSchema.parse(request.body)
+  const result = await authService.updateMe(request.user.id, {
+    name: input.name.trim(),
+    phone: input.phone?.trim() || null,
+  })
   return reply.send(result)
 }
 

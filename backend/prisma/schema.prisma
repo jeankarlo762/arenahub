@@ -22,14 +22,17 @@ model Tenant {
   updatedAt     DateTime @updatedAt
 }
 
-// Branding por tenant — cor primária, logo (base64), nome de exibição e template de mensagem WhatsApp.
+// Branding por tenant — cor primária, logo (base64), nome de exibição e mensagens WhatsApp.
 model TenantBranding {
-  tenantId          String   @id
-  primaryColor      String   @default("#f97316")
-  logoUrl           String?
-  companyName       String?
-  whatsappTemplate  String?
-  updatedAt         DateTime @updatedAt
+  tenantId                  String   @id
+  primaryColor              String   @default("#f97316")
+  logoUrl                   String?
+  companyName               String?
+  whatsappTemplate          String?  // confirmação enviada ao cliente
+  whatsappReminderTemplate  String?  // lembrete 1h antes do agendamento
+  whatsappOwnerTemplate     String?  // aviso de novo agendamento para o dono
+  whatsappOwnerNumber       String?  // número do dono que recebe os avisos
+  updatedAt                 DateTime @updatedAt
 }
 
 // Role: ADMIN | OPERATOR | SUPERADMIN
@@ -93,12 +96,13 @@ model Booking {
   date          DateTime
   startTime     String
   endTime       String
-  totalPrice    Decimal
-  status        String   @default("CONFIRMED")
-  notes         String?
-  payment       Payment?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  totalPrice     Decimal
+  status         String    @default("CONFIRMED")
+  notes          String?
+  payment        Payment?
+  reminderSentAt DateTime? // marca quando o lembrete de 1h foi enviado
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([tenantId])
   @@index([tenantId, courtId, date])

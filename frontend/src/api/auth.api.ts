@@ -15,3 +15,8 @@ export async function getMe(): Promise<User> {
   return res.data
 }
 
+export async function updateMe(data: { name: string; phone?: string }): Promise<User> {
+  const res = await api.patch<User>('/auth/me', data)
+  return res.data
+}
+

@@ -20,15 +20,25 @@ export async function whatsappRoutes(app: FastifyInstance) {
     return reply.send({ ok: true })
   })
 
-  app.get('/template', async (_, reply) => {
-    return reply.send(await settings.getWhatsAppTemplate())
+  app.get('/config', async (_, reply) => {
+    return reply.send(await settings.getWhatsAppConfig())
   })
 
-  app.put('/template', { preHandler: requireAdmin }, async (request, reply) => {
-    const { template } = request.body as { template?: string }
-    if (!template || typeof template !== 'string' || !template.trim()) {
-      return reply.status(400).send({ message: 'Template inválido' })
+  app.put('/config', { preHandler: requireAdmin }, async (request, reply) => {
+    const body = request.body as {
+      confirmation?: string
+      reminder?: string
+      owner?: string
+      ownerNumber?: string
     }
-    return reply.send(await settings.setWhatsAppTemplate(template.trim()))
+    const clean = (v?: string) => (typeof v === 'string' ? v.trim() : undefined)
+    return reply.send(
+      await settings.setWhatsAppConfig({
+        confirmation: clean(body.confirmation),
+        reminder: clean(body.reminder),
+        owner: clean(body.owner),
+        ownerNumber: body.ownerNumber !== undefined ? body.ownerNumber.trim() : undefined,
+      }),
+    )
   })
 }

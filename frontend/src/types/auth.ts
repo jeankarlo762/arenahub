@@ -3,6 +3,7 @@ export interface User {
   name: string
   email: string
   role: 'ADMIN' | 'OPERATOR' | 'SUPERADMIN'
+  phone?: string | null
   active: boolean
   createdAt: string
 }

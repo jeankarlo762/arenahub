@@ -18,11 +18,19 @@ export async function disconnectWhatsApp(): Promise<void> {
   await api.post('/settings/whatsapp/disconnect')
 }
 
-export async function getWhatsAppTemplate(): Promise<{ template: string }> {
-  const res = await api.get<{ template: string }>('/settings/whatsapp/template')
+export interface WhatsAppConfig {
+  confirmation: string
+  reminder: string
+  owner: string
+  ownerNumber: string
+}
+
+export async function getWhatsAppConfig(): Promise<WhatsAppConfig> {
+  const res = await api.get<WhatsAppConfig>('/settings/whatsapp/config')
   return res.data
 }
 
-export async function saveWhatsAppTemplate(template: string): Promise<void> {
-  await api.put('/settings/whatsapp/template', { template })
+export async function saveWhatsAppConfig(data: Partial<WhatsAppConfig>): Promise<WhatsAppConfig> {
+  const res = await api.put<WhatsAppConfig>('/settings/whatsapp/config', data)
+  return res.data
 }

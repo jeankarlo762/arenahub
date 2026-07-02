@@ -33,6 +33,7 @@ import ReportsPage from './pages/Reports'
 import AutoBookingPage from './pages/AutoBooking'
 import AuditPage from './pages/Audit'
 import SuporteUserPage from './pages/Suporte'
+import AccountPage from './pages/Account'
 import PublicBookingPage from './pages/PublicBooking'
 import PrivacidadePage from './pages/Privacidade'
 import TermosPage from './pages/Termos'
@@ -130,6 +131,7 @@ export default function App() {
         <Route path="/auto-booking" element={<RequireAdmin><AutoBookingPage /></RequireAdmin>} />
         <Route path="/audit" element={<RequireAdmin><AuditPage /></RequireAdmin>} />
         <Route path="/suporte" element={<RequireAuth><SuporteUserPage /></RequireAuth>} />
+        <Route path="/minha-conta" element={<RequireAuth><AccountPage /></RequireAuth>} />
         <Route path="/booking/:slug" element={<PublicBookingPage />} />
         <Route path="/privacidade" element={<PrivacidadePage />} />
         <Route path="/termos" element={<TermosPage />} />

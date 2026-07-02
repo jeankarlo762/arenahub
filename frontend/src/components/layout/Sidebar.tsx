@@ -179,11 +179,22 @@ export function Sidebar() {
 
         <div className="border-t border-gray-700 p-4 shrink-0">
           {sidebarOpen && user && (
-            <div className="mb-3">
-              <p className="text-sm font-medium text-white truncate">{user.name}</p>
-              <p className="text-xs text-gray-400 truncate">{user.email}</p>
-              <p className="text-xs text-gray-500 capitalize">{user.role === 'ADMIN' ? 'Administrador' : 'Operador'}</p>
-            </div>
+            <NavLink
+              to="/minha-conta"
+              className="flex items-center gap-3 mb-3 -mx-2 px-2 py-2 rounded-lg hover:bg-gray-700 transition-colors group"
+              title="Minha conta"
+            >
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-orange-400">
+                  {user.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                <p className="text-xs text-gray-500 capitalize">{user.role === 'ADMIN' ? 'Administrador' : 'Operador'}</p>
+              </div>
+            </NavLink>
           )}
           <button
             onClick={toggleDarkMode}

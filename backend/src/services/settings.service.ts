@@ -12,6 +12,38 @@ export const DEFAULT_WHATSAPP_TEMPLATE =
   `💰 *Total:* R$ {total}\n\n` +
   `Qualquer dúvida, entre em contato com a arena. Até lá! 👋`
 
+export const DEFAULT_WHATSAPP_REMINDER_TEMPLATE =
+  `⏰ *Lembrete de agendamento*\n\n` +
+  `Olá, *{nome}*! Passando para lembrar do seu horário:\n\n` +
+  `🏟️ *Arena:* {arena}\n` +
+  `🎾 *Quadra:* {quadra}\n` +
+  `📅 *Data:* {data}\n` +
+  `⏰ *Horário:* {horario}\n\n` +
+  `Te esperamos! 👋`
+
+export const DEFAULT_WHATSAPP_OWNER_TEMPLATE =
+  `🔔 *Novo agendamento!*\n\n` +
+  `Uma nova reserva foi feita pelo link de agendamento:\n\n` +
+  `👤 *Cliente:* {nome}\n` +
+  `🎾 *Quadra:* {quadra}\n` +
+  `📅 *Data:* {data}\n` +
+  `⏰ *Horário:* {horario}\n` +
+  `💰 *Total:* R$ {total}`
+
+// Substitui as variáveis {nome}/{arena}/{quadra}/{data}/{horario}/{total} no template.
+export function fillWhatsAppTemplate(
+  template: string,
+  vars: { nome: string; arena: string; quadra: string; data: string; horario: string; total: string },
+): string {
+  return template
+    .replace(/\{nome\}/g, vars.nome)
+    .replace(/\{arena\}/g, vars.arena)
+    .replace(/\{quadra\}/g, vars.quadra)
+    .replace(/\{data\}/g, vars.data)
+    .replace(/\{horario\}/g, vars.horario)
+    .replace(/\{total\}/g, vars.total)
+}
+
 const PAYMENT_METHODS = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'TRANSFER']
 
 export async function getBranding() {
@@ -63,22 +95,46 @@ export async function setBookingSlug(slug?: string) {
   }
 }
 
-export async function getWhatsAppTemplate() {
+export async function getWhatsAppConfig() {
   const tenantId = getTenantId()
-  if (!tenantId) return { template: DEFAULT_WHATSAPP_TEMPLATE }
-  const b = await prisma.tenantBranding.findUnique({ where: { tenantId }, select: { whatsappTemplate: true } })
-  return { template: b?.whatsappTemplate ?? DEFAULT_WHATSAPP_TEMPLATE }
+  const b = tenantId
+    ? await prisma.tenantBranding.findUnique({
+        where: { tenantId },
+        select: {
+          whatsappTemplate: true,
+          whatsappReminderTemplate: true,
+          whatsappOwnerTemplate: true,
+          whatsappOwnerNumber: true,
+        },
+      })
+    : null
+  return {
+    confirmation: b?.whatsappTemplate ?? DEFAULT_WHATSAPP_TEMPLATE,
+    reminder: b?.whatsappReminderTemplate ?? DEFAULT_WHATSAPP_REMINDER_TEMPLATE,
+    owner: b?.whatsappOwnerTemplate ?? DEFAULT_WHATSAPP_OWNER_TEMPLATE,
+    ownerNumber: b?.whatsappOwnerNumber ?? '',
+  }
 }
 
-export async function setWhatsAppTemplate(template: string) {
+export async function setWhatsAppConfig(data: {
+  confirmation?: string
+  reminder?: string
+  owner?: string
+  ownerNumber?: string
+}) {
   const tenantId = getTenantId()
   if (!tenantId) throw Object.assign(new Error('Arena não identificada'), { statusCode: 403 })
+  const update: Record<string, string> = {}
+  if (data.confirmation !== undefined) update.whatsappTemplate = data.confirmation
+  if (data.reminder !== undefined) update.whatsappReminderTemplate = data.reminder
+  if (data.owner !== undefined) update.whatsappOwnerTemplate = data.owner
+  if (data.ownerNumber !== undefined) update.whatsappOwnerNumber = data.ownerNumber
   await prisma.tenantBranding.upsert({
     where: { tenantId },
-    create: { tenantId, whatsappTemplate: template },
-    update: { whatsappTemplate: template },
+    create: { tenantId, ...update },
+    update,
   })
-  return { template }
+  return getWhatsAppConfig()
 }
 
 export async function upsertPaymentFee(method: string, feePercent: number) {

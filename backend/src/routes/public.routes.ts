@@ -4,7 +4,11 @@ import { prisma } from '../config/database'
 import * as courtsApi from '../services/court.service'
 import { timesOverlap, timeToMinutes } from '../utils/date'
 import { sendMessage as sendWhatsApp } from '../services/baileys.service'
-import { DEFAULT_WHATSAPP_TEMPLATE } from '../services/settings.service'
+import {
+  DEFAULT_WHATSAPP_TEMPLATE,
+  DEFAULT_WHATSAPP_OWNER_TEMPLATE,
+  fillWhatsAppTemplate,
+} from '../services/settings.service'
 
 const publicBookingBodySchema = z.object({
   courtId: z.string().min(1),
@@ -180,17 +184,27 @@ export async function publicRoutes(app: FastifyInstance) {
         bookingDate.getFullYear(),
       ]
 
-      prisma.tenantBranding.findUnique({ where: { tenantId: tenant.id }, select: { whatsappTemplate: true } })
-        .then((branding) => {
-          const template = branding?.whatsappTemplate ?? DEFAULT_WHATSAPP_TEMPLATE
-          const message = template
-            .replace(/\{nome\}/g, body.customerName)
-            .replace(/\{arena\}/g, tenant.name)
-            .replace(/\{quadra\}/g, court.name)
-            .replace(/\{data\}/g, `${day}/${month}/${year}`)
-            .replace(/\{horario\}/g, `${body.startTime} às ${body.endTime}`)
-            .replace(/\{total\}/g, totalPrice.toFixed(2).replace('.', ','))
-          return sendWhatsApp(body.customerPhone, message)
+      prisma.tenantBranding.findUnique({
+        where: { tenantId: tenant.id },
+        select: { whatsappTemplate: true, whatsappOwnerTemplate: true, whatsappOwnerNumber: true },
+      })
+        .then(async (branding) => {
+          const vars = {
+            nome: body.customerName,
+            arena: tenant.name,
+            quadra: court.name,
+            data: `${day}/${month}/${year}`,
+            horario: `${body.startTime} às ${body.endTime}`,
+            total: totalPrice.toFixed(2).replace('.', ','),
+          }
+          // Confirmação ao cliente
+          const confirmation = fillWhatsAppTemplate(branding?.whatsappTemplate ?? DEFAULT_WHATSAPP_TEMPLATE, vars)
+          await sendWhatsApp(body.customerPhone, confirmation)
+          // Aviso ao dono da arena (se configurado)
+          if (branding?.whatsappOwnerNumber) {
+            const ownerMsg = fillWhatsAppTemplate(branding.whatsappOwnerTemplate ?? DEFAULT_WHATSAPP_OWNER_TEMPLATE, vars)
+            await sendWhatsApp(branding.whatsappOwnerNumber, ownerMsg)
+          }
         })
         .catch((err) => console.error('[WhatsApp] Erro ao notificar agendamento:', err))
 
