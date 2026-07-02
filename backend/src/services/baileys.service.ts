@@ -147,27 +147,50 @@ export async function disconnect(): Promise<void> {
   await prisma.whatsAppAuth.deleteMany({}).catch(() => {})
 }
 
-// Normaliza um telefone brasileiro para o formato que o WhatsApp usa.
-// Muitos números antigos estão registrados no WhatsApp SEM o 9º dígito
-// (o "9" logo após o DDD), então enviar com o 9 faz a mensagem falhar.
-// Regra: 55 + DDD(2) + 9 + 8 dígitos = 13 → remove o 9 → 12 dígitos.
-export function normalizeBrazilNumber(raw: string): string {
-  let digits = raw.replace(/\D/g, '')
-  if (!digits.startsWith('55')) digits = `55${digits}`
-  // Remove o 9º dígito extra de celulares (posição logo após o DDD)
-  if (digits.length === 13 && digits[4] === '9') {
-    digits = digits.slice(0, 4) + digits.slice(5)
+// Gera as variações possíveis de um telefone brasileiro (com e sem o 9º dígito).
+// No Brasil, alguns números estão registrados no WhatsApp COM o 9 e outros SEM,
+// então precisamos testar as duas formas e usar a que realmente existe.
+function brazilCandidates(raw: string): string[] {
+  const digits = raw.replace(/\D/g, '')
+  const base = digits.startsWith('55') ? digits : `55${digits}`
+  const set = new Set<string>([base])
+  // 55 + DDD(2) + 9 + 8 = 13 dígitos → também tenta SEM o 9
+  if (base.length === 13 && base[4] === '9') set.add(base.slice(0, 4) + base.slice(5))
+  // 55 + DDD(2) + 8 = 12 dígitos → também tenta COM o 9
+  if (base.length === 12) set.add(`${base.slice(0, 4)}9${base.slice(4)}`)
+  return [...set]
+}
+
+// Descobre o JID real no WhatsApp, tratando o 9º dígito automaticamente.
+async function resolveJid(raw: string): Promise<string | null> {
+  const candidates = brazilCandidates(raw)
+  for (const c of candidates) {
+    try {
+      const res = await sock.onWhatsApp(c)
+      if (res && res[0]?.exists && res[0]?.jid) return res[0].jid
+    } catch (err) {
+      console.error('[WhatsApp] Falha ao verificar número:', err)
+    }
   }
-  return digits
+  return null
 }
 
 export async function sendMessage(to: string, text: string): Promise<void> {
   if (!sock || status !== 'connected') {
-    console.warn('[WhatsApp] Mensagem não enviada: WhatsApp não conectado')
+    console.warn(`[WhatsApp] Mensagem não enviada: WhatsApp não conectado (status=${status})`)
     return
   }
-  const number = normalizeBrazilNumber(to)
-  await sock.sendMessage(`${number}@s.whatsapp.net`, { text })
+  try {
+    const jid = await resolveJid(to)
+    if (!jid) {
+      console.warn(`[WhatsApp] Número ${to} não encontrado no WhatsApp — mensagem não enviada`)
+      return
+    }
+    await sock.sendMessage(jid, { text })
+    console.log(`[WhatsApp] Mensagem enviada para ${jid}`)
+  } catch (err) {
+    console.error(`[WhatsApp] Erro ao enviar mensagem para ${to}:`, err)
+  }
 }
 
 // Auto-conecta na inicialização se já existe sessão salva no banco
