@@ -174,7 +174,7 @@ export default function FinancialPage() {
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Origem</span>
               <div className="flex gap-2 flex-wrap">
-                {([['courts', 'Quadras'], ['bar', 'Bar'], ['rentals', 'Locação'], ['all', 'Tudo']] as const).map(([val, label]) => (
+                {([['courts', 'Quadras'], ['bar', 'Bar'], ['rentals', 'Mensalistas'], ['all', 'Tudo']] as const).map(([val, label]) => (
                   <button
                     key={val}
                     onClick={() => setSource(val)}

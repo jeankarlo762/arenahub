@@ -11,8 +11,8 @@ const ENTITY_LABELS: Record<string, string> = {
   Court: 'Quadra', Schedule: 'Horário', Booking: 'Agendamento', Payment: 'Pagamento',
   Tournament: 'Torneio', TournamentTeam: 'Time de torneio', BarProduct: 'Produto do bar',
   BarOrder: 'Comanda', BarOrderItem: 'Item de comanda', BarCategory: 'Categoria do bar',
-  BarTransaction: 'Transação do bar', Client: 'Cliente', Rental: 'Locação',
-  RentalPayment: 'Pagamento de locação', Player: 'Jogador', User: 'Usuário',
+  BarTransaction: 'Transação do bar', Client: 'Cliente', Rental: 'Mensalista',
+  RentalPayment: 'Mensalidade', Player: 'Jogador', User: 'Usuário',
   Tenant: 'Arena', PaymentFee: 'Taxa de pagamento', Auth: 'Autenticação',
 }
 

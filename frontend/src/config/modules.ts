@@ -8,7 +8,7 @@ export const ALL_MODULES = [
   { key: 'bookings',     label: 'Agendamentos' },
   { key: 'tournaments',  label: 'Torneios' },
   { key: 'clients',      label: 'Clientes' },
-  { key: 'rentals',      label: 'Locação' },
+  { key: 'rentals',      label: 'Mensalistas' },
   { key: 'bar',          label: 'Bar' },
   { key: 'comandas',     label: 'Comandas' },
   { key: 'financial',    label: 'Financeiro' },

@@ -46,6 +46,8 @@ export const bookingFiltersSchema = z.object({
   customerPhone: z.string().optional(),
   search: z.string().optional(),
   status: z.enum(['CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW']).optional(),
+  // recent = criado mais recente primeiro (padrão); asc/desc = pela data do agendamento
+  sort: z.enum(['recent', 'asc', 'desc']).optional(),
 })
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>

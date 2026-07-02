@@ -311,7 +311,7 @@ function AdminDashboard() {
           <div className="flex items-center gap-1.5 shrink-0">
             <AlertTriangle size={14} className="text-red-500" />
             <span className="text-xs font-semibold text-red-700 dark:text-red-400">
-              {overduePayments.length} pagamento{overduePayments.length > 1 ? 's' : ''} de locação em atraso:
+              {overduePayments.length} mensalidade{overduePayments.length > 1 ? 's' : ''} em atraso:
             </span>
           </div>
           <div className="flex gap-1.5 flex-wrap flex-1 min-w-0">

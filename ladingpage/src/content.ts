@@ -79,6 +79,11 @@ export const FEATURES = [
     description: 'Cliente recebe a confirmação da reserva direto no WhatsApp, na hora.',
   },
   {
+    icon: 'Repeat',
+    title: 'Mensalistas',
+    description: 'Horário fixo, cobrança recorrente e controle de quem pagou a mensalidade.',
+  },
+  {
     icon: 'Users',
     title: 'Gestão de clientes',
     description: 'Histórico, contatos e frequência de cada cliente.',

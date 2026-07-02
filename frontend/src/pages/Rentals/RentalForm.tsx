@@ -174,7 +174,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
       return
     }
     if (isDaily && !data.endDate) {
-      toast.error('Informe a data de término para locação diária')
+      toast.error('Informe a data de término para mensalista diário')
       return
     }
 
@@ -207,15 +207,15 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
       }
       if (isEdit) {
         await rentalsApi.updateRental(rental.id, payload)
-        toast.success('Locação atualizada')
+        toast.success('Mensalista atualizado')
       } else {
         await rentalsApi.createRental(payload)
-        toast.success('Locação cadastrada')
+        toast.success('Mensalista cadastrado')
       }
       onSuccess()
       onClose()
     } catch {
-      toast.error('Erro ao salvar locação')
+      toast.error('Erro ao salvar mensalista')
     }
   }
 
@@ -223,7 +223,7 @@ export function RentalForm({ open, onClose, onSuccess, courts, rental }: RentalF
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? 'Editar Locação' : 'Nova Locação'}
+      title={isEdit ? 'Editar Mensalista' : 'Novo Mensalista'}
       size="lg"
       footer={
         <>

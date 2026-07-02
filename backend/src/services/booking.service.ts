@@ -31,6 +31,7 @@ export async function listBookings(filters: {
   customerPhone?: string
   status?: string
   search?: string
+  sort?: 'recent' | 'asc' | 'desc'
 }) {
   const where: Record<string, unknown> = {}
 
@@ -67,12 +68,19 @@ export async function listBookings(filters: {
     if (filters.customerPhone) where.customerPhone = { contains: filters.customerPhone }
   }
 
+  // Ordenação: 'recent' (padrão) = criado mais recente primeiro;
+  // 'asc'/'desc' = pela data do agendamento (crescente/decrescente)
+  const orderByMap = {
+    recent: [{ createdAt: 'desc' as const }],
+    asc: [{ date: 'asc' as const }, { startTime: 'asc' as const }],
+    desc: [{ date: 'desc' as const }, { startTime: 'desc' as const }],
+  }
+  const orderBy = orderByMap[filters.sort ?? 'recent']
+
   return prisma.booking.findMany({
     where,
     include: { court: { select: { id: true, name: true } }, payment: true },
-    orderBy: filters.createdDate
-      ? [{ createdAt: 'desc' }]
-      : [{ date: 'asc' }, { startTime: 'asc' }],
+    orderBy,
   })
 }
 

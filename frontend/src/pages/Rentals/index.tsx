@@ -108,7 +108,7 @@ export default function RentalsPage() {
   async function handleToggleActive(rental: Rental) {
     try {
       await rentalsApi.updateRental(rental.id, { active: !rental.active })
-      toast.success(rental.active ? 'Locação desativada' : 'Locação ativada')
+      toast.success(rental.active ? 'Mensalista desativado' : 'Mensalista ativado')
       load()
     } catch { toast.error('Erro ao atualizar') }
   }
@@ -118,7 +118,7 @@ export default function RentalsPage() {
     setDeleting(true)
     try {
       await rentalsApi.deleteRental(selected.id)
-      toast.success('Locação removida')
+      toast.success('Mensalista removido')
       setDeleteOpen(false)
       load()
     } catch { toast.error('Erro ao remover') }
@@ -126,7 +126,7 @@ export default function RentalsPage() {
   }
 
   return (
-    <Layout title="Locação">
+    <Layout title="Mensalistas">
       <div className="flex flex-col gap-6">
         {/* Tabs */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -139,13 +139,13 @@ export default function RentalsPage() {
                   tab === t ? 'border-orange-500 text-orange-600' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
-                {t === 'list' ? 'Locações' : 'Relatório'}
+                {t === 'list' ? 'Mensalistas' : 'Relatório'}
               </button>
             ))}
           </div>
           {tab === 'list' && (
             <Button onClick={() => { setSelected(null); setFormOpen(true) }}>
-              <Plus size={16} /> Nova Locação
+              <Plus size={16} /> Novo Mensalista
             </Button>
           )}
         </div>
@@ -172,7 +172,7 @@ export default function RentalsPage() {
             {loading ? (
               <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>
             ) : filtered.length === 0 ? (
-              <EmptyState icon={<CalendarRange size={48} />} title="Nenhuma locação cadastrada" description="Cadastre locações recorrentes de quadras" action={{ label: 'Nova Locação', onClick: () => { setSelected(null); setFormOpen(true) } }} />
+              <EmptyState icon={<CalendarRange size={48} />} title="Nenhum mensalista cadastrado" description="Cadastre mensalistas recorrentes de quadras" action={{ label: 'Novo Mensalista', onClick: () => { setSelected(null); setFormOpen(true) } }} />
             ) : (
               <div className="flex flex-col gap-3">
                 {filtered.map((r) => {
@@ -322,7 +322,7 @@ export default function RentalsPage() {
       <RentalForm open={formOpen} onClose={() => setFormOpen(false)} onSuccess={load} courts={courts} rental={selected ?? undefined} />
 
       <ConfirmDialog open={deleteOpen} onClose={() => setDeleteOpen(false)} onConfirm={handleDelete}
-        title="Remover locação" message={`Remover a locação de "${selected?.clientName}"${selected?.court ? ` em ${selected.court.name}` : ''}?`}
+        title="Remover mensalista" message={`Remover o mensalista "${selected?.clientName}"${selected?.court ? ` em ${selected.court.name}` : ''}?`}
         confirmLabel="Remover" loading={deleting} />
     </Layout>
   )
@@ -353,7 +353,7 @@ function RentalReportTab() {
 
   const weekdayData = report?.weekdayActivity.map(w => ({
     name: WEEKDAY_LABELS[w.weekday],
-    locações: w.rentalCount,
+    mensalistas: w.rentalCount,
   })) ?? []
 
   return (
@@ -372,15 +372,15 @@ function RentalReportTab() {
           {/* Summary cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <Card>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Locações Ativas</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Mensalistas Ativos</p>
               <p className="text-2xl font-bold text-green-700 dark:text-green-400">{report.activeCount}</p>
             </Card>
             <Card>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Locações Inativas</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Mensalistas Inativos</p>
               <p className="text-2xl font-bold text-gray-500 dark:text-gray-400">{report.inactiveCount}</p>
             </Card>
             <Card>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Locações</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de Mensalistas</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{report.totalCount}</p>
             </Card>
             <Card>
@@ -393,7 +393,7 @@ function RentalReportTab() {
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Top courts */}
             <Card>
-              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Quadras com mais locações</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Quadras com mais mensalistas</h2>
               {report.topCourts.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Sem dados</p>
               ) : (
@@ -407,7 +407,7 @@ function RentalReportTab() {
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{court.courtName}</p>
                       </div>
                       <div className="flex items-center gap-4 shrink-0 text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">{court.rentalCount} locação{court.rentalCount !== 1 ? 'ções' : ''}</span>
+                        <span className="text-gray-500 dark:text-gray-400">{court.rentalCount} mensalista{court.rentalCount !== 1 ? 's' : ''}</span>
                         <span className="font-semibold text-orange-600 dark:text-orange-400">{formatCurrency(court.estimatedRevenue)}</span>
                       </div>
                     </div>
@@ -428,7 +428,7 @@ function RentalReportTab() {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Bar dataKey="locações" fill="#f97316" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="mensalistas" fill="#f97316" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

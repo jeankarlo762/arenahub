@@ -90,7 +90,7 @@ export function RentalDetailModal({ open, onClose, rental }: RentalDetailModalPr
   const totalPending = pending.reduce((s, p) => s + Number(p.amount), 0)
 
   return (
-    <Modal open={open} onClose={onClose} title="Detalhes da Locação" size="lg">
+    <Modal open={open} onClose={onClose} title="Detalhes do Mensalista" size="lg">
       <div className="flex flex-col gap-5">
 
         {/* Tenant info */}

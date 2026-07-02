@@ -59,6 +59,7 @@ export default function BookingsPage() {
   const [filterCourt, setFilterCourt] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterCustomer, setFilterCustomer] = useState('')
+  const [sort, setSort] = useState<'recent' | 'asc' | 'desc'>('recent')
 
   // History filters
   const [historySearch, setHistorySearch] = useState('')
@@ -71,7 +72,7 @@ export default function BookingsPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, string> = {}
+      const params: Record<string, string> = { sort }
       if (filterCreatedDate) params.createdDate = filterCreatedDate
       if (filterCourt) params.courtId = filterCourt
       if (filterStatus) params.status = filterStatus
@@ -82,7 +83,7 @@ export default function BookingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterCreatedDate, filterCourt, filterStatus, filterCustomer])
+  }, [filterCreatedDate, filterCourt, filterStatus, filterCustomer, sort])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -239,6 +240,17 @@ export default function BookingsPage() {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="w-40"
+            />
+            <Select
+              label="Ordenar por"
+              options={[
+                { value: 'recent', label: 'Data de criação' },
+                { value: 'asc', label: 'Crescente' },
+                { value: 'desc', label: 'Decrescente' },
+              ]}
+              value={sort}
+              onChange={(e) => setSort(e.target.value as 'recent' | 'asc' | 'desc')}
+              className="w-44"
             />
           </div>
         )}

@@ -7,6 +7,10 @@ export async function listBookings(params?: {
   endDate?: string
   courtId?: string
   status?: string
+  createdDate?: string
+  customerName?: string
+  search?: string
+  sort?: 'recent' | 'asc' | 'desc'
 }): Promise<Booking[]> {
   const res = await api.get<Booking[]>('/bookings', { params })
   return res.data

@@ -155,6 +155,24 @@ export async function publicRoutes(app: FastifyInstance) {
         })
       })
 
+      // Auto-cadastro do cliente na plataforma — fire-and-forget.
+      // Deduplica pelo telefone (comparando só os dígitos significativos).
+      const phoneDigits = body.customerPhone.replace(/\D/g, '')
+      const parts = body.customerName.trim().split(/\s+/)
+      const firstName = parts[0]
+      const lastName = parts.slice(1).join(' ') || '-'
+      prisma.client.findMany({ where: { tenantId: tenant.id }, select: { phone: true } })
+        .then((clients) => {
+          const exists = clients.some(
+            (c) => c.phone && c.phone.replace(/\D/g, '').slice(-8) === phoneDigits.slice(-8),
+          )
+          if (exists) return undefined
+          return prisma.client.create({
+            data: { tenantId: tenant.id, firstName, lastName, phone: body.customerPhone },
+          })
+        })
+        .catch((err) => console.error('[Cliente] Erro no auto-cadastro:', err))
+
       // Notificação WhatsApp — fire-and-forget, não bloqueia a resposta
       const [day, month, year] = [
         bookingDate.getDate().toString().padStart(2, '0'),

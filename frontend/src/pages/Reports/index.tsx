@@ -99,14 +99,14 @@ export default function ReportsPage() {
                   <p className="text-xs text-gray-400 dark:text-gray-500">{barStats?.orderCount ?? 0} comandas</p>
                 </Card>
                 <Card>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Locações (estimado)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Mensalistas (estimado)</p>
                   <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCurrency(rentalsEstimated)}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">{rentalReport?.activeCount ?? 0} locações ativas</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{rentalReport?.activeCount ?? 0} mensalistas ativos</p>
                 </Card>
                 <Card className="border-orange-200 dark:border-orange-700 bg-orange-50/40 dark:bg-orange-900/20">
                   <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Geral</p>
                   <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatCurrency(totalGeral)}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Quadras + Bar + Locações</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Quadras + Bar + Mensalistas</p>
                 </Card>
               </div>
             </section>
@@ -174,13 +174,13 @@ export default function ReportsPage() {
               </section>
             )}
 
-            {/* ─── Locações ─── */}
+            {/* ─── Mensalistas ─── */}
             {rentalReport && (
               <section>
-                <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Locações</h2>
+                <h2 className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-3">Mensalistas</h2>
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <Card>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Quadras com mais locações</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Quadras com mais mensalistas</h3>
                     {rentalReport.topCourts.length === 0 ? (
                       <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">Sem dados</p>
                     ) : (
@@ -208,7 +208,7 @@ export default function ReportsPage() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                           <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                          <Tooltip formatter={(v) => [`${v}`, 'Locações']} />
+                          <Tooltip formatter={(v) => [`${v}`, 'Mensalistas']} />
                           <Bar dataKey="v" fill="#f97316" radius={[4, 4, 0, 0]}>
                             {rentalReport.weekdayActivity.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                           </Bar>

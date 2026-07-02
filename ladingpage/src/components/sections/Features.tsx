@@ -1,4 +1,4 @@
-import { Calendar, Receipt, DollarSign, BarChart2, UtensilsCrossed, CalendarCheck, Users, MessageCircle } from 'lucide-react';
+import { Calendar, Receipt, DollarSign, BarChart2, UtensilsCrossed, CalendarCheck, Users, MessageCircle, Repeat } from 'lucide-react';
 import AnimatedSection from '../AnimatedSection';
 import { FEATURES, LINKS } from '../../content';
 
@@ -10,6 +10,7 @@ const iconMap: Record<string, React.ElementType> = {
   UtensilsCrossed,
   CalendarCheck,
   MessageCircle,
+  Repeat,
   Users,
 };
 

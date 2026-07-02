@@ -32,7 +32,7 @@ const commonItems = [
   { to: '/bookings',    icon: CalendarDays,    label: 'Agendamentos',    module: 'bookings' },
   { to: '/tournaments', icon: Trophy,          label: 'Torneios',        module: 'tournaments' },
   { to: '/clients',     icon: Users,           label: 'Clientes',        module: 'clients' },
-  { to: '/rentals',     icon: CalendarRange,   label: 'Locação',         module: 'rentals' },
+  { to: '/rentals',     icon: CalendarRange,   label: 'Mensalistas',     module: 'rentals' },
   { to: '/comandas',    icon: ClipboardList,   label: 'Comandas',        module: 'comandas' },
 ]
 
