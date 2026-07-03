@@ -267,7 +267,7 @@ function AdminDashboard() {
 
   useEffect(() => { load() }, [load])
 
-  const chartColor = darkMode ? '#F2B705' : '#f97316'
+  const chartColor = '#F2B705'
   const chartGrid  = darkMode ? '#374151' : '#f0f0f0'
   const chartTick  = darkMode ? '#9ca3af' : '#6b7280'
 

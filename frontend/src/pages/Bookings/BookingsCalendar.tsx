@@ -17,7 +17,7 @@ const TOTAL_HEIGHT = HOURS.length * HOUR_HEIGHT
 const DAY_NAMES_SHORT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 
 const COURT_COLORS = [
-  { bg: '#fff7ed', border: '#f97316', text: '#9a3412' },  // orange
+  { bg: '#FEF9EA', border: '#F2B705', text: '#7a5b02' },  // amarelo
   { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' },  // blue
   { bg: '#f0fdf4', border: '#22c55e', text: '#14532d' },  // green
   { bg: '#faf5ff', border: '#a855f7', text: '#581c87' },  // purple
@@ -26,7 +26,7 @@ const COURT_COLORS = [
 ]
 
 const COURT_COLORS_DARK = [
-  { bg: 'rgba(249,115,22,0.15)', border: '#f97316', text: '#fb923c' },  // orange
+  { bg: 'rgba(242,183,5,0.15)', border: '#F2B705', text: '#F4C918' },  // amarelo
   { bg: 'rgba(59,130,246,0.15)', border: '#3b82f6', text: '#60a5fa' },  // blue
   { bg: 'rgba(34,197,94,0.15)', border: '#22c55e', text: '#4ade80' },   // green
   { bg: 'rgba(168,85,247,0.15)', border: '#a855f7', text: '#c084fc' },  // purple

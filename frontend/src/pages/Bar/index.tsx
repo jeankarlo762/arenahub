@@ -302,7 +302,7 @@ export default function BarPage() {
                         <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11 }} />
                         <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} width={55} />
                         <Tooltip formatter={(v, _n, p) => [formatCurrency(Number(v)), `${p.payload?.count ?? 0} comanda(s)`]} labelFormatter={(l) => formatDate(l as string)} />
-                        <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="revenue" fill="#F2B705" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}

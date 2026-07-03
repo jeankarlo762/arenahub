@@ -10,4 +10,4 @@ export const METHOD_LABELS: Record<string, string> = {
   TRANSFER: 'Transferência',
 }
 
-export const CHART_COLORS = ['#f97316', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
+export const CHART_COLORS = ['#F2B705', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']

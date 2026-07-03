@@ -48,9 +48,9 @@ const PAYMENT_METHODS = ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'PIX', 'TRANSFER']
 
 export async function getBranding() {
   const tenantId = getTenantId()
-  if (!tenantId) return { primaryColor: '#f97316', logoUrl: null, companyName: null }
+  if (!tenantId) return { primaryColor: '#F2B705', logoUrl: null, companyName: null }
   const b = await prisma.tenantBranding.findUnique({ where: { tenantId } })
-  return b ?? { primaryColor: '#f97316', logoUrl: null, companyName: null }
+  return b ?? { primaryColor: '#F2B705', logoUrl: null, companyName: null }
 }
 
 export async function upsertBranding(data: { primaryColor?: string; logoUrl?: string | null; companyName?: string | null }) {

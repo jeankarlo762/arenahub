@@ -121,7 +121,7 @@ export default function ReportsPage() {
                     <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} width={55} />
                     <Tooltip formatter={(v) => [formatCurrency(Number(v)), 'Receita']} labelFormatter={(l) => formatDate(l as string)} />
-                    <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="revenue" stroke="#F2B705" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </Card>
@@ -209,7 +209,7 @@ export default function ReportsPage() {
                           <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                           <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(v) => [`${v}`, 'Mensalistas']} />
-                          <Bar dataKey="v" fill="#f97316" radius={[4, 4, 0, 0]}>
+                          <Bar dataKey="v" fill="#F2B705" radius={[4, 4, 0, 0]}>
                             {rentalReport.weekdayActivity.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                           </Bar>
                         </BarChart>

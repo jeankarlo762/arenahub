@@ -221,7 +221,7 @@ export default function FinancialPage() {
                     <XAxis dataKey="date" tickFormatter={(d) => formatDate(d, 'dd/MM')} tick={{ fontSize: 11 }} />
                     <YAxis tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} width={55} />
                     <Tooltip formatter={(v) => [formatCurrency(Number(v)), 'Receita']} labelFormatter={(l) => formatDate(l as string)} />
-                    <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="revenue" stroke="#F2B705" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -240,7 +240,7 @@ export default function FinancialPage() {
                         <XAxis type="number" tickFormatter={(v) => `R$${v}`} tick={{ fontSize: 11 }} />
                         <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
                         <Tooltip formatter={(v) => [formatCurrency(Number(v)), 'Receita']} />
-                        <Bar dataKey="revenue" fill="#f97316" radius={[0, 4, 4, 0]} />
+                        <Bar dataKey="revenue" fill="#F2B705" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -291,7 +291,7 @@ export default function FinancialPage() {
                           <XAxis type="number" tick={{ fontSize: 11 }} />
                           <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={110} />
                           <Tooltip formatter={(v) => [`${v} un.`, 'Qtd']} />
-                          <Bar dataKey="quantity" fill="#f97316" radius={[0, 4, 4, 0]} />
+                          <Bar dataKey="quantity" fill="#F2B705" radius={[0, 4, 4, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     )}

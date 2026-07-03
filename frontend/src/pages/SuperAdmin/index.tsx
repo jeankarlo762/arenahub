@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
@@ -107,6 +107,16 @@ const editSchema = z.object({
 })
 type EditForm = z.infer<typeof editSchema>
 
+// ── Máscara de moeda (R$) ───────────────────────────────────────────────────────
+function formatBRLInput(value: number | string | undefined | null): string {
+  const n = Number(value ?? 0)
+  return (isNaN(n) ? 0 : n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+function parseBRLInput(str: string): number {
+  const digits = str.replace(/\D/g, '')
+  return digits ? Number(digits) / 100 : 0
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([])
@@ -126,7 +136,7 @@ export default function TenantsPage() {
   const [tenantUsers, setTenantUsers] = useState<TenantUser[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { mrrValue: 0, setupFee: 0 },
   })
@@ -182,7 +192,7 @@ export default function TenantsPage() {
       setOpenModal(false)
       setCreateModules(DEFAULT_MODULES_CONFIG)
       reset()
-      load()
+      await load()
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
@@ -355,13 +365,43 @@ export default function TenantsPage() {
                 <input {...register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
-                <input {...register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="199.00" />
+                <label className="text-sm font-medium text-gray-700">Valor MRR (mensal)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
+                  <Controller
+                    control={control}
+                    name="mrrValue"
+                    render={({ field }) => (
+                      <input
+                        inputMode="numeric"
+                        value={formatBRLInput(field.value)}
+                        onChange={(e) => field.onChange(parseBRLInput(e.target.value))}
+                        className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                        placeholder="0,00"
+                      />
+                    )}
+                  />
+                </div>
                 {errors.mrrValue && <p className="text-xs text-red-500">{errors.mrrValue.message}</p>}
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-700">Valor de Implantação (R$)</label>
-                <input {...register('setupFee')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="500.00" />
+                <label className="text-sm font-medium text-gray-700">Valor de Implantação</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
+                  <Controller
+                    control={control}
+                    name="setupFee"
+                    render={({ field }) => (
+                      <input
+                        inputMode="numeric"
+                        value={formatBRLInput(field.value)}
+                        onChange={(e) => field.onChange(parseBRLInput(e.target.value))}
+                        className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                        placeholder="0,00"
+                      />
+                    )}
+                  />
+                </div>
                 {errors.setupFee && <p className="text-xs text-red-500">{errors.setupFee.message}</p>}
               </div>
             </div>
@@ -422,13 +462,43 @@ export default function TenantsPage() {
               <input {...editForm.register('phone')} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" placeholder="(11) 99999-9999" />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Valor MRR (mensal R$)</label>
-              <input {...editForm.register('mrrValue')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+              <label className="text-sm font-medium text-gray-700">Valor MRR (mensal)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
+                <Controller
+                  control={editForm.control}
+                  name="mrrValue"
+                  render={({ field }) => (
+                    <input
+                      inputMode="numeric"
+                      value={formatBRLInput(field.value)}
+                      onChange={(e) => field.onChange(parseBRLInput(e.target.value))}
+                      className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                      placeholder="0,00"
+                    />
+                  )}
+                />
+              </div>
               {editForm.formState.errors.mrrValue && <p className="text-xs text-red-500">{editForm.formState.errors.mrrValue.message}</p>}
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-gray-700">Valor de Implantação (R$)</label>
-              <input {...editForm.register('setupFee')} type="number" step="0.01" min="0" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none" />
+              <label className="text-sm font-medium text-gray-700">Valor de Implantação</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">R$</span>
+                <Controller
+                  control={editForm.control}
+                  name="setupFee"
+                  render={({ field }) => (
+                    <input
+                      inputMode="numeric"
+                      value={formatBRLInput(field.value)}
+                      onChange={(e) => field.onChange(parseBRLInput(e.target.value))}
+                      className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-orange-400 focus:ring-1 focus:ring-orange-200 outline-none"
+                      placeholder="0,00"
+                    />
+                  )}
+                />
+              </div>
               {editForm.formState.errors.setupFee && <p className="text-xs text-red-500">{editForm.formState.errors.setupFee.message}</p>}
             </div>
           </div>

@@ -6,7 +6,7 @@ import { useBrandingStore, applyBrandingCss } from '../../store/branding.store'
 import * as settingsApi from '../../api/settings.api'
 
 const PRESET_COLORS = [
-  { label: 'Laranja', value: '#f97316' },
+  { label: 'Âmbar', value: '#F2B705' },
   { label: 'Azul', value: '#3b82f6' },
   { label: 'Verde', value: '#22c55e' },
   { label: 'Roxo', value: '#8b5cf6' },

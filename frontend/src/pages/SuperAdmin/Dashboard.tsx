@@ -130,11 +130,11 @@ export default function SuperAdminDashboard() {
                     <XAxis dataKey="label" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <Tooltip
-                      cursor={{ fill: '#fff7ed' }}
+                      cursor={{ fill: '#FEF9EA' }}
                       contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13 }}
                       formatter={(v: number) => [`${v} arena(s)`, 'Novas']}
                     />
-                    <Bar dataKey="count" fill="#f97316" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="count" fill="#F2B705" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

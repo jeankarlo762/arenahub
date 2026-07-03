@@ -25,7 +25,7 @@ model Tenant {
 // Branding por tenant — cor primária, logo (base64), nome de exibição e mensagens WhatsApp.
 model TenantBranding {
   tenantId                  String   @id
-  primaryColor              String   @default("#f97316")
+  primaryColor              String   @default("#F2B705")
   logoUrl                   String?
   companyName               String?
   whatsappTemplate          String?  // confirmação enviada ao cliente

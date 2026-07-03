@@ -428,7 +428,7 @@ function RentalReportTab() {
                     <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                     <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                     <Tooltip />
-                    <Bar dataKey="mensalistas" fill="#f97316" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="mensalistas" fill="#F2B705" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
