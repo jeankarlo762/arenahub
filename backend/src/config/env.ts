@@ -9,6 +9,9 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   FRONTEND_URL: z.string().default('http://localhost:5173'),
+  // Lista de origens permitidas no CORS, separadas por vírgula. Se vazio,
+  // libera todas (dev). Em produção, defina com os domínios do seu frontend.
+  CORS_ORIGINS: z.string().optional(),
   // SMS (Twilio) — optional; recovery SMS will fail gracefully if not set
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),

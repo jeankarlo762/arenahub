@@ -57,8 +57,9 @@ export async function publicRoutes(app: FastifyInstance) {
     return reply.send(availability)
   })
 
-  // POST /api/public/booking/:slug — create a booking without auth
-  app.post('/booking/:slug', async (request, reply) => {
+  // POST /api/public/booking/:slug — create a booking without auth.
+  // Rate limit rígido: evita spam de reservas (e de mensagens WhatsApp).
+  app.post('/booking/:slug', { config: { rateLimit: { max: 8, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { slug } = request.params as { slug: string }
 
     let body: z.infer<typeof publicBookingBodySchema>
@@ -243,7 +244,7 @@ export async function publicRoutes(app: FastifyInstance) {
   })
 
   // POST /api/public/presence/:id — cliente confirma presença ou avisa que não vai
-  app.post('/presence/:id', async (request, reply) => {
+  app.post('/presence/:id', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const { confirm } = request.body as { confirm?: boolean }
 
