@@ -3,7 +3,8 @@ import { z } from 'zod'
 const createBookingBase = z.object({
   courtId: z.string().min(1, 'Quadra obrigatória'),
   customerName: z.string().min(1, 'Nome do cliente obrigatório'),
-  customerPhone: z.string().min(1, 'Telefone obrigatório'),
+  // Telefone é opcional em agendamentos internos (feitos pelo admin/operador).
+  customerPhone: z.string().optional().or(z.literal('')),
   customerEmail: z.string().email().optional().or(z.literal('')),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato YYYY-MM-DD'),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Formato HH:MM'),

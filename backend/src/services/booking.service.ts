@@ -162,7 +162,7 @@ export async function createBooking(input: CreateBookingInput) {
         data: {
           courtId: input.courtId,
           customerName: input.customerName,
-          customerPhone: input.customerPhone,
+          customerPhone: input.customerPhone ?? '',
           customerEmail: input.customerEmail || null,
           date: bookingDate,
           startTime: input.startTime,
