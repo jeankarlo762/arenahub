@@ -1,38 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { ChevronDown, ChevronRight, Pencil, Save, Check, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Pencil, Save, Check, X, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Spinner } from '../../components/ui/Spinner'
 import { Button } from '../../components/ui/Button'
-import type { Court, Schedule } from '../../types/court'
+import type { Court } from '../../types/court'
 import * as courtsApi from '../../api/courts.api'
 import { formatCurrency } from '../../utils/format'
-
-const DAY_SHORT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-
-function ScheduleSummary({ schedules }: { schedules: Schedule[] }) {
-  const active = schedules.filter((s) => s.active).sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-  if (active.length === 0) return <p className="text-xs text-gray-400">Sem horários configurados</p>
-
-  const groups = new Map<string, number[]>()
-  for (const s of active) {
-    const key = `${s.openTime}–${s.closeTime}`
-    if (!groups.has(key)) groups.set(key, [])
-    groups.get(key)!.push(s.dayOfWeek)
-  }
-
-  const parts = Array.from(groups.entries()).map(
-    ([time, days]) => `${days.map((d) => DAY_SHORT[d]).join(', ')} · ${time}`,
-  )
-
-  return <p className="text-xs text-gray-400">{parts.join('  |  ')}</p>
-}
 
 interface CourtPriceEdit {
   pricePerSlot: string
   slotMinutes: string
 }
 
-export function CourtsConfigTab() {
+export function CourtsConfigTab({ reloadSignal }: { reloadSignal?: number }) {
   const [courts, setCourts] = useState<Court[]>([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -63,7 +43,8 @@ export function CourtsConfigTab() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  // Recarrega ao montar E sempre que o sinal externo mudar (ex: nova quadra criada).
+  useEffect(() => { load() }, [load, reloadSignal])
 
   useEffect(() => {
     if (nameEditing) setTimeout(() => nameInputRef.current?.focus(), 50)
@@ -123,17 +104,27 @@ export function CourtsConfigTab() {
     }
   }
 
-  if (loading) {
-    return <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>
-  }
-
-  if (courts.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-10">Nenhuma quadra cadastrada ainda.</p>
-  }
-
   return (
-    <div className="flex flex-col gap-2">
-      {courts.map((court) => {
+    <div className="flex flex-col gap-3">
+      {/* Cabeçalho com botão de atualizar */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-900">Preços e duração das quadras</p>
+        <button
+          onClick={load}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-orange-600 border border-gray-200 hover:border-orange-300 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} /> Atualizar
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>
+      ) : courts.length === 0 ? (
+        <p className="text-sm text-gray-400 text-center py-10">Nenhuma quadra cadastrada ainda.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {courts.map((court) => {
         const isExpanded = expanded === court.id
         const isNameEditing = nameEditing === court.id
         const edit = priceEdits[court.id] ?? { pricePerSlot: '0', slotMinutes: '60' }
@@ -188,7 +179,6 @@ export function CourtsConfigTab() {
                         <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full shrink-0">Inativa</span>
                       )}
                     </div>
-                    <ScheduleSummary schedules={court.schedules ?? []} />
                   </>
                 )}
               </div>
@@ -261,6 +251,8 @@ export function CourtsConfigTab() {
           </div>
         )
       })}
+        </div>
+      )}
     </div>
   )
 }

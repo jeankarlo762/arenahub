@@ -4,6 +4,7 @@ import { prisma } from '../config/database'
 import * as courtsApi from '../services/court.service'
 import { timesOverlap, timeToMinutes } from '../utils/date'
 import { sendMessage as sendWhatsApp } from '../services/baileys.service'
+import { getDayHours } from '../services/business-hours.service'
 import {
   DEFAULT_WHATSAPP_TEMPLATE,
   DEFAULT_WHATSAPP_OWNER_TEMPLATE,
@@ -95,15 +96,13 @@ export async function publicRoutes(app: FastifyInstance) {
 
     try {
       const booking = await prisma.$transaction(async (tx) => {
-        // 1) Court must be open on this weekday and the slot inside its hours
-        const schedule = await tx.schedule.findFirst({
-          where: { courtId: body.courtId, dayOfWeek, active: true },
-        })
-        if (!schedule) {
-          throw Object.assign(new Error('Quadra fechada neste dia'), { statusCode: 400 })
+        // 1) Estabelecimento aberto neste dia e slot dentro do horário de funcionamento
+        const hours = await getDayHours(tenant.id, dayOfWeek)
+        if (!hours.active) {
+          throw Object.assign(new Error('Estabelecimento fechado neste dia'), { statusCode: 400 })
         }
-        if (body.startTime < schedule.openTime || body.endTime > schedule.closeTime) {
-          throw Object.assign(new Error('Horário fora do funcionamento da quadra'), { statusCode: 400 })
+        if (body.startTime < hours.openTime || body.endTime > hours.closeTime) {
+          throw Object.assign(new Error('Horário fora do funcionamento do estabelecimento'), { statusCode: 400 })
         }
 
         // 2) Slot must not collide with an active fixed rental for this weekday

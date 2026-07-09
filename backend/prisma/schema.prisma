@@ -35,6 +35,19 @@ model TenantBranding {
   updatedAt                 DateTime @updatedAt
 }
 
+// Horário de funcionamento do estabelecimento (por dia da semana), aplicado a
+// TODAS as quadras da arena. Substitui o horário por quadra (Schedule).
+// dayOfWeek: 0=Dom ... 6=Sáb.
+model BusinessHours {
+  tenantId  String
+  dayOfWeek Int
+  openTime  String  @default("08:00")
+  closeTime String  @default("22:00")
+  active    Boolean @default(true)
+
+  @@id([tenantId, dayOfWeek])
+}
+
 // Role: ADMIN | OPERATOR | SUPERADMIN
 model User {
   id           String   @id @default(cuid())

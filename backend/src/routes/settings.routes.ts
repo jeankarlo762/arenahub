@@ -14,4 +14,7 @@ export async function settingsRoutes(app: FastifyInstance) {
 
   app.get('/branding', settingsController.getBranding)
   app.put('/branding', admin, settingsController.upsertBranding)
+
+  app.get('/business-hours', settingsController.getBusinessHours)
+  app.put('/business-hours', admin, settingsController.setBusinessHours as RouteHandlerMethod)
 }

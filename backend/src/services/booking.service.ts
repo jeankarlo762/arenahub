@@ -1,5 +1,6 @@
 import { prisma } from '../config/database'
 import { timesOverlap } from '../utils/date'
+import { getDayHours } from './business-hours.service'
 import {
   CreateBookingInput,
   UpdateBookingInput,
@@ -111,12 +112,10 @@ export async function createBooking(input: CreateBookingInput) {
       const bookingDate = new Date(input.date + 'T00:00:00')
       const dayOfWeek = bookingDate.getDay()
 
-      const schedule = await tx.schedule.findFirst({
-        where: { courtId: input.courtId, dayOfWeek, active: true },
-      })
-
-      if (!schedule) {
-        throw Object.assign(new Error('Quadra fechada neste dia'), { statusCode: 400 })
+      // Estabelecimento precisa estar aberto neste dia (horário único da arena).
+      const hours = await getDayHours(court.tenantId, dayOfWeek)
+      if (!hours.active) {
+        throw Object.assign(new Error('Estabelecimento fechado neste dia'), { statusCode: 400 })
       }
 
       // Block bookings that collide with an active fixed rental on this weekday

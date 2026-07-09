@@ -13,7 +13,7 @@ import * as courtsApi from '../../api/courts.api'
  * Full court management (create, edit, schedules, activate/deactivate).
  * Lives in Configurações — the Quadras page is now operational-only.
  */
-export function CourtsManageSection() {
+export function CourtsManageSection({ onChange }: { onChange?: () => void }) {
   const [courts, setCourts] = useState<Court[]>([])
   const [manageOpen, setManageOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
@@ -31,6 +31,12 @@ export function CourtsManageSection() {
     }
   }, [])
 
+  // Recarrega esta seção E notifica o parent (pra outras seções, ex: preços, atualizarem).
+  const reloadAll = useCallback(async () => {
+    await load()
+    onChange?.()
+  }, [load, onChange])
+
   useEffect(() => { load() }, [load])
 
   async function handleActivate(court: Court) {
@@ -38,7 +44,7 @@ export function CourtsManageSection() {
     try {
       await courtsApi.activateCourt(court.id)
       toast.success(`${court.name} ativada`)
-      load()
+      reloadAll()
     } catch {
       toast.error('Erro ao ativar quadra')
     } finally {
@@ -53,7 +59,7 @@ export function CourtsManageSection() {
       await courtsApi.deactivateCourt(selected.id)
       toast.success('Quadra desativada')
       setDeactivateOpen(false)
-      load()
+      reloadAll()
     } catch {
       toast.error('Erro ao desativar')
     } finally {
@@ -86,7 +92,7 @@ export function CourtsManageSection() {
       <CourtForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        onSuccess={load}
+        onSuccess={reloadAll}
         court={selected ?? undefined}
       />
 
@@ -95,7 +101,7 @@ export function CourtsManageSection() {
           open={settingsOpen}
           onClose={() => setSettingsOpen(false)}
           court={selected}
-          onSuccess={load}
+          onSuccess={reloadAll}
         />
       )}
 

@@ -1,14 +1,16 @@
 ﻿import { useState } from 'react'
-import { MapPin, DollarSign, Users, Plug } from 'lucide-react'
+import { MapPin, DollarSign, Users, Plug, Store } from 'lucide-react'
 import { Layout } from '../../components/layout/Layout'
 import { UsersTab } from './UsersTab'
 import { CourtsConfigTab } from './CourtsConfigTab'
 import { CourtsManageSection } from './CourtsManageSection'
 import { PaymentFeesTab } from './PaymentFeesTab'
 import { IntegrationsTab } from './IntegrationsTab'
+import { EstablishmentTab } from './EstablishmentTab'
 import { useAuthStore } from '../../store/auth.store'
 
 const ALL_TABS = [
+  { key: 'establishment', label: 'Estabelecimento', icon: Store, adminOnly: true },
   { key: 'courts', label: 'Quadras', icon: MapPin },
   { key: 'financial', label: 'Financeiro', icon: DollarSign },
   { key: 'users', label: 'Usuários', icon: Users, adminOnly: true },
@@ -19,6 +21,7 @@ type Tab = (typeof ALL_TABS)[number]['key']
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('courts')
+  const [courtsReload, setCourtsReload] = useState(0)
   const { user } = useAuthStore()
 
   const visibleTabs = ALL_TABS.filter((t) => !('adminOnly' in t && t.adminOnly) || user?.role === 'ADMIN')
@@ -42,10 +45,11 @@ export default function SettingsPage() {
           ))}
         </div>
 
+        {activeTab === 'establishment' && user?.role === 'ADMIN' && <EstablishmentTab />}
         {activeTab === 'courts' && (
           <div className="flex flex-col gap-4">
-            <CourtsManageSection />
-            <CourtsConfigTab />
+            <CourtsManageSection onChange={() => setCourtsReload((n) => n + 1)} />
+            <CourtsConfigTab reloadSignal={courtsReload} />
           </div>
         )}
         {activeTab === 'financial' && <PaymentFeesTab />}

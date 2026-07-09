@@ -1,6 +1,20 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
 import * as settingsService from '../services/settings.service'
+import * as businessHoursService from '../services/business-hours.service'
 import { z } from 'zod'
+
+const businessHoursSchema = z.object({
+  hours: z
+    .array(
+      z.object({
+        dayOfWeek: z.number().int().min(0).max(6),
+        openTime: z.string().regex(/^\d{2}:\d{2}$/),
+        closeTime: z.string().regex(/^\d{2}:\d{2}$/),
+        active: z.boolean(),
+      }),
+    )
+    .length(7),
+})
 
 const feeSchema = z.object({ feePercent: z.number().min(0).max(100) })
 const slugSchema = z.object({ slug: z.string().min(3).max(60).regex(/^[a-z0-9-]+$/, 'Apenas letras minúsculas, números e hífen').optional() })
@@ -26,6 +40,15 @@ export async function getBookingSlug(_request: FastifyRequest, reply: FastifyRep
 export async function setBookingSlug(request: FastifyRequest, reply: FastifyReply) {
   const { slug } = slugSchema.parse(request.body ?? {})
   return reply.send(await settingsService.setBookingSlug(slug))
+}
+
+export async function getBusinessHours(_request: FastifyRequest, reply: FastifyReply) {
+  return reply.send(await businessHoursService.getBusinessHours())
+}
+
+export async function setBusinessHours(request: FastifyRequest, reply: FastifyReply) {
+  const { hours } = businessHoursSchema.parse(request.body)
+  return reply.send(await businessHoursService.setBusinessHours(hours))
 }
 
 export async function getPaymentFees(_request: FastifyRequest, reply: FastifyReply) {

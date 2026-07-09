@@ -85,6 +85,30 @@ export default function ComandasPage() {
     return o.customerName.toLowerCase().includes(searchNum.toLowerCase()) || String(o.number).includes(searchNum)
   }
 
+  // Comandas em aberto que batem com a busca (usadas no modo de pesquisa)
+  const filteredOpen = searchNum ? openOrders.filter(matchesSearch) : []
+
+  function OrderCard({ order }: { order: BarOrder }) {
+    return (
+      <button
+        key={order.id}
+        onClick={() => openDetail(order.id)}
+        className="relative rounded-lg p-2.5 text-left text-white bg-red-500 hover:bg-red-600 transition-all min-h-[78px] flex flex-col justify-between shadow-sm"
+      >
+        <div className="flex items-start justify-between gap-1">
+          <span className="font-bold text-lg leading-none">{order.number}</span>
+          <span className="text-[10px] bg-white/20 rounded-full px-1.5 py-0.5 leading-none">
+            {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
+          </span>
+        </div>
+        <div>
+          <p className="text-[11px] font-medium truncate">{order.customerName}</p>
+          <p className="text-xs font-bold">{formatCurrency(Number(order.total))}</p>
+        </div>
+      </button>
+    )
+  }
+
   return (
     <Layout title="Comandas">
       <div className="flex flex-col gap-6">
@@ -115,55 +139,48 @@ export default function ComandasPage() {
           <div className="flex justify-center py-16"><Spinner size="lg" className="text-orange-500" /></div>
         ) : (
           <>
-            {/* Legend */}
-            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-green-500 inline-block" /> Disponível
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-red-500 inline-block" /> Em consumo
-              </span>
-            </div>
+            {/* Legend — só na grade completa */}
+            {!searchNum && (
+              <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-green-500 inline-block" /> Disponível
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded bg-red-500 inline-block" /> Em consumo
+                </span>
+              </div>
+            )}
 
-            {/* ── Grade de comandas (estilo SAIPOS) ── */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-              {cells.map((num) => {
-                const order = ordersByNumber.get(num)
-                const dimmed = !!searchNum && order ? !matchesSearch(order) : false
-
-                if (order) {
+            {/* ── Modo busca: só as comandas em aberto que batem ── */}
+            {searchNum ? (
+              filteredOpen.length === 0 ? (
+                <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6">
+                  Nenhuma comanda em aberto para "{search}"
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+                  {filteredOpen.map((order) => <OrderCard key={order.id} order={order} />)}
+                </div>
+              )
+            ) : (
+              /* ── Grade completa de comandas (estilo SAIPOS) ── */
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
+                {cells.map((num) => {
+                  const order = ordersByNumber.get(num)
+                  if (order) return <OrderCard key={num} order={order} />
                   return (
                     <button
                       key={num}
-                      onClick={() => openDetail(order.id)}
-                      className={`relative rounded-lg p-2.5 text-left text-white bg-red-500 hover:bg-red-600 transition-all min-h-[78px] flex flex-col justify-between shadow-sm ${dimmed ? 'opacity-30' : ''}`}
+                      onClick={() => openNewWithNumber(num)}
+                      title={`Abrir comanda ${num}`}
+                      className="rounded-lg p-2.5 text-white bg-green-500 hover:bg-green-600 transition-all min-h-[78px] flex items-center justify-center shadow-sm"
                     >
-                      <div className="flex items-start justify-between gap-1">
-                        <span className="font-bold text-lg leading-none">{num}</span>
-                        <span className="text-[10px] bg-white/20 rounded-full px-1.5 py-0.5 leading-none">
-                          {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-medium truncate">{order.customerName}</p>
-                        <p className="text-xs font-bold">{formatCurrency(Number(order.total))}</p>
-                      </div>
+                      <span className="font-bold text-2xl">{num}</span>
                     </button>
                   )
-                }
-
-                return (
-                  <button
-                    key={num}
-                    onClick={() => openNewWithNumber(num)}
-                    title={`Abrir comanda ${num}`}
-                    className="rounded-lg p-2.5 text-white bg-green-500 hover:bg-green-600 transition-all min-h-[78px] flex items-center justify-center shadow-sm"
-                  >
-                    <span className="font-bold text-2xl">{num}</span>
-                  </button>
-                )
-              })}
-            </div>
+                })}
+              </div>
+            )}
 
             {/* ── Histórico (CLOSED) ── */}
             <div>

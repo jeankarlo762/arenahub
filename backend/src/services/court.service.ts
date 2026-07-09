@@ -1,6 +1,7 @@
 import { prisma } from '../config/database'
 import { CreateCourtInput, UpdateCourtInput, UpdateScheduleInput } from '../schemas/court.schema'
 import { generateSlots, timeToMinutes } from '../utils/date'
+import { getDayHours } from './business-hours.service'
 
 export async function listCourts(filters: { active?: string; type?: string }) {
   const where: Record<string, unknown> = {}
@@ -101,16 +102,15 @@ export async function getCourtAvailability(courtId: string, date: string, option
   const dateObj = new Date(date + 'T00:00:00')
   const dayOfWeek = dateObj.getDay()
 
-  const schedule = await prisma.schedule.findFirst({
-    where: { courtId, dayOfWeek, active: true },
-  })
+  // Horário do estabelecimento (aplica-se a todas as quadras).
+  const hours = await getDayHours(court.tenantId, dayOfWeek)
 
-  if (!schedule) {
-    return { available: false, reason: 'Quadra fechada neste dia', slots: [] }
+  if (!hours.active) {
+    return { available: false, reason: 'Estabelecimento fechado neste dia', slots: [] }
   }
 
   const slotMinutes = court.slotMinutes
-  const allSlots = generateSlots(schedule.openTime, schedule.closeTime, slotMinutes)
+  const allSlots = generateSlots(hours.openTime, hours.closeTime, slotMinutes)
 
   const existingBookings = await prisma.booking.findMany({
     where: {

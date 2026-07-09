@@ -25,3 +25,20 @@ export async function upsertBranding(data: Partial<BrandingData>): Promise<Brand
   const res = await api.put<BrandingData>('/settings/branding', data)
   return res.data
 }
+
+export interface DayHours {
+  dayOfWeek: number
+  openTime: string
+  closeTime: string
+  active: boolean
+}
+
+export async function getBusinessHours(): Promise<DayHours[]> {
+  const res = await api.get<DayHours[]>('/settings/business-hours')
+  return res.data
+}
+
+export async function saveBusinessHours(hours: DayHours[]): Promise<DayHours[]> {
+  const res = await api.put<DayHours[]>('/settings/business-hours', { hours })
+  return res.data
+}
