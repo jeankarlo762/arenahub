@@ -1,6 +1,7 @@
 import { prisma } from '../config/database'
 import { timesOverlap } from '../utils/date'
 import { getDayHours } from './business-hours.service'
+import { notifyNewBookingEmail } from './email.service'
 import {
   CreateBookingInput,
   UpdateBookingInput,
@@ -103,7 +104,7 @@ export async function getBooking(id: string) {
 
 export async function createBooking(input: CreateBookingInput) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    const booking = await prisma.$transaction(async (tx) => {
       const court = await tx.court.findUnique({ where: { id: input.courtId } })
       if (!court || !court.active) {
         throw Object.assign(new Error('Quadra não encontrada ou inativa'), { statusCode: 404 })
@@ -172,6 +173,20 @@ export async function createBooking(input: CreateBookingInput) {
         include: { court: { select: { id: true, name: true } } },
       })
     }, { isolationLevel: 'Serializable' })
+
+    // Notificação por e-mail (cliente + dono) — best-effort, não bloqueia.
+    void notifyNewBookingEmail({
+      tenantId: booking.tenantId,
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      courtName: booking.court.name,
+      date: booking.date,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      totalPrice: Number(booking.totalPrice),
+    })
+
+    return booking
   } catch (err: unknown) {
     const e = err as { code?: string; statusCode?: number }
     if (e.code === 'P2034') {

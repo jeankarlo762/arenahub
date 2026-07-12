@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../config/database'
 import { authenticate, requireSuperAdmin } from '../middlewares/auth'
 import { hashPassword } from '../utils/password'
+import * as emailService from '../services/email.service'
 
 const createTenantSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
@@ -376,5 +377,44 @@ export async function superAdminRoutes(app: FastifyInstance) {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
     })
+  })
+
+  // ---------- Integração de E-mail (Gmail OAuth2) ----------
+  // Config global de envio de e-mail. Segredos nunca são retornados ao painel.
+  app.get('/email', async (_req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send(await emailService.getEmailConfig())
+  })
+
+  app.put('/email', async (req: FastifyRequest, reply: FastifyReply) => {
+    const input = z.object({
+      senderEmail: z.string().email('E-mail inválido').or(z.literal('')).optional(),
+      senderName: z.string().max(120).optional(),
+      clientId: z.string().max(400).optional(),
+      clientSecret: z.string().max(400).optional(),
+      active: z.boolean().optional(),
+      clientSubject: z.string().max(300).optional(),
+      clientBodyHtml: z.string().max(20000).optional(),
+      ownerSubject: z.string().max(300).optional(),
+      ownerBodyHtml: z.string().max(20000).optional(),
+    }).parse(req.body)
+    return reply.send(await emailService.setEmailConfig(input))
+  })
+
+  // Gera a URL de consentimento do Google. O redirect_uri aponta para o callback
+  // público do backend e é derivado do host da requisição.
+  app.post('/email/auth-url', async (req: FastifyRequest, reply: FastifyReply) => {
+    const redirectUri = `${req.protocol}://${req.headers.host}/api/email/oauth/callback`
+    return reply.send(await emailService.getGoogleAuthUrl(redirectUri))
+  })
+
+  app.post('/email/disconnect', async (_req: FastifyRequest, reply: FastifyReply) => {
+    await emailService.disconnectEmail()
+    return reply.send({ ok: true })
+  })
+
+  app.post('/email/test', async (req: FastifyRequest, reply: FastifyReply) => {
+    const { to } = z.object({ to: z.string().email('E-mail inválido') }).parse(req.body)
+    await emailService.sendTestEmail(to)
+    return reply.send({ ok: true })
   })
 }

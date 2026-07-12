@@ -394,6 +394,29 @@ model WhatsAppAuth {
   value String
 }
 
+// Configuração GLOBAL de envio de e-mail via Gmail (OAuth2), definida pelo
+// super admin. Uma única linha (id fixo "default"). Os segredos OAuth
+// (clientSecret e refreshToken) são gravados CRIPTOGRAFADOS (AES-256-GCM) —
+// nunca em texto puro. As colunas *Enc guardam o ciphertext.
+model EmailConfig {
+  id              String    @id @default("default")
+  senderEmail     String? // conta Gmail que envia as notificações
+  senderName      String? // nome exibido no remetente (ex.: "ArenaHub")
+  clientId        String? // OAuth client ID (público)
+  clientSecretEnc String? // OAuth client secret — criptografado
+  refreshTokenEnc String? // refresh token — criptografado; presente após conectar
+  redirectUri     String? // URI de callback registrada no Google Cloud
+  connectedAt     DateTime? // marca quando o Google foi conectado com sucesso
+  active          Boolean   @default(true)
+  // Templates (assunto + corpo HTML). Nulos = usa o padrão do código.
+  clientSubject   String?
+  clientBodyHtml  String?
+  ownerSubject    String?
+  ownerBodyHtml   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
 // Trilha de auditoria — registra toda criação/edição/exclusão feita no sistema.
 // action: CREATE | UPDATE | DELETE | UPDATE_MANY | DELETE_MANY
 model AuditLog {

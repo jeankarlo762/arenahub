@@ -4,6 +4,7 @@ import { prisma } from '../config/database'
 import * as courtsApi from '../services/court.service'
 import { timesOverlap, timeToMinutes } from '../utils/date'
 import { sendMessage as sendWhatsApp } from '../services/baileys.service'
+import { notifyNewBookingEmail } from '../services/email.service'
 import { getDayHours } from '../services/business-hours.service'
 import {
   DEFAULT_WHATSAPP_TEMPLATE,
@@ -207,6 +208,18 @@ export async function publicRoutes(app: FastifyInstance) {
           }
         })
         .catch((err) => console.error('[WhatsApp] Erro ao notificar agendamento:', err))
+
+      // Notificação por e-mail (cliente + dono) — best-effort, não bloqueia.
+      void notifyNewBookingEmail({
+        tenantId: tenant.id,
+        customerName: body.customerName,
+        customerEmail: body.customerEmail || null,
+        courtName: court.name,
+        date: bookingDate,
+        startTime: body.startTime,
+        endTime: body.endTime,
+        totalPrice,
+      })
 
       return reply.status(201).send(booking)
     } catch (err: unknown) {

@@ -16,6 +16,7 @@ import FinanceiroPage from './pages/SuperAdmin/Financeiro'
 import SegurancaPage from './pages/SuperAdmin/Seguranca'
 import SuperAdminAuditoria from './pages/SuperAdmin/Auditoria'
 import SuportePage from './pages/SuperAdmin/Suporte'
+import SuperAdminEmailPage from './pages/SuperAdmin/Email'
 import DashboardPage from './pages/Dashboard'
 import CourtsPage from './pages/Courts'
 import BookingsPage from './pages/Bookings'
@@ -113,6 +114,7 @@ export default function App() {
         <Route path="/superadmin/financeiro" element={<RequireSuperAdmin><FinanceiroPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/auditoria" element={<RequireSuperAdmin><SuperAdminAuditoria /></RequireSuperAdmin>} />
         <Route path="/superadmin/seguranca" element={<RequireSuperAdmin><SegurancaPage /></RequireSuperAdmin>} />
+        <Route path="/superadmin/email" element={<RequireSuperAdmin><SuperAdminEmailPage /></RequireSuperAdmin>} />
         <Route path="/superadmin/suporte" element={<RequireSuperAdmin><SuportePage /></RequireSuperAdmin>} />
         <Route path="/" element={<RequireAuth><DashboardPage /></RequireAuth>} />
         <Route path="/courts" element={<RequireAuth><CourtsPage /></RequireAuth>} />

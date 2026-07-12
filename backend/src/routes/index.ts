@@ -15,6 +15,7 @@ import { publicRoutes } from './public.routes'
 import { auditRoutes } from './audit.routes'
 import { supportRoutes } from './support.routes'
 import { whatsappRoutes } from './whatsapp.routes'
+import { emailRoutes } from './email.routes'
 
 export async function registerRoutes(app: FastifyInstance) {
   app.register(authRoutes, { prefix: '/api/auth' })
@@ -33,4 +34,5 @@ export async function registerRoutes(app: FastifyInstance) {
   app.register(auditRoutes, { prefix: '/api/audit' })
   app.register(supportRoutes, { prefix: '/api/support' })
   app.register(whatsappRoutes, { prefix: '/api/settings/whatsapp' })
+  app.register(emailRoutes, { prefix: '/api/email' })
 }
